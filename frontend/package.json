@@ -1,0 +1,32 @@
+{
+  "name": "mercaduca-frontend",
+  "version": "1.0.0",
+  "description": "Frontend para plataforma de emprendedores uca",
+  "private": true,
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext .js,.jsx,.ts,.tsx",
+    "format": "prettier --write .",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.14.2",
+    "axios": "^1.4.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "@vitejs/plugin-react": "^4.0.0",
+    "eslint": "^8.52.0",
+    "prettier": "^3.0.3",
+    "vitest": "^0.34.0",
+    "@testing-library/react": "^14.0.0",
+    "@testing-library/jest-dom": "^6.1.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
