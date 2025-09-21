@@ -1,35 +1,32 @@
-import { useEffect, useState } from 'react';
+import React from 'react';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import TopBar from './components/TopBar';
+import Landing from './components/Landing';
+import { ALL_PRODUCTS, BEST_SELLERS, NEW_PRODUCTS } from './data/products';
+import Catalog from './components/Catalog';
+import Sellers from './components/Sellers';
+import AboutUS from './components/AboutUS';
 
-function App() {
-  const [message, setMessage] = useState('Cargando...');
-
-  useEffect(() => {
-    // Probando conexión con backend
-    fetch(`${import.meta.env.VITE_API_URL}/api/hello`)
-      .then(response => response.json())
-      .then(data => setMessage(data.message))
-      .catch(() => setMessage('Error al conectar con backend'));
-
-    // Probando conexión con base de datos (opcional)
-    fetch(`${import.meta.env.VITE_API_URL}/api/categories`)
-      .then(response => response.json())
-      .then(data => {
-        setCategories(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
-  }, []);
-
+export default function App() {
   return (
-    <div>
-      <h1>{message}</h1>
-      <h1>Funciona!</h1>
-      <p>La aplicacion está funcionando</p>
-    </div>
-  )
+    <Router>
+      <TopBar />
 
+      <Routes>
+        <Route path="/" element={<Landing NEW_PRODUCTS={NEW_PRODUCTS} BEST_SELLERS={BEST_SELLERS} />}/>
+        <Route path="/catalog" element={<Catalog ALL_PRODUCTS={ALL_PRODUCTS} />}/>
+        <Route path="/emprendedores" element={<Sellers />}/>
+        <Route path="/sobreNosotros" element={<AboutUS />}/>
+      </Routes>
+
+      <footer className="border-t border-zinc-200 bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-zinc-500 flex items-center justify-between">
+          <span>© {new Date().getFullYear()} MercadUCA</span>
+          <a href="#" className="hover:text-zinc-700">
+            Redes sociales de MercadUca
+          </a>
+        </div>
+      </footer>
+    </Router>
+  );
 }
-
-export default App;
