@@ -23,7 +23,7 @@ export default function App() {
         <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-zinc-500 flex items-center justify-between">
           <span>© {new Date().getFullYear()} MercadUCA</span>
           <a href="#" className="hover:text-zinc-700">
-            Redes sociales de MercadUca
+            Redes sociales de MercadUca 
           </a>
         </div>
       </footer>

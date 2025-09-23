@@ -1,0 +1,27 @@
+# Dockerfile.prod para Backend (Deploy separado)
+FROM node:18-alpine
+
+WORKDIR /app
+
+# Crear usuario no-root por seguridad
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nextjs -u 1001
+
+# Copiar archivos de dependencias
+COPY package*.json ./
+RUN npm ci --only=production && npm cache clean --force
+
+# Copiar código fuente
+COPY . .
+RUN chown -R nextjs:nodejs /app
+
+USER nextjs
+
+# Exponer puerto (Railway usa PORT dinámico)
+EXPOSE $PORT
+
+# Variables de entorno
+ENV NODE_ENV=production
+
+# Comando de inicio (Railway requiere este formato)
+CMD ["npm", "start"]
