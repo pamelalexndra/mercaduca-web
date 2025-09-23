@@ -5,7 +5,7 @@ import Landing from './components/Landing';
 import { ALL_PRODUCTS, BEST_SELLERS, NEW_PRODUCTS } from './data/products';
 import Catalog from './components/Catalog';
 import Sellers from './components/Sellers';
-import AboutUS from './components/AboutUS';
+import AboutUs from './components/AboutUs';
 
 export default function App() {
   return (
@@ -16,7 +16,7 @@ export default function App() {
         <Route path="/" element={<Landing NEW_PRODUCTS={NEW_PRODUCTS} BEST_SELLERS={BEST_SELLERS} />}/>
         <Route path="/catalog" element={<Catalog ALL_PRODUCTS={ALL_PRODUCTS} />}/>
         <Route path="/emprendedores" element={<Sellers />}/>
-        <Route path="/sobreNosotros" element={<AboutUS />}/>
+        <Route path="/sobreNosotros" element={<AboutUs />}/>
       </Routes>
 
       <footer className="border-t border-zinc-200 bg-white">
