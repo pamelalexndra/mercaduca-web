@@ -1,9 +1,46 @@
-import React, { useMemo } from "react";
+import React, { useRef } from "react";
+import { 
+  Utensils, 
+  Cookie, 
+  Gem, 
+  Drum, 
+  Shirt, 
+  Crown, 
+  Droplet, 
+  Bike, 
+  Brush, 
+  Palette, 
+  ChevronLeft, 
+  ChevronRight 
+} from "lucide-react"; 
+
 import SearchBox from "./SearchBox";
 import ProductCard from "./ProductCard";
 
 export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
-  const grid = useMemo(() => ALL_PRODUCTS, [ALL_PRODUCTS]);
+  const scrollRef = useRef(null);
+
+  const categories = [
+    { name: "Alimentos", icon: <Utensils size={20} /> },
+    { name: "Snacks", icon: <Cookie size={20} /> },
+    { name: "Joyería y Accesorios", icon: <Gem size={20} /> },
+    { name: "Juguetes", icon: <Drum size={20} /> },
+    { name: "Ropa", icon: <Shirt size={20} /> },
+    { name: "Coleccionables", icon: <Crown size={20} /> },
+    { name: "Skincare", icon: <Droplet size={20} /> },
+    { name: "Deportivos", icon: <Bike size={20} /> },
+    { name: "Cosméticos", icon: <Brush size={20} /> },
+    { name: "Decorativos", icon: <Palette size={20} /> },
+  ];
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({
+        left: direction === "left" ? -200 : 200,
+        behavior: "smooth",
+      });
+    }
+  };
 
   return (
     <>
@@ -14,9 +51,10 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         </div>
       </section>
 
+      {/* Productos */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-          {grid.map((p) => (
+          {ALL_PRODUCTS.map((p) => (
             <ProductCard key={p.id} p={p} />
           ))}
         </div>

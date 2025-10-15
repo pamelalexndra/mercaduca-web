@@ -1,18 +1,30 @@
 import React from "react";
+import productPlaceholder from "../images/productPlaceholder.jpg";
 
 export default function ProductCard({ p }) {
   return (
-    <div className="group rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden font-montserrat hover:shadow-md transition">
-      <div className="aspect-square bg-zinc-200 flex items-center justify-center text-zinc-400 text-sm">
-        Imagen
+    <div
+      className="
+        group rounded-xl border border-zinc-200 
+        bg-white shadow-sm overflow-hidden font-montserrat 
+        hover:shadow-md transition
+      "
+    >
+      <div className="w-full aspect-[4/3] overflow-hidden">
+        <img
+          src={p.image || productPlaceholder}
+          alt={p.name || "Producto"}
+          className="w-full h-full object-cover"
+        />
       </div>
-      <div className="p-3 text-xs text-zinc-500">{p.category}</div>
-      <div className="px-3 pb-3">
-        <div className=" text-sm font-medium text-zinc-800 line-clamp-2">{p.name}</div>
-        <div className="mt-2 flex items-center gap-2">
-          <button className="flex-1 rounded-xl border border-zinc-300 px-3 py-2 text-xs">{p.price}</button>
-          <button className="flex-1 rounded-xl border border-zinc-300 px-3 py-2 text-xs">Detalles</button>
-        </div>
+
+      <div className="p-3 pt-5 font-montserrat text-[12px]">
+        <h3 className="flex items-center justify-between font-semibold text-zinc-900 leading-tight">
+          <span>{p.name || "Nombre del producto"}</span>
+          <span className="font-semibold text-[#557051] text-sm">
+            {p.price || "0.00"}
+          </span>
+        </h3>
       </div>
     </div>
   );
