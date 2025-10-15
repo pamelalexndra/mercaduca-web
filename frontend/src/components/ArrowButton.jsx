@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 export default function ArrowButton({ onClick, dir }) {
   const Icon = dir === "prev" ? ChevronLeft : ChevronRight;
   return (
-    <button //hacer que desplazen al mantener presionado
+    <button
       onClick={onClick}
       className="
         rounded-full bg-[F4F4F2] p-2

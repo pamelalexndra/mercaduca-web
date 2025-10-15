@@ -51,7 +51,6 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         </div>
       </section>
 
-      {/* Productos */}
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
           {ALL_PRODUCTS.map((p) => (
