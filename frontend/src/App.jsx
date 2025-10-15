@@ -19,7 +19,7 @@ export default function App() {
         <Route path="/sobreNosotros" element={<AboutUS />}/>
       </Routes>
 
-      <footer className="border-t border-zinc-200 bg-white">
+      <footer className="mt-20 border-t border-zinc-200 bg-white">
         <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-zinc-500 flex items-center justify-between">
           <span>© {new Date().getFullYear()} MercadUCA</span>
           <a href="#" className="hover:text-zinc-700">
