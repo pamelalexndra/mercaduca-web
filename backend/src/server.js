@@ -1,12 +1,12 @@
 import express from 'express';
 import cors from 'cors';
-import pool from './src/database/db.js';
+import pool from './database/db.js';
 
 // importación de rutas
-import categoriasRoutes from './src/routes/categoriasRoutes.js';
-import productosRoutes from './src/routes/productosRoutes.js';
-import emprendimientosRoutes from './src/routes/emprendimientosRoutes.js';
-import imageRoutes from './src/routes/imageRoutes.js';
+import categoriasRoutes from './routes/categoriasRoutes.js';
+import productosRoutes from './routes/productosRoutes.js';
+import emprendimientosRoutes from './routes/emprendimientosRoutes.js';
+import imageRoutes from './routes/imageRoutes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
