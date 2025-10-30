@@ -5,7 +5,6 @@ import Landing from './components/Landing';
 import { ALL_PRODUCTS, BEST_SELLERS, NEW_PRODUCTS } from './data/products';
 import Catalog from './components/Catalog';
 import Sellers from './components/Sellers';
-import AboutUS from './components/AboutUS';
 
 export default function App() {
   return (
