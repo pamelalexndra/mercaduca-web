@@ -7,6 +7,7 @@ import Catalog from './components/Catalog';
 import Sellers from './components/Sellers';
 import AboutUS from './components/AboutUs';
 import Footer from './components/Footer';
+import Login from './components/Login';
 
 export default function App() {
   return (
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/catalog" element={<Catalog ALL_PRODUCTS={ALL_PRODUCTS} />}/>
         <Route path="/emprendedores" element={<Sellers />}/>
         <Route path="/sobreNosotros" element={<AboutUS />}/>
+        <Route path='/vender' element={<Login />}/>
       </Routes>
 
       <Footer />
