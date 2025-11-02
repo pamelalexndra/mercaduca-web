@@ -6,7 +6,10 @@ export default function Login() {
     backgroundImage: `linear-gradient(rgba(255,255,255,0.45), rgba(255,255,255,0.45)), url(${chicaFondoLogin})`,
     backgroundSize: "cover",
     backgroundRepeat: "no-repeat",
-    backgroundPosition: "top center",
+    backgroundPosition: "top center 35%",
+    backgroundAttachment: "scroll",
+    backgroundClip: "border-box",
+    transition: "background-size 0.5s ease, background-position 0.5s ease",
   };
 
   return (
@@ -14,14 +17,14 @@ export default function Login() {
       <div
         style={myStyle}
         className="
-          order-1 lg:order-2
-          w-full 
-          h-[35vh]
-          bg-cover bg-no-repeat bg-top 
-          lg:h-full 
-          lg:[clip-path:circle(90%_at_100%_50%)]
-          lg:[-webkit-clip-path:circle(90%_at_100%_50%)]
-        "
+    order-1 lg:order-2
+    w-full 
+    h-[35vh]
+    bg-cover bg-no-repeat bg-top 
+    lg:h-full 
+    lg:[clip-path:circle(95%_at_100%_60%)] 
+    lg:[-webkit-clip-path:circle(95%_at_100%_60%)] 
+  "
       ></div>
 
       <div
