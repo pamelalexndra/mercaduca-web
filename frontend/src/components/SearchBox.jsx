@@ -87,7 +87,7 @@ export default function SearchBox({ placeholder = "Search" }) {
                 rounded-full border border-zinc-300 text-[#557051]
                 hover:bg-[#557051] hover:text-white transition
               "
-            >
+            > 
               +
           </button>
         </div>

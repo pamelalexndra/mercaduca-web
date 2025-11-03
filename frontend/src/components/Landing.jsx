@@ -43,12 +43,10 @@ export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
 
       <Carousel
         title="Nuevos productos"
-        subtitle="Descubre los productos agregados recientemente al catálogo"
         items={NEW_PRODUCTS}
       />
       <Carousel
         title="Favoritos"
-        subtitle="Descubre los favoritos de la comunidad"
         items={BEST_SELLERS}
       />
     </>

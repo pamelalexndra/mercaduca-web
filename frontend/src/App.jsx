@@ -6,6 +6,7 @@ import { ALL_PRODUCTS, BEST_SELLERS, NEW_PRODUCTS } from './data/products';
 import Catalog from './components/Catalog';
 import Sellers from './components/Sellers';
 import AboutUS from './components/AboutUS';
+import Perfil from './components/Profile';
 
 export default function App() {
   return (
@@ -17,6 +18,7 @@ export default function App() {
         <Route path="/catalog" element={<Catalog ALL_PRODUCTS={ALL_PRODUCTS} />}/>
         <Route path="/emprendedores" element={<Sellers />}/>
         <Route path="/sobreNosotros" element={<AboutUS />}/>
+        <Route path="/perfil" element={<Perfil />}/>
       </Routes>
 
       <footer className="mt-20 border-t border-zinc-200 bg-white">
