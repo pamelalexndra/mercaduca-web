@@ -7,6 +7,7 @@ import Catalog from './components/Catalog';
 import Sellers from './components/Sellers';
 import AboutUS from './components/AboutUs';
 import Footer from './components/Footer';
+import Perfil from './components/Profile';
 
 export default function App() {
   return (
@@ -18,9 +19,18 @@ export default function App() {
         <Route path="/catalog" element={<Catalog ALL_PRODUCTS={ALL_PRODUCTS} />}/>
         <Route path="/emprendedores" element={<Sellers />}/>
         <Route path="/sobreNosotros" element={<AboutUS />}/>
+        <Route path="/perfil" element={<Perfil />}/>
       </Routes>
 
       <Footer />
+      <footer className="mt-20 border-t border-zinc-200 bg-white">
+        <div className="mx-auto max-w-6xl px-6 py-10 text-sm text-zinc-500 flex items-center justify-between">
+          <span>© {new Date().getFullYear()} MercadUCA</span>
+          <a href="#" className="hover:text-zinc-700">
+            Redes sociales de MercadUca
+          </a>
+        </div>
+      </footer>
     </Router>
   );
 }

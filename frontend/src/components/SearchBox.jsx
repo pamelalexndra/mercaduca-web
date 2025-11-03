@@ -167,6 +167,7 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
         <button
           type="button"
           onClick={() => { setFilterOpen(!filterOpen) }}
+
           className={`
             p-2 rounded-full transition-colors
             ${filterOpen ? "bg-[#557051] text-white" : "text-[#557051] hover:bg-zinc-100"}
@@ -200,7 +201,7 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
             >
               <X size={18} />
             </button>
-
+            
             {/* Estado de carga */}
             {loading && (
               <div className="w-full text-center py-4 text-zinc-500 text-sm">

@@ -16,3 +16,11 @@ export const BEST_SELLERS = Array.from({ length: 12 }, (_, i) =>
 export const ALL_PRODUCTS = Array.from({ length: 16 }, (_, i) =>
   makeProduct(i + 1, "All")
 );
+export const CATEGORIES = [ "Productos de belleza",
+    "Snacks",
+    "Coleccionables",
+    "Productos deportivos",
+    "Papelería",
+    "Skincare",
+    "Accesorios",
+  ];
