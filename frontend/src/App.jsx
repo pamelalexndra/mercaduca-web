@@ -6,6 +6,9 @@ import { ALL_PRODUCTS, BEST_SELLERS, NEW_PRODUCTS } from './data/products';
 import Catalog from './components/Catalog';
 import Sellers from './components/Sellers';
 import AboutUs from './components/AboutUs';
+import AboutUS from './components/AboutUs';
+import Footer from './components/Footer';
+import Perfil from './components/Profile';
 
 export default function App() {
   return (
