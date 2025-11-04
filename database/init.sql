@@ -31,6 +31,17 @@ CREATE TABLE Emprendedor (
     REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE
 );
 
+-- Crear tabla usuarios
+CREATE TABLE Usuarios (
+	id_usuario SERIAL PRIMARY KEY NOT NULL,
+	id_emprendedor INT, 
+	Usuario VARCHAR(100) UNIQUE NOT NULL, 
+	Contraseña TEXT, 
+	Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	CONSTRAINT fk_Usuarios_Emprendedor FOREIGN KEY (id_emprendedor) 
+		REFERENCES Emprendedor (id_emprendedor) ON DELETE CASCADE
+);
+
 -- Crear la tabla Producto
 CREATE TABLE Producto(
   id_producto SERIAL PRIMARY KEY NOT NULL,
@@ -47,6 +58,14 @@ CREATE TABLE Producto(
     REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE,
   CONSTRAINT fk_Producto_Categoria FOREIGN KEY (id_categoria) 
     REFERENCES Categorias(id_categoria)
+);
+
+-- Crear tabla actividades
+CREATE TABLE Actividades (
+	id_actividad SERIAL PRIMARY KEY NOT NULL,
+	Nombre VARCHAR(500), 
+	Descripcion TEXT, 
+	Imagen_url TEXT
 );
 
 -- Insertar categorías
