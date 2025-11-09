@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { X, Camera, Upload } from "lucide-react";
 
-export default function EditProfile({ visible, onClose, emprendimientoData, onSave }) {
+export default function EditProfile({
+  visible,
+  onClose,
+  emprendimientoData,
+  onSave,
+}) {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
@@ -12,7 +17,7 @@ export default function EditProfile({ visible, onClose, emprendimientoData, onSa
     nombres: "",
     apellidos: "",
     correo: "",
-    telefono: ""
+    telefono: "",
   });
 
   const [categorias, setCategorias] = useState([]);
@@ -31,7 +36,7 @@ export default function EditProfile({ visible, onClose, emprendimientoData, onSa
         nombres: emprendimientoData.nombres || "",
         apellidos: emprendimientoData.apellidos || "",
         correo: emprendimientoData.correo || "",
-        telefono: emprendimientoData.telefono || ""
+        telefono: emprendimientoData.telefono || "",
       });
       setImagenPrevia(emprendimientoData.imagen_url || "");
     }
@@ -52,9 +57,9 @@ export default function EditProfile({ visible, onClose, emprendimientoData, onSa
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     }));
   };
 
@@ -63,7 +68,7 @@ export default function EditProfile({ visible, onClose, emprendimientoData, onSa
     if (file) {
       const previewUrl = URL.createObjectURL(file);
       setImagenPrevia(previewUrl);
-      setFormData(prev => ({ ...prev, imagen_url: file }));
+      setFormData((prev) => ({ ...prev, imagen_url: file }));
     }
   };
 
@@ -88,7 +93,7 @@ export default function EditProfile({ visible, onClose, emprendimientoData, onSa
     >
       <div
         className="bg-white rounded-2xl w-[95%] sm:w-[500px] lg:w-[600px] max-h-[90vh] overflow-y-auto relative shadow-2xl animate-slide-up border border-zinc-200 scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent"
-        style={{ overflowX: 'hidden' }}
+        style={{ overflowX: "hidden" }}
       >
         <button
           onClick={onClose}
@@ -104,7 +109,7 @@ export default function EditProfile({ visible, onClose, emprendimientoData, onSa
 
           <form onSubmit={handleSubmit} className="space-y-5 font-montserrat">
             <div className="flex flex-col items-center mb-6">
-              <div 
+              <div
                 className="relative w-32 h-32 rounded-full border-2 border-[#557051] bg-zinc-100 cursor-pointer group"
                 onClick={() => fileInputRef.current.click()}
               >
@@ -130,7 +135,9 @@ export default function EditProfile({ visible, onClose, emprendimientoData, onSa
                 onChange={handleImageChange}
                 className="hidden"
               />
-              <p className="text-sm text-zinc-500 mt-2">Haz clic para cambiar la foto</p>
+              <p className="text-sm text-zinc-500 mt-2">
+                Haz clic para cambiar la foto
+              </p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">

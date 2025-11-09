@@ -4,7 +4,7 @@ import SearchBox from "./SearchBox";
 import Carousel from "./Carousel";
 import mercaducaBlanco from "../images/mercaducaBlanco.png";
 import bgLanding from "../images/bgLanding.jpg";
-import bgLandingGato from "../images/bgLandingGato.JPG";
+import bgLandingGato from "../images/bgLandingGato.jpg";
 
 export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
   return (
@@ -18,10 +18,8 @@ export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
             relative w-full w-full
             rounded-3xl overflow-hidden shadow-md
             bg-cover bg-center bg-no-repeat"
-
           style={{ backgroundImage: `url(${bgLandingGato})` }}
-          >
-
+        >
           <div className="absolute inset-0 bg-zinc-400/50" />
           <img
             src={mercaducaBlanco}
@@ -36,18 +34,25 @@ export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
 
         <div className="-mt-5 w-full flex justify-center pb-12">
           <div className="w-[75%]">
-          <SearchBox />
+            <SearchBox />
           </div>
         </div>
       </section>
 
       <Carousel
-        title="Nuevos productos"
-        items={NEW_PRODUCTS}
+        title="Nuevos Productos"
+        subtitle="Descubre los productos agregados recientemente al catálogo"
+        endpoint="/api/productos?ordenar=fecha_desc&limit=15"
       />
       <Carousel
         title="Favoritos"
-        items={BEST_SELLERS}
+        subtitle="Descubre los favoritos de la comunidad"
+        endpoint="/api/productos?ordenar=fecha_desc&limit=10"
+      />
+      <Carousel
+        title="Mejores ofertas"
+        subtitle="Descubre los productos con los mejores precios"
+        endpoint="/api/productos?ordenar=precio_asc&limit=15"
       />
     </>
   );

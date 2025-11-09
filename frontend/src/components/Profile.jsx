@@ -8,8 +8,18 @@ export default function Profile() {
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [productoEdit, setProductoEdit] = useState(null);
   const [productos, setProductos] = useState([
-    { id: 1, nombre: "Crema hidratante de lavanda", precio: "$8.00", category: "Cuidado personal" },
-    { id: 2, nombre: "Aceite facial de rosa mosqueta", precio: "$10.50", category: "Cosmética natural" },
+    {
+      id: 1,
+      nombre: "Crema hidratante de lavanda",
+      precio: "$8.00",
+      category: "Cuidado personal",
+    },
+    {
+      id: 2,
+      nombre: "Aceite facial de rosa mosqueta",
+      precio: "$10.50",
+      category: "Cosmética natural",
+    },
   ]);
 
   const [emprendimiento, setEmprendimiento] = useState({
@@ -21,7 +31,7 @@ export default function Profile() {
     nombres: "Ana",
     apellidos: "García",
     correo: "ana@lunabotanicals.com",
-    telefono: "12345678"
+    telefono: "12345678",
   });
 
   const handleAgregar = () => {
@@ -36,8 +46,8 @@ export default function Profile() {
 
   const handleSubmit = (data) => {
     if (productoEdit) {
-      const productosActualizados = productos.map(p =>
-        p.id === productoEdit.id 
+      const productosActualizados = productos.map((p) =>
+        p.id === productoEdit.id
           ? { ...p, ...data, precio: `$${data.precio}` }
           : p
       );
@@ -46,7 +56,7 @@ export default function Profile() {
       const nuevoProducto = {
         id: Date.now(),
         ...data,
-        precio: `$${data.precio}`
+        precio: `$${data.precio}`,
       };
       setProductos([...productos, nuevoProducto]);
     }
@@ -54,17 +64,21 @@ export default function Profile() {
   };
 
   const handleEliminarProducto = (producto) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar "${producto.nombre}"?`)) {
-      const productosFiltrados = productos.filter(p => p.id !== producto.id);
+    if (
+      window.confirm(
+        `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`
+      )
+    ) {
+      const productosFiltrados = productos.filter((p) => p.id !== producto.id);
       setProductos(productosFiltrados);
       setShowModal(false);
     }
   };
 
   const handleSaveProfile = (datos) => {
-    setEmprendimiento(prev => ({
+    setEmprendimiento((prev) => ({
       ...prev,
-      ...datos
+      ...datos,
     }));
     console.log("Perfil guardado:", datos);
   };
@@ -85,7 +99,10 @@ export default function Profile() {
                   {emprendimiento.nombre}
                 </h2>
                 <div className="text-xs text-zinc-600">
-                  <span className="font-bold text-[#557051]">{productos.length}</span> productos
+                  <span className="font-bold text-[#557051]">
+                    {productos.length}
+                  </span>{" "}
+                  productos
                 </div>
               </div>
             </div>
@@ -96,12 +113,15 @@ export default function Profile() {
                   {emprendimiento.nombre}
                 </h2>
                 <div className="text-sm text-zinc-600 mb-3">
-                  <span className="font-bold text-[#557051] text-base">{productos.length}</span> productos
+                  <span className="font-bold text-[#557051] text-base">
+                    {productos.length}
+                  </span>{" "}
+                  productos
                 </div>
               </div>
 
               <div className="pt-1 flex flex-col sm:flex-row gap-3 w-full">
-                <button 
+                <button
                   onClick={() => setShowEditProfileModal(true)}
                   className="w-full sm:w-auto sm:min-w-[160px] px-4 py-2 rounded-xl border border-zinc-300 hover:bg-zinc-100 text-xs sm:text-[13px] font-medium transition"
                 >
@@ -127,7 +147,9 @@ export default function Profile() {
 
           {productos.length === 0 ? (
             <div className="text-center py-10">
-              <p className="text-zinc-500 text-sm mb-4">Aún no tienes productos publicados.</p>
+              <p className="text-zinc-500 text-sm mb-4">
+                Aún no tienes productos publicados.
+              </p>
               <button
                 onClick={handleAgregar}
                 className="px-6 py-2 rounded-xl bg-[#557051] text-white hover:bg-[#445a3f] text-sm font-medium transition"

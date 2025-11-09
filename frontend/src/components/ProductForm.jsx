@@ -1,7 +1,20 @@
 import React, { useState, useEffect, useRef } from "react";
-import { ChevronLeft, ChevronRight, X, Upload, Image as ImageIcon, Trash2 } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Upload,
+  Image as ImageIcon,
+  Trash2,
+} from "lucide-react";
 
-export default function ProductForm({ visible, onClose, onSubmit, producto, onDelete }) {
+export default function ProductForm({
+  visible,
+  onClose,
+  onSubmit,
+  producto,
+  onDelete,
+}) {
   const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState("");
   const [precio, setPrecio] = useState("");
@@ -119,7 +132,7 @@ export default function ProductForm({ visible, onClose, onSubmit, producto, onDe
         ref={modalRef}
         className="bg-white rounded-2xl w-[95%] sm:w-[480px] lg:w-[520px] max-h-[85vh] overflow-y-auto relative shadow-2xl animate-slide-up border border-zinc-200 scrollbar-thin scrollbar-thumb-zinc-300 scrollbar-track-transparent"
         onClick={(e) => e.stopPropagation()}
-        style={{ overflowX: 'hidden' }}
+        style={{ overflowX: "hidden" }}
       >
         <button
           onClick={onClose}
@@ -130,7 +143,9 @@ export default function ProductForm({ visible, onClose, onSubmit, producto, onDe
 
         <div
           className={`relative h-72 transition-all duration-300 ${
-            isDragging ? "bg-blue-50 border-2 border-blue-300 border-dashed" : "bg-gradient-to-br from-zinc-50 to-zinc-100"
+            isDragging
+              ? "bg-blue-50 border-2 border-blue-300 border-dashed"
+              : "bg-gradient-to-br from-zinc-50 to-zinc-100"
           }`}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -162,7 +177,7 @@ export default function ProductForm({ visible, onClose, onSubmit, producto, onDe
                 alt="preview"
                 className="h-full w-full object-cover"
               />
-              
+
               {imagenes.length > 1 && (
                 <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-2">
                   {imagenes.map((_, index) => (
@@ -173,9 +188,9 @@ export default function ProductForm({ visible, onClose, onSubmit, producto, onDe
                         setPreviewIndex(index);
                       }}
                       className={`w-2 h-2 rounded-full transition-all ${
-                        index === previewIndex 
-                          ? 'bg-white scale-125' 
-                          : 'bg-white/60 hover:bg-white/80'
+                        index === previewIndex
+                          ? "bg-white scale-125"
+                          : "bg-white/60 hover:bg-white/80"
                       }`}
                     />
                   ))}
@@ -239,9 +254,15 @@ export default function ProductForm({ visible, onClose, onSubmit, producto, onDe
               onChange={(e) => setCategoria(e.target.value)}
               className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all appearance-none"
             >
-              <option value="" className="text-zinc-400">Selecciona una categoría</option>
+              <option value="" className="text-zinc-400">
+                Selecciona una categoría
+              </option>
               {categorias.map((cat) => (
-                <option key={cat.id} value={cat.nombre} className="text-zinc-800">
+                <option
+                  key={cat.id}
+                  value={cat.nombre}
+                  className="text-zinc-800"
+                >
                   {cat.nombre}
                 </option>
               ))}
@@ -279,7 +300,7 @@ export default function ProductForm({ visible, onClose, onSubmit, producto, onDe
             />
           </div>
 
-          <div className={`space-y-3 ${producto ? 'pt-2' : ''}`}>
+          <div className={`space-y-3 ${producto ? "pt-2" : ""}`}>
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-[#557051] to-[#6B8E5E] text-white rounded-xl py-3.5 text-sm font-semibold hover:from-[#496345] hover:to-[#5A7750] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"

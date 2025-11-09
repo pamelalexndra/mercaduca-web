@@ -1,7 +1,11 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
 
-export default function SearchBox({ placeholder = "Search", onCategoryFilter, onSearch }) {
+export default function SearchBox({
+  placeholder = "Search",
+  onCategoryFilter,
+  onSearch,
+}) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -17,17 +21,16 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
         setLoading(true);
         setError(null);
 
-        const response = await fetch('http://localhost:5000/api/categorias');
+        const response = await fetch("http://localhost:5000/api/categorias");
 
         if (!response.ok) {
-          throw new Error('Error al cargar categorías');
+          throw new Error("Error al cargar categorías");
         }
 
         const data = await response.json();
         setCategories(data);
-
       } catch (err) {
-        console.error('Error fetching categories:', err);
+        console.error("Error fetching categories:", err);
         setError(err.message);
         setCategories(["Sin categorías disponibles"]);
       } finally {
@@ -69,7 +72,9 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
 
     let newSelectedCategories;
     if (selectedCategories.includes(categoryId)) {
-      newSelectedCategories = selectedCategories.filter(id => id !== categoryId);
+      newSelectedCategories = selectedCategories.filter(
+        (id) => id !== categoryId
+      );
     } else {
       newSelectedCategories = [...selectedCategories, categoryId];
     }
@@ -100,27 +105,29 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
     }, 500);
 
     setDebounceTimer(timer);
-
   };
 
-  const handleKeyDown = useCallback((e) => {
-    if (e.key === 'Enter') {
-      e.preventDefault();
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
 
-      // Limpiar timer de debounce
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
+        // Limpiar timer de debounce
+        if (debounceTimer) {
+          clearTimeout(debounceTimer);
+        }
+
+        // Ejecutar búsqueda
+        if (onSearch) {
+          onSearch(searchTerm);
+        }
+
+        // Quitar el foco elegantemente
+        e.target.blur();
       }
-
-      // Ejecutar búsqueda
-      if (onSearch) {
-        onSearch(searchTerm);
-      }
-
-      // Quitar el foco elegantemente
-      e.target.blur();
-    }
-  }, [debounceTimer, onSearch, searchTerm]);
+    },
+    [debounceTimer, onSearch, searchTerm]
+  );
 
   const handleClearSearch = () => {
     setSearchTerm("");
@@ -166,8 +173,9 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
 
         <button
           type="button"
-          onClick={() => { setFilterOpen(!filterOpen) }}
-
+          onClick={() => {
+            setFilterOpen(!filterOpen);
+          }}
           className={`
             p-2 rounded-full transition-colors
             ${filterOpen ? "bg-[#557051] text-white" : "text-[#557051] hover:bg-zinc-100"}
@@ -220,10 +228,11 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
             <div className="w-full">
               {!loading && !error && categories.length > 0 && (
                 <div className="text-center text-xs text-zinc-500 mb-2">
-                  Mostrando {visibleCategories.length} de {categories.length} categorías
+                  Mostrando {visibleCategories.length} de {categories.length}{" "}
+                  categorías
                 </div>
-              )}</div>
-
+              )}
+            </div>
 
             {/*<div className="grid grid-cols-7 gap-1.5"></div>*/}
             {visibleCategories.map((category, index) => (
@@ -233,10 +242,11 @@ export default function SearchBox({ placeholder = "Search", onCategoryFilter, on
                 className={`
                     px-3 py-1.25 text-[11px] rounded-full border border-zinc-300 
                     transition
-                    ${isCategorySelected(category)
-                    ? "bg-[#557051] text-white"
-                    : "text-zinc-700 bg-white hover:bg-[#557051] hover:text-white"
-                  }
+                    ${
+                      isCategorySelected(category)
+                        ? "bg-[#557051] text-white"
+                        : "text-zinc-700 bg-white hover:bg-[#557051] hover:text-white"
+                    }
                   `}
               >
                 {category.categoria || category}

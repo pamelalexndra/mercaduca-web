@@ -6,7 +6,7 @@ export default function Map() {
   const mapContainer = useRef(null);
   const map = useRef(null);
 
-  const latitude = 13.679553; 
+  const latitude = 13.679553;
   const longitude = -89.237342;
 
   useEffect(() => {

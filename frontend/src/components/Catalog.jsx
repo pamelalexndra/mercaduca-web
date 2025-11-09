@@ -11,7 +11,7 @@ import {
   Brush,
   Palette,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
 } from "lucide-react";
 import SearchBox from "./SearchBox";
 import ProductCard from "./ProductCard";
@@ -53,24 +53,24 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
     try {
       setError(null);
 
-      let url = 'http://localhost:5000/api/productos';
-      const params = []
+      let url = "http://localhost:5000/api/productos";
+      const params = [];
 
       // Si hay categorías seleccionadas, las añadimos como parámetro
       if (categoryIds.length > 0) {
-        const idsParam = categoryIds.join(',');
+        const idsParam = categoryIds.join(",");
         params.push(`ids=${idsParam}`);
       }
 
       // Si hay un termino de busqueda, lo añadimos
-      if (search && search.trim() !== '') {
+      if (search && search.trim() !== "") {
         params.push(`search=${encodeURIComponent(search.trim())}`);
       }
 
-      url += '?' + params.join('&');
+      url += "?" + params.join("&");
 
       const response = await fetch(url);
-      if (!response.ok) throw new Error('Error al cargar productos');
+      if (!response.ok) throw new Error("Error al cargar productos");
 
       const data = await response.json();
 
@@ -78,10 +78,9 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         setAllProducts(data.productos || []);
       }
       setFilteredProducts(data.productos || []);
-
     } catch (err) {
       setError(err.message);
-      console.error('Error fetching products:', err);
+      console.error("Error fetching products:", err);
     } finally {
       setLoading(false);
     }
@@ -171,7 +170,10 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
           <button className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium hover:bg-zinc-100 transition">
             Ver más
           </button>
-          <button onClick={onGoHome} className="text-sm text-zinc-600 hover:text-zinc-800">
+          <button
+            onClick={onGoHome}
+            className="text-sm text-zinc-600 hover:text-zinc-800"
+          >
             Regresar a Inicio
           </button>
         </div>

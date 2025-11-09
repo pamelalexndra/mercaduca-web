@@ -1,16 +1,16 @@
 import React from "react";
-import mercaducaPerfil from "../images/img_5651.png";
+import mercaducaPerfil from "../images/IMG_5651.jpg";
 import mercaducaPerfilNoche from "../images/bgLanding.jpg";
 import mercaducaPerfilTarde from "../images/IMG_8675.png";
-import mercaducaInterior from "../images/PXL_20250408_205803453 (1).png";
-import mercaducaInteriorCentral from "../images/Interior.png";
+import mercaducaInterior from "../images/PXL_20250408_205803453.png";
+import mercaducaInteriorCentral from "../images/Interior.JPG";
 import actividad1 from "../images/HalloweenStickers.png";
 import actividad2 from "../images/EspecialHalloween.png";
 import actividad3 from "../images/StickersCompras.png";
 import actividad4 from "../images/GalletasHalloween.png";
 import actividad5 from "../images/MercaditoFechas.png";
 import Map from "../components/Map";
-import CarouselAbout from "../components/CarrouselAbout";
+import CarouselAbout from "../components/CarouselAbout";
 
 export default function AboutUs() {
   return (
