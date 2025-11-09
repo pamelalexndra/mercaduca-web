@@ -55,6 +55,7 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
   const fetchProducts = async (categoryIds = [], search = "") => {
     try {
       setError(null);
+      setLoading(true);
 
       let url = "http://localhost:5000/api/productos";
       const params = [];
@@ -70,17 +71,25 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         params.push(`search=${encodeURIComponent(search.trim())}`);
       }
 
-      url += "?" + params.join("&");
+      // ✅ SI NO HAY FILTROS, CARGAR TODOS LOS PRODUCTOS SIN PARÁMETROS
+      if (params.length > 0) {
+        url += "?" + params.join("&");
+      }
+
+      console.log("🔍 Fetching from:", url); // Para debugging
 
       const response = await fetch(url);
       if (!response.ok) throw new Error("Error al cargar productos");
 
       const data = await response.json();
 
+      // ✅ SIEMPRE ACTUALIZAR filteredProducts CON LOS RESULTADOS
+      setFilteredProducts(data.productos || []);
+
+      // ✅ ACTUALIZAR allProducts SOLO SI NO HAY FILTROS ACTIVOS
       if (categoryIds.length === 0 && !search) {
         setAllProducts(data.productos || []);
       }
-      setFilteredProducts(data.productos || []);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching products:", err);
@@ -136,11 +145,8 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
     }
     setSearchParams(newSearchParams);
 
-    if (categoryIds.length === 0 && !searchTerm) {
-      setFilteredProducts(allProducts);
-    } else {
-      fetchProducts(categoryIds, searchTerm);
-    }
+    // ✅ SIEMPRE HACER FETCH CON LOS FILTROS ACTUALES
+    fetchProducts(categoryIds, searchTerm);
   };
 
   // Manejar filtrado por búsqueda
@@ -156,11 +162,8 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
     }
     setSearchParams(newSearchParams);
 
-    if (search === "" && selectedCategories.length === 0) {
-      setFilteredProducts(allProducts);
-    } else {
-      fetchProducts(selectedCategories, search);
-    }
+    // ✅ SIEMPRE HACER FETCH CON LOS FILTROS ACTUALES
+    fetchProducts(selectedCategories, search);
   };
 
   if (loading) {
@@ -218,6 +221,9 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         {filteredProducts.length === 0 && !loading && (
           <div className="text-center py-8 text-zinc-500">
             No se encontraron productos
+            {(selectedCategories.length > 0 || searchTerm) &&
+              " con los filtros aplicados"
+            }
           </div>
         )}
 
