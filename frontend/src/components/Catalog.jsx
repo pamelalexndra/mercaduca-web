@@ -55,7 +55,6 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
   const fetchProducts = async (categoryIds = [], search = "") => {
     try {
       setError(null);
-      setLoading(true);
 
       let url = "http://localhost:5000/api/productos";
       const params = [];
@@ -71,25 +70,17 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         params.push(`search=${encodeURIComponent(search.trim())}`);
       }
 
-      // ✅ SI NO HAY FILTROS, CARGAR TODOS LOS PRODUCTOS SIN PARÁMETROS
-      if (params.length > 0) {
-        url += "?" + params.join("&");
-      }
-
-      console.log("🔍 Fetching from:", url); // Para debugging
+      url += "?" + params.join("&");
 
       const response = await fetch(url);
       if (!response.ok) throw new Error("Error al cargar productos");
 
       const data = await response.json();
 
-      // ✅ SIEMPRE ACTUALIZAR filteredProducts CON LOS RESULTADOS
-      setFilteredProducts(data.productos || []);
-
-      // ✅ ACTUALIZAR allProducts SOLO SI NO HAY FILTROS ACTIVOS
       if (categoryIds.length === 0 && !search) {
         setAllProducts(data.productos || []);
       }
+      setFilteredProducts(data.productos || []);
     } catch (err) {
       setError(err.message);
       console.error("Error fetching products:", err);
@@ -136,7 +127,6 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
   const handleCategoryFilter = (categoryIds) => {
     setSelectedCategories(categoryIds);
 
-    // Actualizar URL
     const newSearchParams = new URLSearchParams(searchParams);
     if (categoryIds.length > 0) {
       newSearchParams.set('categories', categoryIds.join(','));
@@ -145,15 +135,23 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
     }
     setSearchParams(newSearchParams);
 
-    // ✅ SIEMPRE HACER FETCH CON LOS FILTROS ACTUALES
-    fetchProducts(categoryIds, searchTerm);
+    if (categoryIds.length === 0 && !searchTerm) {
+      setFilteredProducts(allProducts);
+    } else {
+      fetchProducts(categoryIds, searchTerm);
+    }
+    // ✅ Si NO hay categorías ni búsqueda → obtener todos los productos
+    if (categoryIds.length === 0 && !searchTerm) {
+      fetchProducts(); // <-- ESTA ES LA CLAVE
+    } else {
+      fetchProducts(categoryIds, searchTerm);
+    }
   };
 
   // Manejar filtrado por búsqueda
   const handleSearch = (search) => {
     setSearchTerm(search);
 
-    // Actualizar URL
     const newSearchParams = new URLSearchParams(searchParams);
     if (search) {
       newSearchParams.set('search', search);
@@ -162,8 +160,17 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
     }
     setSearchParams(newSearchParams);
 
-    // ✅ SIEMPRE HACER FETCH CON LOS FILTROS ACTUALES
-    fetchProducts(selectedCategories, search);
+    if (search === "" && selectedCategories.length === 0) {
+      setFilteredProducts(allProducts);
+    } else {
+      fetchProducts(selectedCategories, search);
+    }
+    // ✅ Si NO hay búsqueda ni categorías → obtener todos los productos
+    if (search === "" && selectedCategories.length === 0) {
+      fetchProducts(); // <-- Y ESTA ES LA OTRA CLAVE
+    } else {
+      fetchProducts(selectedCategories, search);
+    }
   };
 
   if (loading) {
@@ -196,6 +203,7 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
           <SearchBox
             onCategoryFilter={handleCategoryFilter}
             onSearch={handleSearch}
+            // ✅ NUEVAS PROPS: Pasar el estado actual al SearchBox
             initialSelectedCategories={selectedCategories}
             initialSearchTerm={searchTerm}
           />
@@ -221,9 +229,6 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         {filteredProducts.length === 0 && !loading && (
           <div className="text-center py-8 text-zinc-500">
             No se encontraron productos
-            {(selectedCategories.length > 0 || searchTerm) &&
-              " con los filtros aplicados"
-            }
           </div>
         )}
 

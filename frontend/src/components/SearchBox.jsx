@@ -147,14 +147,6 @@ export default function SearchBox({
     }
   };
 
-  // ✅ NUEVA FUNCIÓN: Limpiar todos los filtros de categorías
-  const handleClearAllCategories = () => {
-    setSelectedCategories([]);
-    if (onCategoryFilter) {
-      onCategoryFilter([]);
-    }
-  };
-
   return (
     <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
       <div
@@ -246,21 +238,6 @@ export default function SearchBox({
                 </div>
               )}
             </div>
-
-            {/* ✅ BOTÓN PARA LIMPIAR TODAS LAS CATEGORÍAS */}
-            {selectedCategories.length > 0 && (
-              <div className="w-full flex justify-center mb-2">
-                <button
-                  onClick={handleClearAllCategories}
-                  className="
-                    px-3 py-1 text-[11px] rounded-full border border-red-300 
-                    bg-red-50 text-red-600 hover:bg-red-100 transition
-                  "
-                >
-                  Limpiar todas las categorías
-                </button>
-              </div>
-            )}
 
             {visibleCategories.map((category, index) => (
               <button
