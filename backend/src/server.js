@@ -1,12 +1,12 @@
-import express from 'express';
-import cors from 'cors';
-import pool from './database/db.js';
+import express from "express";
+import cors from "cors";
+import pool from "./database/db.js";
 
 // importación de rutas
-import categoriasRoutes from './routes/categoriasRoutes.js';
-import productosRoutes from './routes/productosRoutes.js';
-import emprendimientosRoutes from './routes/emprendimientosRoutes.js';
-import imageRoutes from './routes/imageRoutes.js';
+import categoriasRoutes from "./routes/categoriasRoutes.js";
+import productosRoutes from "./routes/productosRoutes.js";
+import emprendimientosRoutes from "./routes/emprendimientosRoutes.js";
+import imageRoutes from "./routes/imageRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -16,43 +16,43 @@ app.use(cors());
 app.use(express.json());
 
 // Ruta de health check para Docker
-app.get('/api/health', (req, res) => {
+app.get("/api/health", (req, res) => {
   res.status(200).json({
-    status: 'OK',
-    message: 'Backend is healthy',
-    timestamp: new Date().toISOString()
+    status: "OK",
+    message: "Backend is healthy",
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Ruta para obtener categorías
-app.use('/api/categorias', categoriasRoutes);
-// CRUD - Productos 
-app.use('/api/productos', productosRoutes);
-// CRUD - Emprendimiento 
-app.use('/api/emprendimientos', emprendimientosRoutes);
+app.use("/api/categorias", categoriasRoutes);
+// CRUD - Productos
+app.use("/api/productos", productosRoutes);
+// CRUD - Emprendimiento
+app.use("/api/emprendimientos", emprendimientosRoutes);
 // Proxy de imágenes
-app.use('/api', imageRoutes);
+app.use("/api", imageRoutes);
 
-
-
-// Ruta de información de la base de datos 
-app.get('/api/db-info', async (req, res) => {
+// Ruta de información de la base de datos
+app.get("/api/db-info", async (req, res) => {
   try {
-    const categoriesCount = await pool.query('SELECT COUNT(*) FROM categorias');
-    const emprendedorCount = await pool.query('SELECT COUNT(*) FROM emprendedor');
-    const productosCount = await pool.query('SELECT COUNT(*) FROM producto');
+    const categoriesCount = await pool.query("SELECT COUNT(*) FROM categorias");
+    const emprendedorCount = await pool.query(
+      "SELECT COUNT(*) FROM emprendedor"
+    );
+    const productosCount = await pool.query("SELECT COUNT(*) FROM producto");
 
     res.json({
       database: process.env.DB_NAME,
       categories_count: parseInt(categoriesCount.rows[0].count),
       emprendedor_count: parseInt(emprendedorCount.rows[0].count),
       productosCount: parseInt(productosCount.rows[0].count),
-      connection: 'Succesful'
+      connection: "Succesful",
     });
   } catch (error) {
     res.status(500).json({
-      error: 'Database connection failed',
-      details: error.message
+      error: "Database connection failed",
+      details: error.message,
     });
   }
 });
@@ -61,43 +61,43 @@ app.get('/api/db-info', async (req, res) => {
 app.use((err, req, res, next) => {
   console.error(err.stack);
   res.status(500).json({
-    error: 'Something went wrong!',
-    message: err.message
+    error: "Something went wrong!",
+    message: err.message,
   });
 });
 
 // Ruta 404
-app.use('*', (req, res) => {
+app.use("*", (req, res) => {
   res.status(404).json({
-    error: 'Endpoint not found',
+    error: "Endpoint not found",
     available_endpoints: [
-      '/api/health',
-      '/api/categories',
-      '/api/productos',
-      '/api/emprendimientos',
-      '/api/proxy-image',
-      '/api/image-proxy-status',
-      '/api/db-info'
-    ]
+      "/api/health",
+      "/api/categories",
+      "/api/productos",
+      "/api/emprendimientos",
+      "/api/proxy-image",
+      "/api/image-proxy-status",
+      "/api/db-info",
+    ],
   });
 });
 
 // Inicializar servidor
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
-  console.log('Endpoints disponibles:');
+  console.log("Endpoints disponibles:");
   console.log(`- GET http://localhost:${PORT}/api/health`);
   console.log(`- GET http://localhost:${PORT}/api/categorias`);
   console.log(`- CRUD http://localhost:${PORT}/api/productos`);
   console.log(`- CRUD http://localhost:${PORT}/api/emprendimientos`);
-  console.log(`- GET  http://localhost:${PORT}/api/proxy-image`); 
+  console.log(`- GET  http://localhost:${PORT}/api/proxy-image`);
   console.log(`- GET  http://localhost:${PORT}/api/image-proxy-status`);
   console.log(`- GET http://localhost:${PORT}/api/db-info`);
 });
 
 // Manejar cierre de PostgreSQL
-process.on('SIGINT', async () => {
-  console.log('Closing PostgreSQL pool...');
+process.on("SIGINT", async () => {
+  console.log("Closing PostgreSQL pool...");
   await pool.end();
   process.exit(0);
 });

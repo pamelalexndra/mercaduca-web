@@ -1,14 +1,16 @@
-import pool from '../database/db.js';
+import pool from "../database/db.js";
 
 export const getCategorias = async (req, res) => {
-    try {
-        const result = await pool.query('SELECT * FROM categorias ORDER BY id_categoria');
-        res.json(result.rows);
-    } catch (error) {
-        console.error('Error fetching categories:', error);
-        res.status(500).json({
-            error: 'Error al obtener categorías',
-            details: error.message
-        });
-    }
+  try {
+    const result = await pool.query(
+      "SELECT * FROM categorias ORDER BY id_categoria"
+    );
+    res.json(result.rows);
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).json({
+      error: "Error al obtener categorías",
+      details: error.message,
+    });
+  }
 };
