@@ -2,11 +2,30 @@ import React from "react";
 import { motion } from "framer-motion";
 import SearchBox from "./SearchBox";
 import Carousel from "./Carousel";
+import { useNavigate } from "react-router-dom";
 import mercaducaBlanco from "../images/mercaducaBlanco.png";
 import bgLanding from "../images/bgLanding.jpg";
 import bgLandingGato from "../images/bgLandingGato.jpg";
 
 export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
+  const navigate = useNavigate();
+
+  const handleSearchFromLanding = (searchTerm) => {
+    // Redirigir al catálogo con el término de búsqueda
+    navigate(`/catalog?search=${encodeURIComponent(searchTerm)}`);
+  };
+
+  const handleCategoryFilterFromLanding = (categoryIds) => {
+    // Redirigir al catálogo con las categorías seleccionadas
+    if (categoryIds.length > 0) {
+      const categoriesParam = categoryIds.join(",");
+      navigate(`/catalog?categories=${categoriesParam}`);
+    } else {
+      // Si no hay categorías seleccionadas, ir al catálogo sin filtros
+      navigate('/catalog');
+    }
+  };
+
   return (
     <>
       <section className="relative felx flex-col items-center text-center px-2 w-full">
@@ -34,7 +53,11 @@ export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
 
         <div className="-mt-5 w-full flex justify-center pb-12">
           <div className="w-[75%]">
-            <SearchBox />
+            <SearchBox
+              onSearch={handleSearchFromLanding}
+              onCategoryFilter={handleCategoryFilterFromLanding}
+              enableDebounce={false} // ✅ Deshabilitar debounce en Landing
+            />
           </div>
         </div>
       </section>

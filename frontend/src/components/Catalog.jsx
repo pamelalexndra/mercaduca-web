@@ -1,4 +1,5 @@
 import React, { useMemo, useEffect, useState, useRef } from "react";
+import { useSearchParams } from "react-router-dom";
 import {
   Utensils,
   Cookie,
@@ -18,6 +19,7 @@ import ProductCard from "./ProductCard";
 
 export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
   const grid = useMemo(() => ALL_PRODUCTS, [ALL_PRODUCTS]);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -25,6 +27,7 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const scrollRef = useRef(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   const categories = [
     { name: "Alimentos", icon: <Utensils size={20} /> },
@@ -86,13 +89,52 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
     }
   };
 
+  // ✅ SOLUCIÓN: Manejar la carga inicial y parámetros de URL en un solo efecto
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const urlSearch = searchParams.get('search');
+    const urlCategories = searchParams.get('categories');
+
+    // Si es la carga inicial y hay parámetros en la URL, usarlos
+    if (isInitialLoad) {
+      if (urlSearch) {
+        setSearchTerm(urlSearch);
+      }
+
+      if (urlCategories) {
+        const categoryArray = urlCategories.split(',').map(id => parseInt(id));
+        setSelectedCategories(categoryArray);
+
+        // Si hay categorías en la URL, hacer fetch con esos filtros
+        if (categoryArray.length > 0 || urlSearch) {
+          fetchProducts(categoryArray, urlSearch || "");
+        } else {
+          // Si no hay filtros en la URL, cargar todos los productos
+          fetchProducts();
+        }
+      } else if (urlSearch) {
+        // Si solo hay búsqueda en la URL
+        fetchProducts([], urlSearch);
+      } else {
+        // Si no hay parámetros en la URL, cargar todos los productos
+        fetchProducts();
+      }
+
+      setIsInitialLoad(false);
+    }
+  }, [searchParams, isInitialLoad]);
 
   // Manejar filtrado por categorías
   const handleCategoryFilter = (categoryIds) => {
     setSelectedCategories(categoryIds);
+
+    // Actualizar URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (categoryIds.length > 0) {
+      newSearchParams.set('categories', categoryIds.join(','));
+    } else {
+      newSearchParams.delete('categories');
+    }
+    setSearchParams(newSearchParams);
 
     if (categoryIds.length === 0 && !searchTerm) {
       setFilteredProducts(allProducts);
@@ -104,6 +146,15 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
   // Manejar filtrado por búsqueda
   const handleSearch = (search) => {
     setSearchTerm(search);
+
+    // Actualizar URL
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (search) {
+      newSearchParams.set('search', search);
+    } else {
+      newSearchParams.delete('search');
+    }
+    setSearchParams(newSearchParams);
 
     if (search === "" && selectedCategories.length === 0) {
       setFilteredProducts(allProducts);
@@ -142,13 +193,17 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
           <SearchBox
             onCategoryFilter={handleCategoryFilter}
             onSearch={handleSearch}
+            initialSelectedCategories={selectedCategories}
+            initialSearchTerm={searchTerm}
           />
         </div>
 
         {/* Mostrar categorías seleccionadas */}
         {(selectedCategories.length > 0 || searchTerm) && (
           <div className="mt-4 text-center text-sm text-zinc-600">
-            Filtrado por {selectedCategories.length} categoría(s)
+            {searchTerm && `Búsqueda: "${searchTerm}"`}
+            {searchTerm && selectedCategories.length > 0 && " • "}
+            {selectedCategories.length > 0 && `Filtrado por ${selectedCategories.length} categoría(s)`}
           </div>
         )}
       </section>
