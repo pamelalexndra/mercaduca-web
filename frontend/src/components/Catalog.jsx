@@ -1,20 +1,6 @@
 import React, { useMemo, useEffect, useState, useRef } from "react";
 import { useSearchParams } from "react-router-dom";
-import {
-  Utensils,
-  Cookie,
-  Gem,
-  Drum,
-  Shirt,
-  Crown,
-  Droplet,
-  Bike,
-  Brush,
-  Palette,
-  ChevronLeft,
-  ChevronRight,
-} from "lucide-react";
-import SearchBox from "./SearchBox";
+import SearchBox from "./SearchBox/SearchBox.jsx";
 import ProductCard from "./ProductCard";
 
 export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
@@ -28,19 +14,6 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
   const [searchTerm, setSearchTerm] = useState("");
   const scrollRef = useRef(null);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-
-  const categories = [
-    { name: "Alimentos", icon: <Utensils size={20} /> },
-    { name: "Snacks", icon: <Cookie size={20} /> },
-    { name: "Joyería y Accesorios", icon: <Gem size={20} /> },
-    { name: "Juguetes", icon: <Drum size={20} /> },
-    { name: "Ropa", icon: <Shirt size={20} /> },
-    { name: "Coleccionables", icon: <Crown size={20} /> },
-    { name: "Skincare", icon: <Droplet size={20} /> },
-    { name: "Deportivos", icon: <Bike size={20} /> },
-    { name: "Cosméticos", icon: <Brush size={20} /> },
-    { name: "Decorativos", icon: <Palette size={20} /> },
-  ];
 
   const scroll = (direction) => {
     if (scrollRef.current) {

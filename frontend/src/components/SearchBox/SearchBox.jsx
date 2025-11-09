@@ -1,102 +1,82 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
-import SearchInput from './SearchInput.jsx';
-import FilterPanel from './FilterPanel.jsx';
+// components/SearchBox.jsx
+import React, { useState, useEffect, useCallback, useRef } from "react";
+import SearchInput from "./SearchInput.jsx";
+import CategoryDropdown from "./CategoryDropdown.jsx";
+import useCategories from "../../hooks/useCategories.js";
 
-export default function SearchBox({ placeholder = 'Search', onCategoryFilter, onSearch, enableDebounce = true }) {
+export default function SearchBox({
+    placeholder = "Search",
+    onCategoryFilter,
+    onSearch,
+    enableDebounce = true,
+    initialSelectedCategories = [],
+    initialSearchTerm = "",
+}) {
+    const { categories, loading, error } = useCategories();
     const [filterOpen, setFilterOpen] = useState(false);
-    const [categories, setCategories] = useState([]);
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(null);
     const [visibleCount, setVisibleCount] = useState(7);
-    const [selectedCategories, setSelectedCategories] = useState([]);
-    const [searchTerm, setSearchTerm] = useState('');
 
-    // refs for debounce and mounted flag
-    const debounceRef = useRef(null);
-    const mountedRef = useRef(true);
+    // Estado interno local (sincronizable desde props iniciales)
+    const [selectedCategories, setSelectedCategories] = useState(initialSelectedCategories || []);
+    const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "");
 
+    // Mantener refs para no re-render innecesariamente
+    const isFirstMountRef = useRef(true);
+
+    // Sincronizar con props iniciales si cambian (comportamiento consistente con tu original)
+    // ✅ Solo sincronizar en el primer render (cuando se abre Catalog)
     useEffect(() => {
-        mountedRef.current = true;
-        const fetchCategories = async () => {
-            setLoading(true);
-            setError(null);
-            try {
-                const res = await fetch('http://localhost:5000/api/categorias');
-                if (!res.ok) throw new Error('Error al cargar categorías');
-                const data = await res.json();
-                if (!mountedRef.current) return;
-                setCategories(data || []);
-            } catch (err) {
-                console.error(err);
-                if (!mountedRef.current) return;
-                setError(err.message);
-            } finally {
-                if (mountedRef.current) setLoading(false);
-            }
-        };
-
-        fetchCategories();
-        return () => {
-            mountedRef.current = false;
-            clearTimeout(debounceRef.current);
-        };
+        setSelectedCategories(initialSelectedCategories || []);
+        setSearchTerm(initialSearchTerm || "");
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Debounced search emitter
-    const emitSearch = useCallback((value) => {
-        if (enableDebounce) {
-            clearTimeout(debounceRef.current);
-            debounceRef.current = setTimeout(() => {
-                onSearch?.(value);
-            }, 400);
-        } else {
-            onSearch?.(value);
-        }
-    }, [enableDebounce, onSearch]);
-
-    const handleSearchChange = (value) => {
-        setSearchTerm(value);
-        emitSearch(value);
-    };
-
-    const handleClear = () => {
-        setSearchTerm('');
-        emitSearch('');
-    };
-
-    const handleToggleCategory = (id) => {
+    // Handlers
+    const handleToggleCategory = useCallback((category) => {
+        const id = category.id_categoria;
         setSelectedCategories((prev) => {
             const exists = prev.includes(id);
             const next = exists ? prev.filter((x) => x !== id) : [...prev, id];
-            onCategoryFilter?.(next);
+            onCategoryFilter && onCategoryFilter(next);
             return next;
         });
-    };
+    }, [onCategoryFilter]);
 
-    const handleShowMore = () => {
-        setVisibleCount((v) => Math.min(categories.length, v + 7));
-    };
+    const handleClearAllCategories = useCallback(() => {
+        setSelectedCategories([]);
+        onCategoryFilter && onCategoryFilter([]);
+    }, [onCategoryFilter]);
 
-    const handleShowLess = () => {
-        setVisibleCount((v) => Math.max(7, v - 7));
-    };
+    const handleSearchChange = useCallback((value) => {
+        setSearchTerm(value);
+    }, []);
+
+    const handleSearch = useCallback((value) => {
+        onSearch && onSearch(value);
+    }, [onSearch]);
+
+    const handleShowMore = useCallback(() => setVisibleCount((v) => v + 7), []);
+    const handleShowLess = useCallback(() => setVisibleCount((v) => Math.max(7, v - 7)), []);
 
     return (
         <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
             <SearchInput
-                value={searchTerm}
                 placeholder={placeholder}
+                value={searchTerm}
                 onChange={handleSearchChange}
-                onClear={handleClear}
-                onToggleFilter={() => setFilterOpen((v) => !v)}
+                onSearch={handleSearch}
+                enableDebounce={enableDebounce}
+                onToggleFilterOpen={() => setFilterOpen((s) => !s)}
+                isFilterOpen={filterOpen}
             />
 
             {filterOpen && (
-                <FilterPanel
+                <CategoryDropdown
                     categories={categories}
-                    visibleCount={visibleCount}
-                    selected={selectedCategories}
+                    selectedCategoryIds={selectedCategories}
                     onToggleCategory={handleToggleCategory}
+                    onClearAll={handleClearAllCategories}
+                    visibleCount={visibleCount}
                     onShowMore={handleShowMore}
                     onShowLess={handleShowLess}
                     onClose={() => setFilterOpen(false)}

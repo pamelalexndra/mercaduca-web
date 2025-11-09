@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import SearchBox from "./SearchBox";
+import SearchBox from "./SearchBox/SearchBox.jsx";
 import Carousel from "./Carousel";
 import { useNavigate } from "react-router-dom";
 import mercaducaBlanco from "../images/mercaducaBlanco.png";
