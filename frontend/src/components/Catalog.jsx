@@ -2,44 +2,17 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import SearchBox from "./SearchBox/SearchBox.jsx";
 import ProductCard from "./ProductCard";
+import useProducts from "../hooks/useProducts";
 
 export default function Catalog({ onGoHome }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const [allProducts, setAllProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const { filteredProducts, loading, error, fetchProducts, resetOrFetchAll } = useProducts();
+
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const fetchProducts = async (categoryIds = [], search = "") => {
-    try {
-      setError(null);
-
-      let url = "http://localhost:5000/api/productos";
-      const params = [];
-
-      if (categoryIds.length > 0) params.push(`ids=${categoryIds.join(",")}`);
-      if (search && search.trim() !== "") params.push(`search=${encodeURIComponent(search.trim())}`);
-      if (params.length) url += `?${params.join("&")}`;
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Error al cargar productos");
-
-      const data = await response.json();
-      const productos = data.productos || [];
-
-      if (categoryIds.length === 0 && !search) setAllProducts(productos);
-      setFilteredProducts(productos);
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Carga inicial / lectura de params 
   useEffect(() => {
     const urlSearch = searchParams.get("search");
     const urlCategories = searchParams.get("categories");
@@ -71,6 +44,7 @@ export default function Catalog({ onGoHome }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isInitialLoad]);
 
+  // Manejar filtrado por categorías (usa resetOrFetchAll para el caso "vacío")
   const handleCategoryFilter = (categoryIds) => {
     setSelectedCategories(categoryIds);
 
@@ -80,14 +54,14 @@ export default function Catalog({ onGoHome }) {
     setSearchParams(newSearchParams);
 
     if (categoryIds.length === 0 && !searchTerm) {
-      if (allProducts.length > 0) setFilteredProducts(allProducts);
-      else fetchProducts();
+      resetOrFetchAll();
       return;
     }
 
     fetchProducts(categoryIds, searchTerm);
   };
 
+  // Manejar búsqueda
   const handleSearch = (search) => {
     setSearchTerm(search);
 
@@ -97,8 +71,7 @@ export default function Catalog({ onGoHome }) {
     setSearchParams(newSearchParams);
 
     if (search === "" && selectedCategories.length === 0) {
-      if (allProducts.length > 0) setFilteredProducts(allProducts);
-      else fetchProducts();
+      resetOrFetchAll();
       return;
     }
 
