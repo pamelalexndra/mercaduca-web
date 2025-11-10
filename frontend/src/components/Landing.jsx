@@ -49,6 +49,11 @@ export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
         subtitle="Descubre los favoritos de la comunidad"
         endpoint="/api/productos?ordenar=fecha_desc&limit=10"
       />
+      <Carousel
+        title="Mejores ofertas"
+        subtitle="Descubre los productos con los mejores precios"
+        endpoint="/api/productos?ordenar=precio_asc&limit=15"
+      />
     </>
   );
 }
