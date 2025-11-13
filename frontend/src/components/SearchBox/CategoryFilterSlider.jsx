@@ -1,20 +1,15 @@
 // components/CategoryDropdown.jsx
-import React, { useMemo } from "react";
+import React from "react";
 
 export default function CategoryDropdown({
-    isOpen, // Nueva prop para controlar la animación
+    isOpen,
     categories = [],
     selectedCategoryIds = [],
     onToggleCategory,
-    onClearAll,
-    visibleCount,
-    onShowMore,
-    onShowLess,
-    onClose,
     loading,
     error,
 }) {
-    // Helper para verificar selección (lógica visual)
+    // Helper para verificar selección
     const isSelected = (id) => selectedCategoryIds.includes(id);
 
     return (

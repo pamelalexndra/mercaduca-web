@@ -1,7 +1,7 @@
 // components/SearchBox.jsx
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import SearchInput from "./SearchInput.jsx";
-import CategoryDropdown from "./CategoryDropdown.jsx";
+import CategoryFilterSilder from "./CategoryFilterSlider.jsx";
 import useCategories from "../../hooks/useCategories.js";
 
 export default function SearchBox({
@@ -15,14 +15,9 @@ export default function SearchBox({
     const { categories, loading, error } = useCategories();
     const [filterOpen, setFilterOpen] = useState(false);
 
-    // Mantenemos tus variables aunque no se usen visualmente en el nuevo diseño (scroll)
-    const [visibleCount, setVisibleCount] = useState(7);
-
     // Estado interno local
     const [selectedCategories, setSelectedCategories] = useState(initialSelectedCategories || []);
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "");
-
-    const isFirstMountRef = useRef(true);
 
     useEffect(() => {
         setSelectedCategories(initialSelectedCategories || []);
@@ -30,7 +25,7 @@ export default function SearchBox({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Handlers (Tu lógica original intacta)
+    // Handlers
     const handleToggleCategory = useCallback((category) => {
         const id = category.id_categoria;
         setSelectedCategories((prev) => {
@@ -41,11 +36,6 @@ export default function SearchBox({
         });
     }, [onCategoryFilter]);
 
-    const handleClearAllCategories = useCallback(() => {
-        setSelectedCategories([]);
-        onCategoryFilter && onCategoryFilter([]);
-    }, [onCategoryFilter]);
-
     const handleSearchChange = useCallback((value) => {
         setSearchTerm(value);
     }, []);
@@ -54,12 +44,8 @@ export default function SearchBox({
         onSearch && onSearch(value);
     }, [onSearch]);
 
-    const handleShowMore = useCallback(() => setVisibleCount((v) => v + 7), []);
-    const handleShowLess = useCallback(() => setVisibleCount((v) => Math.max(7, v - 7)), []);
-
     return (
         <>
-            {/* Contenedor del Input (Mantiene estilos del nuevo original) */}
             <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
                 <SearchInput
                     placeholder={placeholder}
@@ -72,18 +58,11 @@ export default function SearchBox({
                 />
             </div>
 
-            {/* CategoryDropdown siempre se renderiza para permitir la animación CSS.
-                Le pasamos isOpen={filterOpen}.
-            */}
-            <CategoryDropdown
+            <CategoryFilterSilder
                 isOpen={filterOpen}
                 categories={categories}
                 selectedCategoryIds={selectedCategories}
                 onToggleCategory={handleToggleCategory}
-                onClearAll={handleClearAllCategories}
-                visibleCount={visibleCount}
-                onShowMore={handleShowMore}
-                onShowLess={handleShowLess}
                 loading={loading}
                 error={error}
             />
