@@ -17,7 +17,7 @@ export default function ProductDetailPage() {
 
         // 1. Obtener el producto
         const productRes = await fetch(
-          `${import.meta.env.VITE_API_URL}/api/productos/${id}`
+          `${import.meta.env.VITE_API_URL}/api/products/${id}`
         );
         if (!productRes.ok) throw new Error("No se pudo obtener el producto");
         const productData = await productRes.json();
@@ -28,7 +28,7 @@ export default function ProductDetailPage() {
         // 2. Obtener el emprendimiento usando el id_emprendimiento del producto
         if (producto.id_emprendimiento) {
           const emprendimientoRes = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/emprendimientos/${producto.id_emprendimiento}`
+            `${import.meta.env.VITE_API_URL}/api/entrepreneurship/${producto.id_emprendimiento}`
           );
           if (emprendimientoRes.ok) {
             const emprendimientoData = await emprendimientoRes.json();
@@ -179,7 +179,7 @@ export default function ProductDetailPage() {
           <Carousel
             title={`Más productos de ${product.nombre_emprendimiento}`}
             subtitle={`Descubre otros artículos de ${product.nombre_emprendimiento}`}
-            endpoint={`/api/productos?emprendimiento_id=${product.id_emprendimiento}`}
+            endpoint={`/api/products?emprendimiento_id=${product.id_emprendimiento}`}
           />
         )}
       </div>

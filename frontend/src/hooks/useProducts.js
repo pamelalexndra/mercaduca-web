@@ -6,7 +6,7 @@ import { useCallback, useState } from "react";
  * - Encapsula fetchProducts + estados relacionados (allProducts, filteredProducts, loading, error).
  * - NOTA: no fuerza setLoading(true) dentro de cada fetch para evitar "parpadeos".
  */
-export default function useProducts(baseUrl = "http://localhost:5000/api/productos") {
+export default function useProducts(baseUrl = "http://localhost:5000/api/products") {
     const [allProducts, setAllProducts] = useState([]);
     const [filteredProducts, setFilteredProducts] = useState([]);
     const [loading, setLoading] = useState(true); // true hasta la primera respuesta

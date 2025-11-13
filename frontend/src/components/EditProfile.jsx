@@ -45,7 +45,7 @@ export default function EditProfile({
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/categorias");
+        const res = await fetch("http://localhost:5000/api/categories");
         const data = await res.json();
         setCategorias(data || []);
       } catch (error) {

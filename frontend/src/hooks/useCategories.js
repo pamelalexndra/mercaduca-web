@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-export default function useCategories(url = "http://localhost:5000/api/categorias") {
+export default function useCategories(url = "http://localhost:5000/api/categories") {
     const [categories, setCategories] = useState([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState(null);

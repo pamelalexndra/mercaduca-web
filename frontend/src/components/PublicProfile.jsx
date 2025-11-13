@@ -18,14 +18,14 @@ export default function PublicProfile() {
     setIsLoading(true);
 
     // Traer emprendimiento desde el backend
-    fetch(`http://localhost:5000/api/emprendimientos/${id}`)
+    fetch(`http://localhost:5000/api/entrepreneurship/${id}`)
       .then((res) => res.json())
       .then((data) => setEmprendimiento(data))
       .catch((err) => console.error("Error cargando emprendimiento:", err))
       .finally(() => setIsLoading(false));
 
     // Traer productos del emprendimiento
-    fetch(`http://localhost:5000/api/productos?emprendimiento_id=${id}`)
+    fetch(`http://localhost:5000/api/products?emprendimiento_id=${id}`)
       .then((res) => res.json())
       .then((data) => setProductos(data.productos))
       .catch((err) => console.error("Error cargando productos:", err));
