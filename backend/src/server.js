@@ -3,9 +3,9 @@ import cors from "cors";
 import pool from "./database/db.js";
 
 // importación de rutas
-import categoriasRoutes from "./routes/categoriasRoutes.js";
-import productosRoutes from "./routes/productosRoutes.js";
-import emprendimientosRoutes from "./routes/emprendimientosRoutes.js";
+import categoriesRoutes from "./routes/categoriesRoutes.js";
+import productsRoutes from "./routes/productsRoutes.js";
+import entrepreneurshipRoutes from "./routes/entrepreneurshipRoutes.js";
 import imageRoutes from "./routes/imageRoutes.js";
 
 const app = express();
@@ -25,11 +25,11 @@ app.get("/api/health", (req, res) => {
 });
 
 // Ruta para obtener categorías
-app.use("/api/categorias", categoriasRoutes);
+app.use("/api/categories", categoriesRoutes);
 // CRUD - Productos
-app.use("/api/productos", productosRoutes);
+app.use("/api/products", productsRoutes);
 // CRUD - Emprendimiento
-app.use("/api/emprendimientos", emprendimientosRoutes);
+app.use("/api/entrepreneurship", entrepreneurshipRoutes);
 // Proxy de imágenes
 app.use("/api", imageRoutes);
 
@@ -73,8 +73,8 @@ app.use("*", (req, res) => {
     available_endpoints: [
       "/api/health",
       "/api/categories",
-      "/api/productos",
-      "/api/emprendimientos",
+      "/api/products",
+      "/api/entrepreneurship",
       "/api/proxy-image",
       "/api/image-proxy-status",
       "/api/db-info",
@@ -87,9 +87,9 @@ app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
   console.log("Endpoints disponibles:");
   console.log(`- GET http://localhost:${PORT}/api/health`);
-  console.log(`- GET http://localhost:${PORT}/api/categorias`);
-  console.log(`- CRUD http://localhost:${PORT}/api/productos`);
-  console.log(`- CRUD http://localhost:${PORT}/api/emprendimientos`);
+  console.log(`- GET http://localhost:${PORT}/api/categories`);
+  console.log(`- CRUD http://localhost:${PORT}/api/products`);
+  console.log(`- CRUD http://localhost:${PORT}/api/entrepreneurship`);
   console.log(`- GET  http://localhost:${PORT}/api/proxy-image`);
   console.log(`- GET  http://localhost:${PORT}/api/image-proxy-status`);
   console.log(`- GET http://localhost:${PORT}/api/db-info`);
