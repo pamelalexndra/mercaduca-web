@@ -55,7 +55,7 @@ export default function TopBar() {
                 Catálogo
               </button>
 
-              <Link to="/emprendedores" className="hover:text-zinc-700">
+              <Link to="/emprendimientos" className="hover:text-zinc-700">
                 Emprendedores
               </Link>
               <Link to="/sobreNosotros" className="hover:text-zinc-700">
@@ -115,7 +115,7 @@ export default function TopBar() {
                 Catálogo
               </button>
 
-              <Link to="/emprendedores" onClick={() => setMenuOpen(false)}>
+              <Link to="/emprendimiento" onClick={() => setMenuOpen(false)}>
                 Emprendedores
               </Link>
               <Link to="/sobreNosotros" onClick={() => setMenuOpen(false)}>
