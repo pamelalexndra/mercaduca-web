@@ -6,7 +6,6 @@ export default function SearchBox({
   onCategoryFilter,
   onSearch,
   enableDebounce = true,
-  // ✅ NUEVAS PROPS: Recibir el estado inicial
   initialSelectedCategories = [],
   initialSearchTerm = "",
 }) {
@@ -15,12 +14,11 @@ export default function SearchBox({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [visibleCount, setVisibleCount] = useState(7);
-  // ✅ INICIALIZAR CON LOS VALORES RECIBIDOS
+
   const [selectedCategories, setSelectedCategories] = useState(initialSelectedCategories);
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [debounceTimer, setDebounceTimer] = useState(null);
 
-  // ✅ ACTUALIZAR EL ESTADO INTERNO CUANDO CAMBIEN LAS PROPS INICIALES
   useEffect(() => {
     setSelectedCategories(initialSelectedCategories);
   }, [initialSelectedCategories]);
@@ -57,64 +55,36 @@ export default function SearchBox({
 
   useEffect(() => {
     return () => {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
+      if (debounceTimer) clearTimeout(debounceTimer);
     };
   }, [debounceTimer]);
 
-  const handleShowMore = () => {
-    if (visibleCount === 7) {
-      setVisibleCount(visibleCount + 7);
-    } else if (visibleCount === 14) {
-      setVisibleCount(visibleCount + 7);
-    }
-  };
-
-  const handleShowLess = () => {
-    setVisibleCount(visibleCount - 7);
-  };
-
-  const visibleCategories = categories.slice(0, visibleCount);
-  const hasMoreCategories = visibleCount < categories.length;
-  const isShowingMoreThan7 = visibleCount > 7;
-
   const handleCategoryClick = (category) => {
-    const categoryId = category.id_categoria;
+    const id = category.id_categoria;
 
-    let newSelectedCategories;
-    if (selectedCategories.includes(categoryId)) {
-      newSelectedCategories = selectedCategories.filter(
-        (id) => id !== categoryId
-      );
+    let updated;
+    if (selectedCategories.includes(id)) {
+      updated = selectedCategories.filter((cid) => cid !== id);
     } else {
-      newSelectedCategories = [...selectedCategories, categoryId];
+      updated = [...selectedCategories, id];
     }
 
-    setSelectedCategories(newSelectedCategories);
-
-    if (onCategoryFilter) {
-      onCategoryFilter(newSelectedCategories);
-    }
+    setSelectedCategories(updated);
+    if (onCategoryFilter) onCategoryFilter(updated);
   };
 
-  const isCategorySelected = (category) => {
-    return selectedCategories.includes(category.id_categoria);
-  };
+  const isCategorySelected = (category) =>
+    selectedCategories.includes(category.id_categoria);
 
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
 
     if (enableDebounce) {
-      if (debounceTimer) {
-        clearTimeout(debounceTimer);
-      }
+      if (debounceTimer) clearTimeout(debounceTimer);
 
       const timer = setTimeout(() => {
-        if (onSearch) {
-          onSearch(value);
-        }
+        if (onSearch) onSearch(value);
       }, 500);
 
       setDebounceTimer(timer);
@@ -125,15 +95,8 @@ export default function SearchBox({
     (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-
-        if (debounceTimer) {
-          clearTimeout(debounceTimer);
-        }
-
-        if (onSearch) {
-          onSearch(searchTerm);
-        }
-
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (onSearch) onSearch(searchTerm);
         e.target.blur();
       }
     },
@@ -142,12 +105,10 @@ export default function SearchBox({
 
   const handleClearSearch = () => {
     setSearchTerm("");
-    if (onSearch) {
-      onSearch("");
-    }
+    if (onSearch) onSearch("");
   };
 
- return (
+  return (
     <>
       <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
         <div className="flex items-center rounded-full border border-zinc-300 bg-white px-3 py-2 shadow-sm">
@@ -160,6 +121,7 @@ export default function SearchBox({
             onKeyDown={handleKeyDown}
             className="flex-1 bg-transparent text-sm text-zinc-700 placeholder:text-zinc-400 outline-none"
           />
+
           {searchTerm && (
             <button
               type="button"
@@ -169,6 +131,7 @@ export default function SearchBox({
               <X size={16} />
             </button>
           )}
+
           <button
             type="button"
             onClick={() => setFilterOpen(!filterOpen)}
@@ -185,7 +148,7 @@ export default function SearchBox({
 
       {filterOpen && (
         <>
-          {/* Overlay que cubre toda la pantalla y cierra al hacer clic */}
+          {/* Overlay */}
           <div
             className="fixed inset-0 z-30"
             onClick={() => setFilterOpen(false)}
@@ -207,47 +170,42 @@ export default function SearchBox({
             >
               <X size={18} />
             </button>
-            
-            {/* Estado de carga */}
+
             {loading && (
               <div className="w-full text-center py-4 text-zinc-500 text-sm">
                 Cargando categorías...
               </div>
             )}
 
-            {/* Estado de error */}
             {error && !loading && (
               <div className="w-full text-center py-2">
                 <p className="text-red-500 text-sm mb-2">{error}</p>
               </div>
             )}
 
-          {!loading && !error && (
-            <div
-              className="
-                flex gap-2 overflow-x-auto scroll-smooth pb-2 no-scrollbar
-              "
-            >
-              {categories.map((category, i) => (
-                <button
-                  key={category.id_categoria || i}
-                  onClick={() => handleCategoryClick(category)}
-                  className={`
-                    flex-shrink-0 px-4 py-2 text-sm rounded-full border transition-all duration-200
-                    ${
-                      isCategorySelected(category)
-                        ? "bg-[#557051] text-white border-[#557051]"
-                        : "border-zinc-300 text-zinc-700 hover:bg-[#557051]/10 hover:text-[#557051]"
-                    }
-                  `}
-                >
-                  {category.categoria || category}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
+            {!loading && !error && (
+              <div className="flex gap-2 overflow-x-auto scroll-smooth pb-2 no-scrollbar">
+                {categories.map((category, i) => (
+                  <button
+                    key={category.id_categoria || i}
+                    onClick={() => handleCategoryClick(category)}
+                    className={`
+                      flex-shrink-0 px-4 py-2 text-sm rounded-full border transition-all duration-200
+                      ${
+                        isCategorySelected(category)
+                          ? "bg-[#557051] text-white border-[#557051]"
+                          : "border-zinc-300 text-zinc-700 hover:bg-[#557051]/10 hover:text-[#557051]"
+                      }
+                    `}
+                  >
+                    {category.categoria || category}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
     </>
   );
 }
