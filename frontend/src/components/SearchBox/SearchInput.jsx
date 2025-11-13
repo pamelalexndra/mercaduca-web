@@ -58,10 +58,6 @@ export default function SearchInput({
                 className="
                 flex-1 bg-transparent text-sm text-zinc-700 
                 placeholder:text-zinc-400 outline-none
-                [-webkit-appearance:none] 
-                [-moz-appearance:textfield]
-                [&::-webkit-search-cancel-button]:hidden
-                [&::-webkit-search-decoration]:hidden
                 "
             />
 

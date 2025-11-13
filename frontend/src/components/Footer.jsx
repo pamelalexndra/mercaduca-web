@@ -51,28 +51,28 @@ const Footer = () => {
   return (
     <footer className="bg-white text-gray-700 border-t border-gray-200 py-1">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start lg:gap-12">
           {/* About Section */}
-          <div className="lg:w-2/6">
-            <h3 className="text-[#557051] text-xl font-bold mb-4">Mercaduca</h3>
-            <p className="text-gray-600 leading-relaxed">
+          <div className="lg:w-2/6 pb-7">
+            <h3 className="text-[#557051] text-lg font-bold mb-4">Mercaduca</h3>
+            <p className="text-gray-600 leading-relaxed text-sm">
               Espacio dónde los estudiantes UCA pueden dar vida a sus proyectos
               y comercializar sus productos
             </p>
             <img
               src={logoVerde}
               alt="Logo Mercaduca"
-              className="w-79 h-29 mt-2"
+              className="w-58 h-13 mt-6 lg:mt-10"
             ></img>
           </div>
 
           {/* Quick Links */}
-          <div className="lg:w-1/6">
-            <h4 className="font-poppins text-[#557051] text-lg font-semibold mb-4">
+          <div className="lg:w-1/6 pb-7">
+            <h4 className="font-poppins text-[#557051] text-base font-semibold mb-4">
               Enlaces Rápidos
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3 text-sm">
               {quickLinks.map((link) => (
                 <li key={link.name}>
                   <a
@@ -87,11 +87,11 @@ const Footer = () => {
           </div>
 
           {/* Categories */}
-          <div className="lg:w-1/6">
-            <h4 className="text-[#557051] text-lg font-semibold font-poppins mb-4">
+          <div className="lg:w-1/6 pb-7">
+            <h4 className="text-[#557051] text-base font-semibold font-poppins mb-4">
               Categorías
             </h4>
-            <ul className="space-y-3">
+            <ul className="space-y-3 text-sm">
               {categories.map((category) => (
                 <li key={category.name}>
                   <a
@@ -107,13 +107,13 @@ const Footer = () => {
 
           {/* Contact Info */}
           <div className="lg:w-2/6">
-            <h4 className="text-[#557051] text-lg font-semibold font-poppins mb-4">
+            <h4 className="text-[#557051] text-base font-semibold font-poppins mb-4">
               Contacto
             </h4>
-            <ul className="space-y-4">
+            <ul className="space-y-4 text-sm">
               <li className="flex items-start gap-3 group">
                 <MapPin
-                  size={20}
+                  size={18}
                   className="text-[#557051] mt-1 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
                 <span className="text-gray-600 hover:font-bold ">
@@ -122,7 +122,7 @@ const Footer = () => {
               </li>
               <li className="flex items-start gap-3 group">
                 <Phone
-                  size={20}
+                  size={18}
                   className="text-[#557051] mt-1 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
                 <a
@@ -134,7 +134,7 @@ const Footer = () => {
               </li>
               <li className="flex items-start gap-3 group">
                 <Mail
-                  size={20}
+                  size={18}
                   className="text-[#557051] mt-1 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
                 <a
@@ -156,31 +156,6 @@ const Footer = () => {
                   {social.icon}
                 </a>
               ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className="border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-gray-600 text-sm text-center md:text-left">
-              © {currentYear} Mercaduca. Todos los derechos reservados.
-            </p>
-            <div className="flex gap-6 text-sm">
-              <a
-                href="#"
-                className="text-gray-600 hover:text-[#557051] transition-colors"
-              >
-                Política de Privacidad
-              </a>
-              <a
-                href="#"
-                className="text-gray-600 hover:text-[#557051] transition-colors"
-              >
-                Términos y Condiciones
-              </a>
             </div>
           </div>
         </div>

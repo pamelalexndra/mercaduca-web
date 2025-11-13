@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import SearchBox from "./SearchBox/SearchBox.jsx";
-import ProductCard from "./ProductCard";
+import ProductCard from "./Card";
 import useProducts from "../hooks/useProducts";
 
 export default function Catalog({ onGoHome }) {
@@ -90,7 +90,10 @@ export default function Catalog({ onGoHome }) {
     return (
       <div className="container mx-auto max-w-6xl px-6 py-8 text-center">
         <div className="text-red-500">Error: {error}</div>
-        <button onClick={() => window.location.reload()} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded">
+        <button
+          onClick={() => window.location.reload()}
+          className="mt-4 px-4 py-2 bg-blue-500 text-white rounded"
+        >
           Reintentar
         </button>
       </div>

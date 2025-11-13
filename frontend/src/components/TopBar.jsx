@@ -41,14 +41,12 @@ export default function TopBar() {
                 Inicio
               </Link>
               <Link
-                to="/catalog"
-                target="_blank"
-                className="hover:text-zinc-700"
+                to="/catalog" className="hover:text-zinc-700"
               >
                 Catálogo
               </Link>
-              <Link to="/emprendedores" className="hover:text-zinc-700">
-                Emprendedores
+              <Link to="/emprendimientos" className="hover:text-zinc-700">
+                Emprendimientos
               </Link>
               <Link to="/sobreNosotros" className="hover:text-zinc-700">
                 Sobre nosotros

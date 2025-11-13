@@ -4,10 +4,9 @@ import SearchBox from "./SearchBox/SearchBox.jsx";
 import Carousel from "./Carousel";
 import { useNavigate } from "react-router-dom";
 import mercaducaBlanco from "../images/mercaducaBlanco.png";
-import bgLanding from "../images/bgLanding.jpg";
 import bgLandingGato from "../images/bgLandingGato.jpg";
 
-export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
+export default function Landing() {
   const navigate = useNavigate();
 
   const handleSearchFromLanding = (searchTerm) => {
@@ -56,7 +55,7 @@ export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
             <SearchBox
               onSearch={handleSearchFromLanding}
               onCategoryFilter={handleCategoryFilterFromLanding}
-              enableDebounce={false} // ✅ Deshabilitar debounce en Landing
+              enableDebounce={false} // deshabilitar debounce en Landing
             />
           </div>
         </div>
@@ -71,6 +70,11 @@ export default function Landing({ NEW_PRODUCTS, BEST_SELLERS }) {
         title="Favoritos"
         subtitle="Descubre los favoritos de la comunidad"
         endpoint="/api/productos?ordenar=fecha_desc&limit=10"
+      />
+      <Carousel
+        title="Mejores ofertas"
+        subtitle="Descubre los productos con los mejores precios"
+        endpoint="/api/productos?ordenar=precio_asc&limit=15"
       />
     </>
   );
