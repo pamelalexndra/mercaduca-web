@@ -106,7 +106,6 @@ export default function TopBar() {
                 Inicio
               </Link>
 
-              {/* ⭐ CAMBIO AQUÍ — versión móvil */}
               <button
                 onClick={() => {
                   abrirCatalogo();
