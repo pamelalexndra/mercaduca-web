@@ -22,7 +22,6 @@ export default function App() {
 
       <Routes>
         {" "}
-        {/* Pasamos los productos reales a landing y catalogo */}
         <Route path="/" element={<Landing />} />
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/emprendimientos" element={<Sellers />} />

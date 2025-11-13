@@ -4,5 +4,10 @@ import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
   plugins: [react(), tailwindcss()],
-  assetsInclude: ['**/*.JPG', '**/*.JPEG']
+  server: {
+    host: true,
+    port: 5173,
+    open: false,
+  },
+  assetsInclude: ['**/*.JPG', '**/*.JPEG', '**/*.PNG', '**/*.GIF'],
 });

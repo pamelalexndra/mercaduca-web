@@ -1,88 +1,81 @@
-import React, { useMemo, useEffect, useState, useRef } from "react";
-import SearchBox from "./SearchBox";
+import React, { useEffect, useState } from "react";
+import { useSearchParams } from "react-router-dom";
+import SearchBox from "./SearchBox/SearchBox.jsx";
 import ProductCard from "./Card";
+import useProducts from "../hooks/useProducts";
 
-export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
-  const grid = useMemo(() => ALL_PRODUCTS, [ALL_PRODUCTS]);
-  const [allProducts, setAllProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+export default function Catalog({ onGoHome }) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { filteredProducts, loading, error, fetchProducts, resetOrFetchAll } = useProducts();
+
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
-  const scrollRef = useRef(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  const scroll = (direction) => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollBy({
-        left: direction === "left" ? -200 : 200,
-        behavior: "smooth",
-      });
-    }
-  };
-
-  // Obtener productos con filtros
-  const fetchProducts = async (categoryIds = [], search = "") => {
-    try {
-      setError(null);
-
-      let url = "http://localhost:5000/api/productos";
-      const params = [];
-
-      // Si hay categorías seleccionadas, las añadimos como parámetro
-      if (categoryIds.length > 0) {
-        const idsParam = categoryIds.join(",");
-        params.push(`ids=${idsParam}`);
-      }
-
-      // Si hay un termino de busqueda, lo añadimos
-      if (search && search.trim() !== "") {
-        params.push(`search=${encodeURIComponent(search.trim())}`);
-      }
-
-      url += "?" + params.join("&");
-
-      const response = await fetch(url);
-      if (!response.ok) throw new Error("Error al cargar productos");
-
-      const data = await response.json();
-
-      if (categoryIds.length === 0 && !search) {
-        setAllProducts(data.productos || []);
-      }
-      setFilteredProducts(data.productos || []);
-    } catch (err) {
-      setError(err.message);
-      console.error("Error fetching products:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // Carga inicial / lectura de params 
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const urlSearch = searchParams.get("search");
+    const urlCategories = searchParams.get("categories");
 
-  // Manejar filtrado por categorías
+    if (isInitialLoad) {
+      if (urlSearch) setSearchTerm(urlSearch);
+
+      if (urlCategories) {
+        const categoryArray = urlCategories
+          .split(",")
+          .map((id) => parseInt(id, 10))
+          .filter((n) => !Number.isNaN(n));
+
+        setSelectedCategories(categoryArray);
+
+        if (categoryArray.length > 0 || urlSearch) {
+          fetchProducts(categoryArray, urlSearch || "");
+        } else {
+          fetchProducts();
+        }
+      } else if (urlSearch) {
+        fetchProducts([], urlSearch);
+      } else {
+        fetchProducts();
+      }
+
+      setIsInitialLoad(false);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, isInitialLoad]);
+
+  // Manejar filtrado por categorías (usa resetOrFetchAll para el caso "vacío")
   const handleCategoryFilter = (categoryIds) => {
     setSelectedCategories(categoryIds);
 
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (categoryIds.length > 0) newSearchParams.set("categories", categoryIds.join(","));
+    else newSearchParams.delete("categories");
+    setSearchParams(newSearchParams);
+
     if (categoryIds.length === 0 && !searchTerm) {
-      setFilteredProducts(allProducts);
-    } else {
-      fetchProducts(categoryIds, searchTerm);
+      resetOrFetchAll();
+      return;
     }
+
+    fetchProducts(categoryIds, searchTerm);
   };
 
-  // Manejar filtrado por búsqueda
+  // Manejar búsqueda
   const handleSearch = (search) => {
     setSearchTerm(search);
 
+    const newSearchParams = new URLSearchParams(searchParams);
+    if (search) newSearchParams.set("search", search);
+    else newSearchParams.delete("search");
+    setSearchParams(newSearchParams);
+
     if (search === "" && selectedCategories.length === 0) {
-      setFilteredProducts(allProducts);
-    } else {
-      fetchProducts(selectedCategories, search);
+      resetOrFetchAll();
+      return;
     }
+
+    fetchProducts(selectedCategories, search);
   };
 
   if (loading) {
@@ -115,13 +108,16 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
           <SearchBox
             onCategoryFilter={handleCategoryFilter}
             onSearch={handleSearch}
+            initialSelectedCategories={selectedCategories}
+            initialSearchTerm={searchTerm}
           />
         </div>
 
-        {/* Mostrar categorías seleccionadas */}
         {(selectedCategories.length > 0 || searchTerm) && (
           <div className="mt-4 text-center text-sm text-zinc-600">
-            Filtrado por {selectedCategories.length} categoría(s)
+            {searchTerm && `Búsqueda: "${searchTerm}"`}
+            {searchTerm && selectedCategories.length > 0 && " • "}
+            {selectedCategories.length > 0 && `Filtrado por ${selectedCategories.length} categoría(s)`}
           </div>
         )}
       </section>
@@ -134,19 +130,14 @@ export default function Catalog({ ALL_PRODUCTS, onGoHome, inline = false }) {
         </div>
 
         {filteredProducts.length === 0 && !loading && (
-          <div className="text-center py-8 text-zinc-500">
-            No se encontraron productos
-          </div>
+          <div className="text-center py-8 text-zinc-500">No se encontraron productos</div>
         )}
 
         <div className="mt-10 flex flex-col items-center gap-4">
           <button className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium hover:bg-zinc-100 transition">
             Ver más
           </button>
-          <button
-            onClick={onGoHome}
-            className="text-sm text-zinc-600 hover:text-zinc-800"
-          >
+          <button onClick={onGoHome} className="text-sm text-zinc-600 hover:text-zinc-800">
             Regresar a Inicio
           </button>
         </div>

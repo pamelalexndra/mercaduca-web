@@ -5,15 +5,29 @@ export default function SearchBox({
   placeholder = "Search",
   onCategoryFilter,
   onSearch,
+  enableDebounce = true,
+  // ✅ NUEVAS PROPS: Recibir el estado inicial
+  initialSelectedCategories = [],
+  initialSearchTerm = "",
 }) {
   const [filterOpen, setFilterOpen] = useState(false);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [visibleCount, setVisibleCount] = useState(7);
-  const [selectedCategories, setSelectedCategories] = useState([]);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debounceTimer, setDebounceTimer] = useState(null); // Timer para el debounce
+  // ✅ INICIALIZAR CON LOS VALORES RECIBIDOS
+  const [selectedCategories, setSelectedCategories] = useState(initialSelectedCategories);
+  const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
+  const [debounceTimer, setDebounceTimer] = useState(null);
+
+  // ✅ ACTUALIZAR EL ESTADO INTERNO CUANDO CAMBIEN LAS PROPS INICIALES
+  useEffect(() => {
+    setSelectedCategories(initialSelectedCategories);
+  }, [initialSelectedCategories]);
+
+  useEffect(() => {
+    setSearchTerm(initialSearchTerm);
+  }, [initialSearchTerm]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -51,14 +65,14 @@ export default function SearchBox({
 
   const handleShowMore = () => {
     if (visibleCount === 7) {
-      setVisibleCount(visibleCount + 7); // Mostrar 14 (primeras 7 + siguientes 7)
+      setVisibleCount(visibleCount + 7);
     } else if (visibleCount === 14) {
-      setVisibleCount(visibleCount + 7); // Mostrar 21 (todas las que tienes)
+      setVisibleCount(visibleCount + 7);
     }
   };
 
   const handleShowLess = () => {
-    setVisibleCount(visibleCount - 7); // Volver a mostrar solo 7
+    setVisibleCount(visibleCount - 7);
   };
 
   const visibleCategories = categories.slice(0, visibleCount);
@@ -66,8 +80,6 @@ export default function SearchBox({
   const isShowingMoreThan7 = visibleCount > 7;
 
   const handleCategoryClick = (category) => {
-    // Si la categoría ya está seleccionada, la quitamos
-    // Si no está seleccionada, la añadimos
     const categoryId = category.id_categoria;
 
     let newSelectedCategories;
@@ -94,17 +106,19 @@ export default function SearchBox({
     const value = e.target.value;
     setSearchTerm(value);
 
-    if (debounceTimer) {
-      clearTimeout(debounceTimer);
-    }
-
-    const timer = setTimeout(() => {
-      if (onSearch) {
-        onSearch(value);
+    if (enableDebounce) {
+      if (debounceTimer) {
+        clearTimeout(debounceTimer);
       }
-    }, 500);
 
-    setDebounceTimer(timer);
+      const timer = setTimeout(() => {
+        if (onSearch) {
+          onSearch(value);
+        }
+      }, 500);
+
+      setDebounceTimer(timer);
+    }
   };
 
   const handleKeyDown = useCallback(
@@ -112,17 +126,14 @@ export default function SearchBox({
       if (e.key === "Enter") {
         e.preventDefault();
 
-        // Limpiar timer de debounce
         if (debounceTimer) {
           clearTimeout(debounceTimer);
         }
 
-        // Ejecutar búsqueda
         if (onSearch) {
           onSearch(searchTerm);
         }
 
-        // Quitar el foco elegantemente
         e.target.blur();
       }
     },
