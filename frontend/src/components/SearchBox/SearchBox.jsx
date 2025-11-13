@@ -14,24 +14,23 @@ export default function SearchBox({
 }) {
     const { categories, loading, error } = useCategories();
     const [filterOpen, setFilterOpen] = useState(false);
+
+    // Mantenemos tus variables aunque no se usen visualmente en el nuevo diseño (scroll)
     const [visibleCount, setVisibleCount] = useState(7);
 
-    // Estado interno local (sincronizable desde props iniciales)
+    // Estado interno local
     const [selectedCategories, setSelectedCategories] = useState(initialSelectedCategories || []);
     const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "");
 
-    // Mantener refs para no re-render innecesariamente
     const isFirstMountRef = useRef(true);
 
-    // Sincronizar con props iniciales si cambian (comportamiento consistente con tu original)
-    // ✅ Solo sincronizar en el primer render (cuando se abre Catalog)
     useEffect(() => {
         setSelectedCategories(initialSelectedCategories || []);
         setSearchTerm(initialSearchTerm || "");
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    // Handlers
+    // Handlers (Tu lógica original intacta)
     const handleToggleCategory = useCallback((category) => {
         const id = category.id_categoria;
         setSelectedCategories((prev) => {
@@ -59,31 +58,35 @@ export default function SearchBox({
     const handleShowLess = useCallback(() => setVisibleCount((v) => Math.max(7, v - 7)), []);
 
     return (
-        <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
-            <SearchInput
-                placeholder={placeholder}
-                value={searchTerm}
-                onChange={handleSearchChange}
-                onSearch={handleSearch}
-                enableDebounce={enableDebounce}
-                onToggleFilterOpen={() => setFilterOpen((s) => !s)}
-                isFilterOpen={filterOpen}
-            />
-
-            {filterOpen && (
-                <CategoryDropdown
-                    categories={categories}
-                    selectedCategoryIds={selectedCategories}
-                    onToggleCategory={handleToggleCategory}
-                    onClearAll={handleClearAllCategories}
-                    visibleCount={visibleCount}
-                    onShowMore={handleShowMore}
-                    onShowLess={handleShowLess}
-                    onClose={() => setFilterOpen(false)}
-                    loading={loading}
-                    error={error}
+        <>
+            {/* Contenedor del Input (Mantiene estilos del nuevo original) */}
+            <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
+                <SearchInput
+                    placeholder={placeholder}
+                    value={searchTerm}
+                    onChange={handleSearchChange}
+                    onSearch={handleSearch}
+                    enableDebounce={enableDebounce}
+                    onToggleFilterOpen={() => setFilterOpen((s) => !s)}
+                    isFilterOpen={filterOpen}
                 />
-            )}
-        </div>
+            </div>
+
+            {/* CategoryDropdown siempre se renderiza para permitir la animación CSS.
+                Le pasamos isOpen={filterOpen}.
+            */}
+            <CategoryDropdown
+                isOpen={filterOpen}
+                categories={categories}
+                selectedCategoryIds={selectedCategories}
+                onToggleCategory={handleToggleCategory}
+                onClearAll={handleClearAllCategories}
+                visibleCount={visibleCount}
+                onShowMore={handleShowMore}
+                onShowLess={handleShowLess}
+                loading={loading}
+                error={error}
+            />
+        </>
     );
 }
