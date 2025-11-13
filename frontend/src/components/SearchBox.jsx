@@ -147,146 +147,83 @@ export default function SearchBox({
     }
   };
 
-  return (
-    <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
-      <div
-        className="
-          flex items-center rounded-full border border-zinc-300 bg-white
-          px-3 py-2 shadow-sm
-        "
-      >
-        <Search className="text-zinc-500 size-4 mr-2" />
-        <input
-          type="search"
-          placeholder={placeholder}
-          value={searchTerm}
-          onChange={handleSearchChange}
-          onKeyDown={handleKeyDown}
-          className="
-            flex-1 bg-transparent text-sm text-zinc-700 
-            placeholder:text-zinc-400 outline-none
-            [-webkit-appearance:none] 
-            [-moz-appearance:textfield]
-            [&::-webkit-search-cancel-button]:hidden
-            [&::-webkit-search-decoration]:hidden
-          "
-        />
-        {searchTerm && (
+ return (
+    <>
+      <div className="relative mx-auto w-full max-w-xs sm:max-w-md font-montserrat">
+        <div className="flex items-center rounded-full border border-zinc-300 bg-white px-3 py-2 shadow-sm">
+          <Search className="text-zinc-500 size-4 mr-2" />
+          <input
+            type="search"
+            placeholder={placeholder}
+            value={searchTerm}
+            onChange={handleSearchChange}
+            onKeyDown={handleKeyDown}
+            className="flex-1 bg-transparent text-sm text-zinc-700 placeholder:text-zinc-400 outline-none"
+          />
+          {searchTerm && (
+            <button
+              type="button"
+              onClick={handleClearSearch}
+              className="p-1 text-zinc-400 hover:text-zinc-600 transition"
+            >
+              <X size={16} />
+            </button>
+          )}
           <button
             type="button"
-            onClick={handleClearSearch}
-            className="p-1 text-zinc-400 hover:text-zinc-600 transition"
+            onClick={() => setFilterOpen(!filterOpen)}
+            className={`p-2 rounded-full transition-colors ${
+              filterOpen
+                ? "bg-[#557051] text-white"
+                : "text-[#557051] hover:bg-zinc-100"
+            }`}
           >
-            <X size={16} />
+            <SlidersHorizontal size={18} />
           </button>
-        )}
-
-        <button
-          type="button"
-          onClick={() => {
-            setFilterOpen(!filterOpen);
-          }}
-          className={`
-            p-2 rounded-full transition-colors
-            ${filterOpen ? "bg-[#557051] text-white" : "text-[#557051] hover:bg-zinc-100"}
-          `}
-        >
-          <SlidersHorizontal size={18} />
-        </button>
+        </div>
       </div>
 
-      {filterOpen && (
-        <>
-          <div
-            className="fixed inset-0 z-30"
-            onClick={() => setFilterOpen(false)}
-          />
-
-          <div
-            className="
-              absolute left-1/2 -translate-x-1/2 w-[90vw] sm:w-[70vw]
-              mt-3 rounded-2xl border border-zinc-200 bg-[#FAFAF9] 
-              shadow-lg p-4 flex flex-wrap gap-2 justify-center 
-              animate-fadeIn z-40
-            "
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              onClick={() => setFilterOpen(false)}
-              className="absolute top-3 right-4 p-1 rounded-md text-[#557051] hover:bg-zinc-200 transition"
-            >
-              <X size={18} />
-            </button>
-
-            {loading && (
-              <div className="w-full text-center py-4 text-zinc-500 text-sm">
-                Cargando categorías...
-              </div>
-            )}
-
-            {error && !loading && (
-              <div className="w-full text-center py-2">
-                <p className="text-red-500 text-sm mb-2">{error}</p>
-              </div>
-            )}
-
-            <div className="w-full">
-              {!loading && !error && categories.length > 0 && (
-                <div className="text-center text-xs text-zinc-500 mb-2">
-                  Mostrando {visibleCategories.length} de {categories.length}{" "}
-                  categorías
-                </div>
-              )}
+      <div
+        className={`transition-all duration-300 overflow-hidden ${
+          filterOpen ? "max-h-[140px] mt-8" : "max-h-0"
+        }`}
+      >
+        <div className="mx-auto w-full max-w-7xl px-8">
+          {loading && (
+            <div className="text-zinc-500 text-sm text-center py-2">
+              Cargando categorías...
             </div>
+          )}
+          {error && !loading && (
+            <div className="text-red-500 text-sm text-center py-2">{error}</div>
+          )}
 
-            {visibleCategories.map((category, index) => (
-              <button
-                key={category.id_categoria || index}
-                onClick={() => handleCategoryClick(category)}
-                className={`
-                    px-3 py-1.25 text-[11px] rounded-full border border-zinc-300 
-                    transition
+          {!loading && !error && (
+            <div
+              className="
+                flex gap-2 overflow-x-auto scroll-smooth pb-2 no-scrollbar
+              "
+            >
+              {categories.map((category, i) => (
+                <button
+                  key={category.id_categoria || i}
+                  onClick={() => handleCategoryClick(category)}
+                  className={`
+                    flex-shrink-0 px-4 py-2 text-sm rounded-full border transition-all duration-200
                     ${
                       isCategorySelected(category)
-                        ? "bg-[#557051] text-white"
-                        : "text-zinc-700 bg-white hover:bg-[#557051] hover:text-white"
+                        ? "bg-[#557051] text-white border-[#557051]"
+                        : "border-zinc-300 text-zinc-700 hover:bg-[#557051]/10 hover:text-[#557051]"
                     }
                   `}
-              >
-                {category.categoria || category}
-              </button>
-            ))}
-
-            <div className="flex justify-center gap-2 mt-2 w-full">
-              {hasMoreCategories && (
-                <button
-                  onClick={handleShowMore}
-                  className="
-                    w-7 h-7 flex items-center justify-center text-xl 
-                    rounded-full border border-zinc-300 text-[#557051]
-                    hover:bg-[#557051] hover:text-white transition
-                  "
                 >
-                  +
+                  {category.categoria || category}
                 </button>
-              )}
-
-              {isShowingMoreThan7 && (
-                <button
-                  onClick={handleShowLess}
-                  className="
-                    w-7 h-7 flex items-center justify-center text-xl 
-                    rounded-full border border-zinc-300 text-[#557051]
-                    hover:bg-[#557051] hover:text-white transition
-                  "
-                >
-                  -
-                </button>
-              )}
+              ))}
             </div>
-          </div>
-        </>
-      )}
-    </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
