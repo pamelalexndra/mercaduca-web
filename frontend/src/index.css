@@ -69,7 +69,6 @@
 }
 
 /* Animations */
-
 @keyframes slideIn {
   from {
     transform: translateX(100%);
@@ -98,6 +97,11 @@
   animation: fadeIn 0.3s ease-out forwards;
 }
 
+/* Ocultar la X del input tipo search en todos los navegadores */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
 .no-scrollbar::-webkit-scrollbar {
   display: none;
 }

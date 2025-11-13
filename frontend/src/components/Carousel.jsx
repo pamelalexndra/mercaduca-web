@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import ProductCard from "./ProductCard";
+import ProductCard from "./Card";
 import ArrowButton from "./ArrowButton";
 
 export default function Carousel({
