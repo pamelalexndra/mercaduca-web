@@ -6,7 +6,6 @@ import { Menu, X } from "lucide-react";
 export default function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
-  // ⭐ NUEVO: control de ventana del Catálogo
   const [catalogWindow, setCatalogWindow] = useState(null);
 
   const abrirCatalogo = () => {
@@ -52,8 +51,6 @@ export default function TopBar() {
               <Link to="/" className="hover:text-zinc-700">
                 Inicio
               </Link>
-
-              {/* ⭐ CAMBIO AQUÍ — solo esto */}
               <button onClick={abrirCatalogo} className="hover:text-zinc-700">
                 Catálogo
               </button>
