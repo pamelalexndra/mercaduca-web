@@ -6,6 +6,17 @@ import { Menu, X } from "lucide-react";
 export default function TopBar() {
   const [menuOpen, setMenuOpen] = useState(false);
 
+  const [catalogWindow, setCatalogWindow] = useState(null);
+
+  const abrirCatalogo = () => {
+    if (!catalogWindow || catalogWindow.closed) {
+      const nueva = window.open("/catalog", "catalogoWindow");
+      setCatalogWindow(nueva);
+    } else {
+      catalogWindow.focus();
+    }
+  };
+
   return (
     <>
       <header className="sticky top-0 z-100 bg-[#FAFAF9]/80 backdrop-blur-sm">
@@ -40,13 +51,12 @@ export default function TopBar() {
               <Link to="/" className="hover:text-zinc-700">
                 Inicio
               </Link>
-              <Link
-                to="/catalog" className="hover:text-zinc-700"
-              >
+              <button onClick={abrirCatalogo} className="hover:text-zinc-700">
                 Catálogo
-              </Link>
-              <Link to="/emprendimientos" className="hover:text-zinc-700">
-                Emprendimientos
+              </button>
+
+              <Link to="/emprendedores" className="hover:text-zinc-700">
+                Emprendedores
               </Link>
               <Link to="/sobreNosotros" className="hover:text-zinc-700">
                 Sobre nosotros
@@ -95,13 +105,16 @@ export default function TopBar() {
               <Link to="/" onClick={() => setMenuOpen(false)}>
                 Inicio
               </Link>
-              <Link
-                to="/catalog"
-                target="_blank"
-                onClick={() => setMenuOpen(false)}
+
+              <button
+                onClick={() => {
+                  abrirCatalogo();
+                  setMenuOpen(false);
+                }}
               >
                 Catálogo
-              </Link>
+              </button>
+
               <Link to="/emprendedores" onClick={() => setMenuOpen(false)}>
                 Emprendedores
               </Link>

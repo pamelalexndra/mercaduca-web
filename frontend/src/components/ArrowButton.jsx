@@ -7,13 +7,16 @@ export default function ArrowButton({ onClick, dir }) {
     <button
       onClick={onClick}
       className="
-        rounded-full bg-[F4F4F2] p-2
-        border border-[#507051] text-[#557051]
+        flex items-center justify-center
+        rounded-full border border-[#507051]
+        bg-white text-[#557051]
+        w-10 h-10            /* 🔹 tamaño ligeramente mayor */
         hover:bg-[#557051] hover:text-white
-        "
+        transition-colors duration-200
+      "
       aria-label={dir === "prev" ? "Anterior" : "Siguiente"}
     >
-      <Icon className="size-5" />
+      <Icon className="w-4.5 h-4.5" /> 
     </button>
   );
 }

@@ -183,20 +183,44 @@ export default function SearchBox({
         </div>
       </div>
 
-      <div
-        className={`transition-all duration-300 overflow-hidden ${
-          filterOpen ? "max-h-[140px] mt-8" : "max-h-0"
-        }`}
-      >
-        <div className="mx-auto w-full max-w-7xl px-8">
-          {loading && (
-            <div className="text-zinc-500 text-sm text-center py-2">
-              Cargando categorías...
-            </div>
-          )}
-          {error && !loading && (
-            <div className="text-red-500 text-sm text-center py-2">{error}</div>
-          )}
+      {filterOpen && (
+        <>
+          {/* Overlay que cubre toda la pantalla y cierra al hacer clic */}
+          <div
+            className="fixed inset-0 z-30"
+            onClick={() => setFilterOpen(false)}
+          />
+
+          {/* Panel del filtro */}
+          <div
+            className="
+              absolute left-1/2 -translate-x-1/2 w-[90vw] sm:w-[70vw]
+              mt-3 rounded-2xl border border-zinc-200 bg-[#FAFAF9] 
+              shadow-lg p-4 flex flex-wrap gap-2 justify-center 
+              animate-fadeIn z-40
+            "
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setFilterOpen(false)}
+              className="absolute top-3 right-4 p-1 rounded-md text-[#557051] hover:bg-zinc-200 transition"
+            >
+              <X size={18} />
+            </button>
+            
+            {/* Estado de carga */}
+            {loading && (
+              <div className="w-full text-center py-4 text-zinc-500 text-sm">
+                Cargando categorías...
+              </div>
+            )}
+
+            {/* Estado de error */}
+            {error && !loading && (
+              <div className="w-full text-center py-2">
+                <p className="text-red-500 text-sm mb-2">{error}</p>
+              </div>
+            )}
 
           {!loading && !error && (
             <div
