@@ -1,10 +1,22 @@
-// src/utils/ProductQueryBuilder.js
+/**
+ * Construye la consulta SQL dinámica para productos basada en filtros.
+ * @param {Object} filtros - Objeto con los parámetros de query (req.query)
+ * @returns {Object} { query, params, filtrosAplicados }
+ */
+export const buildProductQuery = (filtros) => {
+    const {
+        ids,
+        precio_min,
+        precio_max,
+        ordenar = "fecha_desc",
+        emprendimiento_id,
+        limit,
+        search,
+    } = filtros;
 
-export class ProductQueryBuilder {
-    constructor() {
-        // Definimos la query base con los JOINS comunes para reutilizarla
-        this.baseQuery = `
-      SELECT
+    // 1. Consulta Base
+    let sqlParts = [
+        `SELECT
         p.id_producto AS id,
         p.Nombre AS nombre,
         p.Precio_dolares AS precio,
@@ -12,92 +24,158 @@ export class ProductQueryBuilder {
         p.Descripcion AS descripcion,
         p.Imagen_URL AS imagen,
         p.Existencias AS stock,
-        p.Disponible AS disponible,
-        p.Fecha_registro,
-        p.id_categoria,
-        p.id_emprendimiento,
         e.Nombre AS nombre_emprendimiento,
         e.id_emprendimiento AS emprendimiento_id
       FROM Producto AS p
       JOIN Categorias AS c ON p.id_categoria = c.id_categoria
       JOIN Emprendimiento AS e ON p.id_emprendimiento = e.id_emprendimiento
-    `;
-        // Por defecto filtramos disponibles, pero permitimos desactivarlo (útil para admin o update)
-        this.conditions = ["WHERE 1=1"];
-        this.params = [];
-        this.limit = null;
-        this.orderBy = "p.Fecha_registro DESC";
-        this.filtrosAplicados = {};
+      WHERE p.Disponible = true`,
+    ];
+
+    let params = [];
+    let filtrosAplicados = {};
+
+    // Helper interno para obtener el índice actual ($1, $2, etc.)
+    const getNextIndex = () => `$${params.length + 1}`;
+
+    // 2. Filtro por Búsqueda de Texto
+    if (search && search.trim() !== "") {
+        const searchTerm = `%${search.trim().toLowerCase()}%`;
+        const idx = getNextIndex();
+
+        sqlParts.push(` AND (
+        LOWER(p.Nombre) LIKE ${idx} 
+        OR LOWER(p.Descripcion) LIKE ${idx}
+        OR LOWER(e.Nombre) LIKE ${idx}
+        OR LOWER(c.Categoria) LIKE ${idx}
+      )`);
+        params.push(searchTerm);
+        filtrosAplicados.search = search.trim();
     }
 
-    // Filtro básico: solo disponibles (default true)
-    onlyAvailable(isAvailable = true) {
-        if (isAvailable) {
-            this.addCondition("p.Disponible = true");
+    // 3. Filtro por Categorías (IDs múltiples)
+    if (ids) {
+        const categoriasIds = ids
+            .split(",")
+            .map((id) => parseInt(id.trim()))
+            .filter((id) => id > 0);
+
+        if (categoriasIds.length > 0) {
+            const placeholders = categoriasIds
+                .map((_, i) => `$${params.length + i + 1}`)
+                .join(",");
+
+            sqlParts.push(` AND p.id_categoria IN (${placeholders})`);
+            params.push(...categoriasIds);
+            filtrosAplicados.categorias = categoriasIds;
         }
-        return this;
     }
 
-    // Agregar condición genérica
-    addCondition(sqlCondition, value = null, filterName = null, filterValue = null) {
-        if (value !== null) {
-            const paramIndex = `$${this.params.length + 1}`;
-            // Reemplazamos ? por $n
-            const finalCondition = sqlCondition.replace('?', paramIndex);
-            this.conditions.push(`AND ${finalCondition}`);
-            this.params.push(value);
-        } else {
-            // Condición sin parámetros (ej: "p.deleted_at IS NULL")
-            this.conditions.push(`AND ${sqlCondition}`);
+    // 4. Filtro por Emprendimiento
+    if (emprendimiento_id && !isNaN(emprendimiento_id)) {
+        sqlParts.push(` AND p.id_emprendimiento = ${getNextIndex()}`);
+        params.push(parseInt(emprendimiento_id));
+        filtrosAplicados.emprendimiento_id = parseInt(emprendimiento_id);
+    }
+
+    // 5. Filtros por Precio
+    if (!isNaN(parseFloat(precio_min))) {
+        sqlParts.push(` AND p.Precio_dolares >= ${getNextIndex()}`);
+        params.push(parseFloat(precio_min));
+        filtrosAplicados.precio_min = parseFloat(precio_min);
+    }
+
+    if (!isNaN(parseFloat(precio_max))) {
+        sqlParts.push(` AND p.Precio_dolares <= ${getNextIndex()}`);
+        params.push(parseFloat(precio_max));
+        filtrosAplicados.precio_max = parseFloat(precio_max);
+    }
+
+    // 6. Ordenamiento
+    const ordenamientos = {
+        precio_asc: "p.Precio_dolares ASC",
+        precio_desc: "p.Precio_dolares DESC",
+        fecha_desc: "p.Fecha_registro DESC",
+        fecha_asc: "p.Fecha_registro ASC",
+        nombre_asc: "e.Nombre ASC",
+        nombre_desc: "e.Nombre DESC",
+    };
+
+    const clausulaOrden = ordenamientos[ordenar] || ordenamientos.fecha_desc;
+    sqlParts.push(` ORDER BY ${clausulaOrden}`);
+    filtrosAplicados.ordenamiento = ordenar;
+
+    // 7. Límite
+    if (limit && !isNaN(parseInt(limit))) {
+        sqlParts.push(` LIMIT ${getNextIndex()}`);
+        params.push(parseInt(limit));
+        filtrosAplicados.limit = parseInt(limit);
+    }
+
+    return {
+        query: sqlParts.join(" "),
+        params,
+        filtrosAplicados,
+    };
+};
+
+/**
+ * Construye la query dinámica para un UPDATE parcial (PATCH).
+ * @param {string|number} id - ID del producto
+ * @param {Object} updates - Objeto con los campos a actualizar (req.body)
+ * @returns {Object} { query, params, count } - Query string, array de parámetros y cantidad de campos
+ */
+export const buildProductQueryUpdate = (id, updates) => {
+    // Mapeo de nombre en JSON (req.body) -> nombre en Base de Datos
+    const dbMap = {
+        nombre: "Nombre",
+        descripcion: "Descripcion",
+        imagen_url: "Imagen_URL",
+        precio_dolares: "Precio_dolares",
+        existencias: "Existencias",
+        disponible: "Disponible",
+        id_categoria: "id_categoria",
+    };
+
+    const setParts = [];
+    const params = [];
+    let paramCount = 1;
+
+    // Iteramos sobre las claves enviadas en el body
+    for (const [key, value] of Object.entries(updates)) {
+        // Solo procesamos si el campo existe en nuestro mapa permitido
+        if (dbMap[key]) {
+            setParts.push(`${dbMap[key]} = $${paramCount}`);
+
+            // Lógica de conversión de tipos
+            if (key === "precio_dolares") {
+                params.push(parseFloat(value));
+            } else if (key === "existencias" || key === "id_categoria") {
+                params.push(parseInt(value));
+            } else if (key === "disponible") {
+                params.push(Boolean(value));
+            } else {
+                params.push(value?.toString().trim() || "");
+            }
+
+            paramCount++;
         }
-
-        if (filterName) this.filtrosAplicados[filterName] = filterValue;
-        return this;
     }
 
-    // Condición IN para arrays
-    addInCondition(column, values, filterName) {
-        if (!values || values.length === 0) return this;
-        const placeholders = values.map((_, i) => `$${this.params.length + i + 1}`).join(",");
-        this.conditions.push(`AND ${column} IN (${placeholders})`);
-        this.params.push(...values);
-        if (filterName) this.filtrosAplicados[filterName] = values;
-        return this;
+    // Si no hay campos válidos, retornamos null o vacío para manejarlo en el controlador
+    if (setParts.length === 0) {
+        return { query: null, params: [], count: 0 };
     }
 
-    setSort(sortKey) {
-        const ordenamientos = {
-            precio_asc: "p.Precio_dolares ASC",
-            precio_desc: "p.Precio_dolares DESC",
-            fecha_desc: "p.Fecha_registro DESC",
-            fecha_asc: "p.Fecha_registro ASC",
-            nombre_asc: "e.Nombre ASC",
-            nombre_desc: "e.Nombre DESC",
-        };
-        if (sortKey && ordenamientos[sortKey]) {
-            this.orderBy = ordenamientos[sortKey];
-            this.filtrosAplicados.ordenamiento = sortKey;
-        }
-        return this;
-    }
+    // Agregamos el ID como último parámetro
+    params.push(parseInt(id));
 
-    setLimit(limit) {
-        const limitVal = parseInt(limit);
-        if (!isNaN(limitVal) && limitVal > 0) {
-            this.limit = limitVal;
-            this.filtrosAplicados.limit = limitVal;
-        }
-        return this;
-    }
+    const query = `
+      UPDATE Producto 
+      SET ${setParts.join(", ")}
+      WHERE id_producto = $${paramCount}
+      RETURNING *
+  `;
 
-    build() {
-        let query = `${this.baseQuery} ${this.conditions.join(" ")} ORDER BY ${this.orderBy}`;
-
-        if (this.limit) {
-            query += ` LIMIT $${this.params.length + 1}`;
-            this.params.push(this.limit);
-        }
-
-        return { query, params: this.params, filtros: this.filtrosAplicados };
-    }
-}
+    return { query, params, count: setParts.length };
+};
