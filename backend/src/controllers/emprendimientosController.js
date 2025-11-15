@@ -120,60 +120,107 @@ export const getEmprendimientoById = async (req, res) => {
 };
 
 export const createEmprendimiento = async (req, res) => {
-  try {
-    const { nombre, descripcion, imagen_url, instagram, id_categoria } =
-      req.body;
+  const client = await pool.connect();
 
-    // Validaciones básicas
-    if (!nombre) {
+  try {
+    await client.query("BEGIN");
+
+    const {
+      nombre,
+      descripcion,
+      id_categoria,
+      imagen_url,
+      id_usuario,
+      instagram,
+    } = req.body;
+
+    // VALIDACIÓN Y CONVERSIÓN DE TIPOS
+    const userId = parseInt(id_usuario);
+    const categoriaId = parseInt(id_categoria);
+
+    if (isNaN(userId)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "ID de usuario inválido" });
+    }
+
+    if (isNaN(categoriaId)) {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "ID de categoría inválido" });
+    }
+
+    // 1. Crear el emprendimiento
+    const emprendimientoResult = await client.query(
+      `
+      INSERT INTO Emprendimiento (Nombre, Descripcion, id_categoria, Imagen_URL, Instagram)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id_emprendimiento
+    `,
+      [nombre, descripcion, categoriaId, imagen_url, instagram || ""]
+    );
+
+    const idEmprendimiento = emprendimientoResult.rows[0].id_emprendimiento;
+
+    // 2. Verificar que el usuario existe y tiene un emprendedor asociado
+    const usuarioResult = await client.query(
+      `
+      SELECT id_emprendedor 
+      FROM Usuarios 
+      WHERE id_usuario = $1
+    `,
+      [userId]
+    );
+
+    if (!usuarioResult.rows[0]) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({ error: "Usuario no encontrado" });
+    }
+
+    const idEmprendedor = usuarioResult.rows[0].id_emprendedor;
+
+    if (!idEmprendedor) {
+      await client.query("ROLLBACK");
+      return res
+        .status(400)
+        .json({ error: "El usuario no tiene un emprendedor asociado" });
+    }
+
+    // 3. Actualizar el emprendedor con el id_emprendimiento
+    await client.query(
+      `
+      UPDATE Emprendedor 
+      SET id_emprendimiento = $1
+      WHERE id_emprendedor = $2
+    `,
+      [idEmprendimiento, idEmprendedor]
+    );
+
+    await client.query("COMMIT");
+
+    // Devolver los datos completos del emprendimiento
+    const finalResult = await client.query(
+      "SELECT * FROM Emprendimiento WHERE id_emprendimiento = $1",
+      [idEmprendimiento]
+    );
+
+    res.json(finalResult.rows[0]);
+  } catch (error) {
+    await client.query("ROLLBACK");
+    console.error("Error creando emprendimiento:", error);
+
+    if (error.message.includes("invalid input syntax")) {
       return res.status(400).json({
-        error: "El campo nombre es requerido",
+        error:
+          "Parámetros inválidos. Verifique que todos los IDs sean números válidos.",
+        details: error.message,
       });
     }
 
-    // Insertar emprendimiento
-    const result = await pool.query(
-      `
-        INSERT INTO Emprendimiento (
-            id_categoria, 
-            Nombre, 
-            Descripcion, 
-            Imagen_URL, 
-            Instagram,
-            Disponible
-        ) VALUES ($1, $2, $3, $4, $5, $6)
-        RETURNING *
-        `,
-      [
-        id_categoria ? parseInt(id_categoria) : null,
-        nombre.trim(),
-        descripcion?.trim() || "",
-        imagen_url?.trim() || "",
-        instagram?.trim() || "",
-        true, // Por defecto, disponible al crear
-      ]
-    );
-
-    res.status(201).json({
-      message: "Emprendimiento creado exitosamente",
-      emprendimiento: result.rows[0],
+    res.status(500).json({
+      error: "Error creando emprendimiento",
+      details: error.message,
     });
-  } catch (error) {
-    console.error("Error creando emprendimiento:", error);
-
-    if (error.code === "23503") {
-      // Foreign key violation
-      return res.status(400).json({ error: "Categoría no válida" });
-    }
-
-    if (error.code === "23505") {
-      // Unique violation
-      return res
-        .status(400)
-        .json({ error: "Ya existe un emprendimiento con ese nombre" });
-    }
-
-    res.status(500).json({ error: "Error interno del servidor" });
+  } finally {
+    client.release();
   }
 };
 
