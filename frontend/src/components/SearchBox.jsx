@@ -15,7 +15,9 @@ export default function SearchBox({
   const [error, setError] = useState(null);
   const [visibleCount, setVisibleCount] = useState(7);
 
-  const [selectedCategories, setSelectedCategories] = useState(initialSelectedCategories);
+  const [selectedCategories, setSelectedCategories] = useState(
+    initialSelectedCategories
+  );
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm);
   const [debounceTimer, setDebounceTimer] = useState(null);
 
