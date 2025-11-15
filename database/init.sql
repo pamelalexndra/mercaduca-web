@@ -26,6 +26,7 @@ CREATE TABLE Emprendedor (
   Apellidos VARCHAR(500),
   Correo TEXT,
   Telefono VARCHAR(8),
+  Activo BOOLEAN DEFAULT TRUE,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Emprendedor_Emprendimiento FOREIGN KEY (id_emprendimiento) 
     REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE
@@ -37,9 +38,10 @@ CREATE TABLE Usuarios (
 	id_emprendedor INT, 
 	Usuario VARCHAR(100) UNIQUE NOT NULL, 
 	Contraseña TEXT, 
-	Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	Registro_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+	Registro_contraseña TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT fk_Usuarios_Emprendedor FOREIGN KEY (id_emprendedor) 
-		REFERENCES Emprendedor (id_emprendedor) ON DELETE CASCADE
+		REFERENCES Emprendedor (id_emprendedor)
 );
 
 -- Crear la tabla Producto
@@ -70,27 +72,27 @@ CREATE TABLE Actividades (
 
 -- Insertar categorías
 INSERT INTO Categorias (Categoria) VALUES 
-('Alimentos y bebidas.'),
+('Alimentos y bebidas'),
 ('Coleccionables'),
-('Automotriz.'),
-('Cocina y utensilios.'),
-('Cosmeticos.'),
-('Deportes.'),
-('Ferreteria y jardin.'),
-('Higiene.'),
-('Hogar y decoracion.'),
-('Infantiles.'),
+('Automotriz'),
+('Cocina y utensilios'),
+('Cosmeticos'),
+('Deportes'),
+('Ferreteria y jardin'),
+('Higiene'),
+('Hogar y decoracion'),
+('Infantiles'),
 ('Joyeria'),
-('Juguetes.'),
-('Papeleria y oficina.'),
-('Limpieza.'),
-('Mascotas.'),
-('Regalos y ocasiones.'),
-('Ropa.'),
-('Salud y bienestar.'),
-('Skincare.'),
-('Tecnologia.'),
-('Viajes.');
+('Juguetes'),
+('Papeleria y oficina'),
+('Limpieza'),
+('Mascotas'),
+('Regalos y ocasiones'),
+('Ropa'),
+('Salud y bienestar'),
+('Skincare'),
+('Tecnologia'),
+('Viajes');
 
 INSERT INTO Emprendimiento (id_categoria, Nombre, Descripcion, Imagen_URL, Instagram) 
 VALUES (1, 'Jochips','Deliciosas galletas artesanales horneadas con ingredientes de calidad, perfectas para acompañar tu café o antojo dulce.','https://i.ibb.co/MDj4kqrt/jochips.jpg', 'https://www.instagram.com/jochipsco/'),

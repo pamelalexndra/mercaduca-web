@@ -50,22 +50,28 @@ export default function Emprendedores({ onGoHome }) {
     );
   }
 
+  const handleGoHome = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (onGoHome) {
+      onGoHome();
+    }
+  };
+
   return (
     <>
       <section className="mx-auto max-w-6xl px-6 py-8">
         <h2 className="text-3xl font-bold text-center font-loubag">
           Emprendimientos
         </h2>
-        <p className="text-center text-zinc-600 mt-2">
-        </p>
+        <p className="text-center text-zinc-600 mt-2"></p>
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-  {emprendimientos.map((p) => (
-    <Card key={p.id} p={p} />
-  ))}
-</div>
+          {emprendimientos.map((p) => (
+            <Card key={p.id} p={p} />
+          ))}
+        </div>
 
         {emprendimientos.length === 0 && !loading && (
           <div className="text-center py-8 text-zinc-500">
@@ -75,7 +81,7 @@ export default function Emprendedores({ onGoHome }) {
 
         <div className="mt-10 flex flex-col items-center gap-4">
           <button
-            onClick={onGoHome}
+            onClick={handleGoHome}
             className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium hover:bg-zinc-100 transition text-zinc-600"
           >
             Regresar a Inicio
