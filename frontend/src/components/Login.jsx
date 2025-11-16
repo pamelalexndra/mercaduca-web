@@ -28,7 +28,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: formData.username, 
+          username: formData.username,
           password: formData.password,
         }),
       });
@@ -40,8 +40,12 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
       }
 
       if (data.success) {
-        const user = data.user;
+        const { user, token } = data; // Recibimos user y token
 
+        // GUARDAR EL TOKEN
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        
         if (!user || !user.id) {
           throw new Error("El usuario no tiene ID en la respuesta");
         }
@@ -76,7 +80,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
               <input
                 type="text"
                 name="username"
-                value={formData.username} 
+                value={formData.username}
                 onChange={handleChange}
                 required
                 placeholder="Ingrese su usuario"
@@ -118,7 +122,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
               {loading ? "Iniciando sesión..." : "Iniciar sesión"}
             </button>
           </form>
-          
+
           <p className="text-sm text-gray-700 mt-4 font-montserrat">
             ¿Quieres vender?{" "}
             <button

@@ -7,8 +7,8 @@ import categoriesRoutes from "./routes/categoriesRoutes.js";
 import productsRoutes from "./routes/productsRoutes.js";
 import entrepreneurshipRoutes from "./routes/entrepreneurshipRoutes.js";
 import imageRoutes from "./routes/imageRoutes.js";
-import authRoutes from "./routes/auth.js";
-import userRoutes from "./routes/user.js";
+import authenticationRoutes from "./routes/authenticationRoutes.js";
+import userRoutes from "./routes/profileRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -35,7 +35,7 @@ app.use("/api/entrepreneurship", entrepreneurshipRoutes);
 // Proxy de imágenes
 app.use("/api", imageRoutes);
 
-app.use("/api/auth", authRoutes);
+app.use("/api/auth", authenticationRoutes);
 
 app.use("/api/user", userRoutes);
 
