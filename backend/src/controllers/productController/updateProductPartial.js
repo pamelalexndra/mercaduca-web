@@ -1,4 +1,4 @@
-import pool from "../../database/db.js";
+import pool from "../../database/connection.js";
 import { buildProductQueryUpdate } from "../../utils/builders/productQueryBuilder.js";
 
 export const updateProductPartial = async (req, res) => {

@@ -1,4 +1,4 @@
-import pool from "../../database/db.js";
+import pool from "../../database/connection.js";
 
 export const createEntrepreneurship = async (req, res) => {
   const client = await pool.connect();

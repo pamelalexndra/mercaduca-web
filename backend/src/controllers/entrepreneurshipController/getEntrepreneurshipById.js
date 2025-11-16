@@ -1,4 +1,4 @@
-import pool from "../../database/db.js";
+import pool from "../../database/connection.js";
 
 export const getEntrepreneurshipById = async (req, res) => {
     const { id } = req.params;

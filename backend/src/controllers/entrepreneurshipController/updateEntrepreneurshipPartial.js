@@ -1,4 +1,4 @@
-import pool from "../../database/db.js";
+import pool from "../../database/connection.js";
 import { buildEntrepreneurshipQueryUpdate } from "../../utils/builders/entrepreneurshipQueryBuilder.js";
 
 export const updateEntrepreneurshipPartial = async (req, res) => {

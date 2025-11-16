@@ -1,7 +1,9 @@
 // src/controllers/authenticationController/logIn.js
-import { findByUsername } from "../../utils/db/findByUsername.js";
-import { verifyPassword } from "../../utils/auth/verifyPassword.js";
-import { generateToken } from "../../utils/auth/jwt.js";
+import { findByUsername } from "../../utils/helpers/findByUsername.js";
+import { verifyPassword } from "../../utils/security/verifyPassword.js";
+import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
+dotenv.config();
 
 export const logIn = async (req, res) => {
     try {
@@ -33,7 +35,7 @@ export const logIn = async (req, res) => {
         }
 
         // 3. Generar Token
-        const token = generateToken({ id: user.id_usuario, username: user.usuario });
+        const token = jwt.sign({ id: user.id_usuario, username: user.usuario }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
         // 4. Responder
         res.json({

@@ -1,4 +1,4 @@
-import pool from "../../database/db.js";
+import pool from "../../database/connection.js";
 // Asegúrate de que la ruta relativa sea correcta según donde guardaste el archivo utils
 import { buildProductQuery } from "../../utils//builders/productQueryBuilder.js";
 

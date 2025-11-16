@@ -1,5 +1,5 @@
 // backend/src/utils/db/findByUsername.js
-import pool from "../../database/db.js";
+import pool from "../../database/connection.js";
 
 export const findByUsername = async (username) => {
   try {
@@ -20,7 +20,7 @@ export const findByUsername = async (username) => {
 
     return result.rows[0] || null;
   } catch (error) {
-    console.error("Error en findByUsername:", error);
+    console.error("Error en findByUsername ->", error);
     throw error;
   }
 };

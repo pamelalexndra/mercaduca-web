@@ -1,6 +1,6 @@
 // backend/src/services/createProfile.js
-import pool from "../database/db.js";
-import bcrypt from "bcrypt";
+import pool from "../database/connection.js";
+import { generateHash } from "../utils/hash/generateHash.js";
 
 export const createProfile = async (userData) => {
     const client = await pool.connect();
@@ -9,7 +9,7 @@ export const createProfile = async (userData) => {
         await client.query("BEGIN");
 
         // 1. Hashear contraseña
-        const hashedPassword = await bcrypt.hash(userData.password, 10);
+        const hashedPassword = generateHash(userData.password);
 
         // 2. Crear emprendedor primero
         const emprendedorResult = await client.query(

@@ -1,6 +1,6 @@
 // src/controllers/authenticationController/signUp.js
+import jwt from "jsonwebtoken";
 import { createProfile } from "../../services/createProfile.js";
-import { generateToken } from "../../utils/auth/jwt.js"; // Importamos nuestra utilidad
 
 export const signUp = async (req, res) => {
     try {
@@ -22,7 +22,7 @@ export const signUp = async (req, res) => {
         });
 
         // Generar token inmediatamente para que el usuario quede logueado al registrarse
-        const token = generateToken({ id: user.id_usuario, username: user.usuario });
+        const token = jwt.sign({ id: user.id_usuario, username: user.usuario }, process.env.JWT_SECRET, { expiresIn: "1h" });
 
         res.status(201).json({
             success: true,
