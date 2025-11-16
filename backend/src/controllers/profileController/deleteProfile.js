@@ -37,7 +37,7 @@ export const deleteProfile = async (req, res) => {
                 // Desactivar productos de los emprendimientos
                 await client.query(
                     `
-            UPDATE Productos 
+            UPDATE Producto 
             SET disponible = false 
             WHERE id_emprendimiento = ANY($1)
           `,

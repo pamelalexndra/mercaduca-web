@@ -1,4 +1,5 @@
 import pool from "../../database/db.js";
+
 export const getProfileById = async (req, res) => {
   try {
     const result = await pool.query(
@@ -11,9 +12,13 @@ export const getProfileById = async (req, res) => {
       [req.params.userId]
     );
 
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Perfil no encontrado" });
+    }
+
     res.json(result.rows[0]);
   } catch (error) {
     console.error("Error obteniendo perfil:", error);
-    res.status(500).json({ error: "Error obteniendo perfil" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 };

@@ -1,6 +1,6 @@
 import pool from "../../database/db.js";
 // Asegúrate de que la ruta relativa sea correcta según donde guardaste el archivo utils
-import { buildProductQuery } from "../../utils/productQueryBuilder.js";
+import { buildProductQuery } from "../../utils//builders/productQueryBuilder.js";
 
 export const getProducts = async (req, res) => {
   try {

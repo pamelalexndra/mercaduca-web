@@ -1,4 +1,4 @@
-import pool from "../../database/db.js";
+import pool from "../database/db.js";
 import bcrypt from "bcrypt";
 
 export const createProfile = async (userData) => {

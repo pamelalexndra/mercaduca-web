@@ -1,5 +1,5 @@
-import { createProfile } from "../profileController/createProfile.js";
-import { generateToken } from "../../utils/jwt.js"; // Importamos nuestra utilidad
+import { createProfile } from "../../services/createProfile.js";
+import { generateToken } from "../../utils/auth/jwt.js"; // Importamos nuestra utilidad
 
 export const signUp = async (req, res) => {
     try {

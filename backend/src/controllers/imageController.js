@@ -1,4 +1,4 @@
-import { getImage, isValidImageUrl } from "../utils/imageProxyService.js";
+import { getImage, isValidImageUrl } from "../utils/services/imageProxyService.js";
 
 /**
  * Controlador para el proxy de imágenes

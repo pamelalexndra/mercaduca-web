@@ -1,6 +1,6 @@
-import { findByUsername } from "../../utils/findByUsername.js";
-import { verifyPassword } from "../../utils/verifyPassword.js";
-import { generateToken } from "../../utils/jwt.js";
+import { findByUsername } from "../../utils/db/findByUsername.js";
+import { verifyPassword } from "../../utils/auth/verifyPassword.js";
+import { generateToken } from "../../utils/auth/jwt.js";
 
 export const logIn = async (req, res) => {
     try {
@@ -10,14 +10,23 @@ export const logIn = async (req, res) => {
             return res.status(400).json({ success: false, message: "Credenciales requeridas" });
         }
 
-        // 1. Buscar usuario
+        // 1. Buscar usuario 
         const user = await findByUsername(username);
+
         if (!user) {
-            return res.status(401).json({ success: false, message: "Credenciales inválidas" }); // Mensaje genérico por seguridad
+            return res.status(401).json({ success: false, message: "Credenciales inválidas" });
+        }
+
+        // Verificamos si el emprendedor fue desactivado (borrado lógico)
+        if (user.activo === false) {
+            return res.status(403).json({
+                success: false,
+                message: "Esta cuenta ha sido desactivada. Contacte a soporte."
+            });
         }
 
         // 2. Verificar contraseña
-        const isValidPassword = await verifyPassword(password, user.contraseña); // Nota: 'user.contraseña' viene de tu query en userController
+        const isValidPassword = await verifyPassword(password, user.contraseña);
         if (!isValidPassword) {
             return res.status(401).json({ success: false, message: "Credenciales inválidas" });
         }
@@ -25,7 +34,7 @@ export const logIn = async (req, res) => {
         // 3. Generar Token
         const token = generateToken({ id: user.id_usuario, username: user.usuario });
 
-        // 4. Responder SIN enviar la contraseña
+        // 4. Responder
         res.json({
             success: true,
             message: "Inicio de sesión exitoso",
@@ -33,7 +42,6 @@ export const logIn = async (req, res) => {
             user: {
                 id: user.id_usuario,
                 username: user.usuario,
-                // ¡Password eliminado de aquí!
             },
         });
     } catch (error) {

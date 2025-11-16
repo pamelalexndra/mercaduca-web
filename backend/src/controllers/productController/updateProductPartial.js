@@ -1,5 +1,5 @@
 import pool from "../../database/db.js";
-import { buildProductQueryUpdate } from "../../utils/productQueryBuilder.js";
+import { buildProductQueryUpdate } from "../../utils/builders/productQueryBuilder.js";
 
 export const updateProductPartial = async (req, res) => {
   try {
