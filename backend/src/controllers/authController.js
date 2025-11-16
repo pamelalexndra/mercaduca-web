@@ -68,7 +68,7 @@ export const login = async (req, res) => {
       });
     }
 
-    const isValidPassword = await verifyPassword(password, user.contraseña);
+    const isValidPassword = await verifyPassword(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({
         success: false,
@@ -81,8 +81,7 @@ export const login = async (req, res) => {
       message: "Inicio de sesión exitoso",
       user: {
         id: user.id_usuario,
-        username: user.usuario,
-        password: password,
+        username: user.username,
       },
     });
   } catch (error) {

@@ -1,8 +1,10 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import chicaFondoLogin from "../images/chicaFondoLogin.png";
 
-const Login = ({ onLoginSuccess, switchToRegister }) => {
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -18,19 +20,39 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
     });
   };
 
-  const handleLoginSuccess = (user) => {
+  const handleLoginSuccess = async (user) => {
     // Guardar información del usuario en localStorage
-    localStorage.setItem("user", JSON.stringify(user));
+    let enrichedUser = user;
+
+    try {
+      const profileResponse = await fetch(
+        `${API_BASE_URL}/api/user/profile/${user.id}`
+      );
+
+      if (!profileResponse.ok) {
+        throw new Error("No se pudo obtener el perfil del usuario");
+      }
+
+      const profiePayload = await profileResponse.json();
+
+      const profileData = profiePayload.profile || profilePayload;
+
+      enrichedUser = { ...user, profile: profileData };
+    } catch (profileError) {
+      console.error("Error al obtener el perfil del usuario:", profileError);
+    }
+      const userDetails = await response.json();
+    localStorage.setItem("user", JSON.stringify(enrichedUser));
     localStorage.setItem("isAuthenticated", "true");
 
     // Guardar token si viene en la respuesta
-    if (user.token) {
-      localStorage.setItem("token", user.token);
+    if (enrichedUser.token) {
+      localStorage.setItem("token", enrichedUser.token);
     }
 
     // Ejecutar el callback proporcionado por el padre (si existe)
     if (onLoginSuccess) {
-      onLoginSuccess(user);
+      onLoginSuccess(enrichedUser);
     }
 
     // Redirigir al perfil
@@ -43,7 +65,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

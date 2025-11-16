@@ -3,10 +3,18 @@ import { Link } from "react-router-dom";
 import logoVerde from "../images/logoVerde.png";
 import { Menu, X } from "lucide-react";
 
-export default function TopBar() {
+const PROFILE_PLACEHOLDER = "https://via.placeholder.com/80?text=Perfil";
+
+export default function TopBar({user}) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const [catalogWindow, setCatalogWindow] = useState(null);
+
+  const isAuthenticated = Boolean(user);
+  const emprendimientoData = user?.profile?.emprendimiento;
+  const profileImage =
+    emprendimientoData?.imagen_url || emprendimientoData?.imagen || PROFILE_PLACEHOLDER;
+  const profileLabel = emprendimientoData?.nombre || user?.profile?.nombres || "Mi perfil";
 
   const abrirCatalogo = () => {
     if (!catalogWindow || catalogWindow.closed) {
@@ -61,19 +69,33 @@ export default function TopBar() {
               <Link to="/sobreNosotros" className="hover:text-zinc-700">
                 Sobre nosotros
               </Link>
-              <Link
-                to="/vender"
-                className="
-                inline-flex items-center rounded-full 
-                border-2 border-[#557051] text-[#557051]
-                px-4 py-2 font-medium 
-                hover:bg-[#557051] hover:text-white 
-                transition-colors duration-300
-              "
-              >
-                <span className="hidden sm:inline">Quiero vender</span>
-                <span className="sm:hidden">Vender</span>
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/perfil"
+                  className="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#557051] overflow-hidden hover:border-[#3f523d] transition-colors"
+                  title={profileLabel}
+                >
+                  <img
+                    src={profileImage}
+                    alt={profileLabel}
+                    className="w-full h-full object-cover"
+                  />
+                </Link>
+              ) : (
+                <Link
+                  to="/vender"
+                  className="
+                  inline-flex items-center rounded-full
+                  border-2 border-[#557051] text-[#557051]
+                  px-4 py-2 font-medium
+                  hover:bg-[#557051] hover:text-white
+                  transition-colors duration-300
+                "
+                >
+                  <span className="hidden sm:inline">Quiero vender</span>
+                  <span className="sm:hidden">Vender</span>
+                </Link>
+              )}
             </nav>
           </div>
         </div>
@@ -121,14 +143,30 @@ export default function TopBar() {
               <Link to="/sobreNosotros" onClick={() => setMenuOpen(false)}>
                 Sobre nosotros
               </Link>
-              <Link
-                to="/vender"
-                className=" mt-2 inline-block rounded-full border-2 border-white 
-                  text-white px-5 py-2
-                  hover:bg-white hover:text-[#557051] transition"
-              >
-                Quiero vender
-              </Link>
+              {isAuthenticated ? (
+                <Link
+                  to="/perfil"
+                  onClick={() => setMenuOpen(false)}
+                  className="mt-2 inline-flex items-center gap-3 rounded-full border-2 border-white text-white px-5 py-2 hover:bg-white hover:text-[#557051] transition"
+                >
+                  <img
+                    src={profileImage}
+                    alt={profileLabel}
+                    className="w-8 h-8 rounded-full object-cover border border-white/70"
+                  />
+                  Mi perfil
+                </Link>
+              ) : (
+                <Link
+                  to="/vender"
+                  onClick={() => setMenuOpen(false)}
+                  className=" mt-2 inline-block rounded-full border-2 border-white
+                    text-white px-5 py-2
+                    hover:bg-white hover:text-[#557051] transition"
+                >
+                  Quiero vender
+                </Link>
+              )}5
             </nav>
           </div>
         </div>

@@ -1,45 +1,129 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import ProductCard from "./Card";
 import ProductForm from "./ProductForm";
 import EditProfile from "./EditProfile";
 
-export default function Profile() {
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const PROFILE_PLACEHOLDER = "https://via.placeholder.com/160";
+
+export default function Profile(user, onProfileLoader) {
   const [showModal, setShowModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [productoEdit, setProductoEdit] = useState(null);
 
-  // Datos reales de JoChips de la base de datos
-  const [emprendimiento, setEmprendimiento] = useState({
-    id_emprendimiento: 1,
-    nombre: "Jochips",
-    descripcion:
-      "Deliciosas galletas artesanales horneadas con ingredientes de calidad, perfectas para acompañar tu café o antojo dulce.",
-    imagen_url: "https://i.ibb.co/MDj4kqrt/jochips.jpg",
-    instagram: "https://www.instagram.com/jochipsco/",
-    mercado_presencial: true,
+  const [emprendimiento, setEmprendimiento] = useState(null);
+  const [productos, setProductos] = useState([]);
+  const [currentUser, setCurrentUser] = useState(() => {
+    if (user) return user;
+    const stored = localStorage.getItem("user");
+    return stored ? JSON.parse(stored) : null;
   });
+    const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingProductos, setLoadingProductos] = useState(false);
+  const [error, setError] = useState("");
 
-  const [productos, setProductos] = useState([
-    {
-      id: 1,
-      nombre: "Galletas edición clásicas",
-      descripcion: "",
-      precio: "0.75",
-      imagen_url:
-        "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlNNhU3GusCR5R8Fs8QPLWkkGDghEsLxSrNA&s",
-      disponible: true,
-      existencias: 15,
+   const fetchProductos = useCallback(async (emprendimientoId) => {
+    setLoadingProductos(true);
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/productos?emprendimiento_id=${emprendimientoId}`
+      );
+      if (!response.ok) {
+        throw new Error("No se pudieron obtener los productos");
+      }
+      const data = await response.json();
+      setProductos(data.productos || []);
+    } catch (fetchError) {
+      console.error("Error cargando productos:", fetchError);
+      setError(fetchError.message || "Error al cargar los productos");
+    } finally {
+      setLoadingProductos(false);
+    }
+  }, []);
+
+  const loadProfile = useCallback(
+    async (userId, baseUserData = null) => {
+      setLoadingProfile(true);
+      setError("");
+      try {
+        const response = await fetch(
+          `${API_BASE_URL}/api/user/profile/${userId}`
+        );
+        if (!response.ok) {
+          throw new Error("No se pudo obtener la información del perfil");
+        }
+
+        const payload = await response.json();
+        const profileData = payload.profile || payload;
+
+        const normalizedEmprendimiento = profileData?.emprendimiento
+          ? {
+              ...profileData.emprendimiento,
+              nombres: profileData.nombres,
+              apellidos: profileData.apellidos,
+              correo: profileData.correo,
+              telefono: profileData.telefono,
+            }
+          : null;
+
+        setEmprendimiento(normalizedEmprendimiento);
+
+        const storedFallback = localStorage.getItem("user");
+        const fallbackUser = storedFallback ? JSON.parse(storedFallback) : null;
+
+        const baseUser =
+          baseUserData ||
+          fallbackUser || {
+            id: profileData.id_usuario,
+            username: profileData.username,
+          };
+
+        const updatedUser = { ...baseUser, profile: profileData };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
+        if (onProfileLoaded) {
+          onProfileLoaded(updatedUser);
+        }
+
+        if (profileData?.emprendimiento?.id_emprendimiento) {
+          await fetchProductos(profileData.emprendimiento.id_emprendimiento);
+        } else {
+          setProductos([]);
+        }
+      } catch (profileError) {
+        console.error("Error obteniendo perfil:", profileError);
+        setError(profileError.message || "Error al cargar el perfil");
+      } finally {
+        setLoadingProfile(false);
+      }
     },
-    {
-      id: 2,
-      nombre: "Galletas edición premium",
-      descripcion: "",
-      precio: "1.00",
-      imagen_url: "https://i.ibb.co/3mzHFpKs/Galletas-premium.png",
-      disponible: true,
-      existencias: 20,
-    },
-  ]);
+    [fetchProductos, onProfileLoaded]
+  );
+
+  useEffect(() => {
+    const storedRaw = localStorage.getItem("user");
+    const storedUser = user || (storedRaw ? JSON.parse(storedRaw) : null);
+    if (!storedUser?.id) {
+      navigate("/vender");
+      return;
+    }
+
+    setCurrentUser(storedUser);
+    loadProfile(storedUser.id, storedUser);
+  }, [user, loadProfile, navigate]);
+
+  const profileImage = emprendimiento?.imagen_url || PROFILE_PLACEHOLDER;
+  const emprendimientoNombre =
+    emprendimiento?.nombre || currentUser?.profile?.username || "Tu emprendimiento";
+  const emprendimientoDescripcion = emprendimiento?.descripcion || "";
+  const instagramValue = emprendimiento?.instagram || "";
+  const instagramHref = instagramValue
+    ? instagramValue.startsWith("http")
+      ? instagramValue
+      : `https://instagram.com/${instagramValue.replace("@", "")}`
+    : null;
+  const instagramLabel = instagramValue.replace(/^https?:\/\//, "");
 
   const handleAgregar = () => {
     setProductoEdit(null);
@@ -56,7 +140,7 @@ export default function Profile() {
       // Actualizar producto existente
       const productosActualizados = productos.map((p) =>
         p.id === productoEdit.id
-          ? { ...p, ...data, precio: `$${data.precio}` }
+          ? { ...p, ...data, precio: data.precio }
           : p
       );
       setProductos(productosActualizados);
@@ -93,21 +177,58 @@ export default function Profile() {
       ...prev,
       ...datos,
     }));
-    console.log("Perfil actualizado:", datos);
+     setCurrentUser((prevUser) => {
+      if (!prevUser) return prevUser;
+
+      const { nombres, apellidos, correo, telefono, ...emprendimientoDatos } = datos;
+
+      const updatedProfile = {
+        ...(prevUser.profile || {}),
+        nombres: nombres ?? prevUser.profile?.nombres,
+        apellidos: apellidos ?? prevUser.profile?.apellidos,
+        correo: correo ?? prevUser.profile?.correo,
+        telefono: telefono ?? prevUser.profile?.telefono,
+        emprendimiento: {
+          ...(prevUser.profile?.emprendimiento || {}),
+          ...emprendimientoDatos,
+        },
+      };
+
+      const mergedUser = { ...prevUser, profile: updatedProfile };
+      localStorage.setItem("user", JSON.stringify(mergedUser));
+      if (onProfileLoaded) {
+        onProfileLoaded(mergedUser);
+      }
+      return mergedUser;
+    });
   };
+   if (loadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
+        <p className="text-gray-500 text-sm font-semibold">
+          Cargando tu perfil...
+        </p>
+      </div>
+    );
+  }
 
   return (
     <>
       <div className="min-h-screen bg-white font-montserrat">
         {/* Header del perfil*/}
         <div className="max-w-4xl mx-auto px-4 py-8">
+           {error && (
+            <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+              {error}
+            </div>
+          )}
           {/* Desktop Layout */}
           <div className="hidden md:flex md:items-center md:gap-20 mb-11">
             {/* Foto de perfil */}
             <div className="flex-shrink-0">
               <img
-                src={emprendimiento.imagen_url}
-                alt={emprendimiento.nombre}
+                src={profileImage}
+                alt={emprendimientoNombre}
                 className="w-40 h-40 rounded-full object-cover border"
               />
             </div>
@@ -117,7 +238,7 @@ export default function Profile() {
               {/* Username y botones */}
               <div className="flex items-center gap-5 mb-5">
                 <h1 className="text-xl font-normal text-gray-900">
-                  {emprendimiento.nombre}
+                  {emprendimientoNombre}
                 </h1>
                 <button
                   onClick={() => setShowEditProfileModal(true)}
@@ -147,13 +268,13 @@ export default function Profile() {
               <div className="text-sm space-y-2">
                 {emprendimiento.descripcion && (
                   <p className="text-gray-900 whitespace-pre-wrap">
-                    {emprendimiento.descripcion}
+                    {emprendimientoDescripcion}
                   </p>
                 )}
 
-                {emprendimiento.instagram && (
+                {instagramHref && (
                   <a
-                    href={`https://instagram.com/${emprendimiento.instagram.replace("@", "")}`}
+                    href={instagramHref}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-1.5 text-gray-600 hover:text-pink-600 transition-colors"
@@ -165,7 +286,7 @@ export default function Profile() {
                     >
                       <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                     </svg>
-                    {emprendimiento.instagram}
+                    {instagramLabel || instagramValue}
                   </a>
                 )}
               </div>
@@ -178,8 +299,8 @@ export default function Profile() {
             <div className="flex items-center gap-4 mb-4 px-4">
               {/* Foto de perfil */}
               <img
-                src={emprendimiento.imagen_url}
-                alt={emprendimiento.nombre}
+                src={profileImage}
+                alt={emprendimientoNombre}
                 className="w-20 h-20 rounded-full object-cover border"
               />
 
@@ -197,10 +318,10 @@ export default function Profile() {
             {/* Bio */}
             <div className="px-4 mb-4 text-sm space-y-2">
               <p className="font-semibold text-gray-900">
-                {emprendimiento.nombre}
+                {emprendimientoNombre}
               </p>
 
-              {emprendimiento.descripcion && (
+              {emprendimientoDescripcion && (
                 <p className="text-gray-900 whitespace-pre-wrap">
                   {emprendimiento.descripcion}
                 </p>
@@ -231,9 +352,9 @@ export default function Profile() {
                 </div>
               )}
 
-              {emprendimiento.instagram && (
+              {instagramHref && (
                 <a
-                  href={`https://instagram.com/${emprendimiento.instagram.replace("@", "")}`}
+                  href={instagramHref}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-2 text-gray-600 hover:text-pink-600 font-semibold text-xs transition-colors"
@@ -245,7 +366,7 @@ export default function Profile() {
                   >
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
                   </svg>
-                  {emprendimiento.instagram}
+                  {instagramLabel || instagramValue}
                 </a>
               )}
             </div>
@@ -275,11 +396,13 @@ export default function Profile() {
           </div>
 
           {/* Grid de productos */}
-          {productos.length === 0 ? (
+          {loadingProductos ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+              <p className="text-sm font-semibold">Cargando tus productos...</p>
+            </div>
+          ) : productos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
-              <h2 className="text-3xl font-light mb-2">
-                Comparte tus productos
-              </h2>
+              <h2 className="text-3xl font-light mb-2">Comparte tus productos</h2>
               <p className="text-sm text-gray-500 mb-6">
                 Cuando compartas productos, aparecerán en tu perfil.
               </p>
