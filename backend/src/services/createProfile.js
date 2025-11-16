@@ -1,3 +1,4 @@
+// backend/src/services/createProfile.js
 import pool from "../database/db.js";
 import bcrypt from "bcrypt";
 

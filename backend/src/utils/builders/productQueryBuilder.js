@@ -1,3 +1,4 @@
+// utils/builders/productQueryBuilder.js
 /**
  * Construye la consulta SQL dinámica para productos basada en filtros.
  * @param {Object} filtros - Objeto con los parámetros de query (req.query)

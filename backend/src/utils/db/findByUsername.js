@@ -1,3 +1,4 @@
+// backend/src/utils/db/findByUsername.js
 import pool from "../../database/db.js";
 
 export const findByUsername = async (username) => {

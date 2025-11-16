@@ -1,3 +1,4 @@
+// src/controllers/authenticationController/logIn.js
 import { findByUsername } from "../../utils/db/findByUsername.js";
 import { verifyPassword } from "../../utils/auth/verifyPassword.js";
 import { generateToken } from "../../utils/auth/jwt.js";

@@ -1,3 +1,4 @@
+// src/controllers/authenticationController/signUp.js
 import { createProfile } from "../../services/createProfile.js";
 import { generateToken } from "../../utils/auth/jwt.js"; // Importamos nuestra utilidad
 

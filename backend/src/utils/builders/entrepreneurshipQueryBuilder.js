@@ -1,3 +1,4 @@
+// utils/builders/entrepreneurshipQueryBuilder.js
 /**
  * Construye la consulta SQL dinámica para obtener emprendimientos.
  * Incluye lógica de búsqueda por texto (search).
