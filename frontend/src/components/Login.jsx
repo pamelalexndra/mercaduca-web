@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import chicaFondoLogin from "../images/chicaFondoLogin.png";
 
 const Login = ({ onLoginSuccess, switchToRegister }) => {
@@ -8,12 +9,32 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
     });
+  };
+
+  const handleLoginSuccess = (user) => {
+    // Guardar información del usuario en localStorage
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("isAuthenticated", "true");
+
+    // Guardar token si viene en la respuesta
+    if (user.token) {
+      localStorage.setItem("token", user.token);
+    }
+
+    // Ejecutar el callback proporcionado por el padre (si existe)
+    if (onLoginSuccess) {
+      onLoginSuccess(user);
+    }
+
+    // Redirigir al perfil
+    navigate("/perfil");
   };
 
   const handleSubmit = async (e) => {
@@ -28,7 +49,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: formData.username, 
+          username: formData.username,
           password: formData.password,
         }),
       });
@@ -46,7 +67,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
           throw new Error("El usuario no tiene ID en la respuesta");
         }
 
-        onLoginSuccess(user);
+        handleLoginSuccess(user);
       } else {
         throw new Error(data.message || "Error en el login");
       }
@@ -56,6 +77,11 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para manejar el registro
+  const handleRegisterClick = () => {
+    navigate("/registrar");
   };
 
   return (
@@ -76,7 +102,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
               <input
                 type="text"
                 name="username"
-                value={formData.username} 
+                value={formData.username}
                 onChange={handleChange}
                 required
                 placeholder="Ingrese su usuario"
@@ -118,13 +144,13 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
               {loading ? "Iniciando sesión..." : "Iniciar sesión"}
             </button>
           </form>
-          
+
           <p className="text-sm text-gray-700 mt-4 font-montserrat">
             ¿Quieres vender?{" "}
             <button
               type="button"
               className="text-[#2563EB] font-semibold hover:underline bg-transparent border-none cursor-pointer"
-              onClick={switchToRegister}
+              onClick={handleRegisterClick}
             >
               Regístrate
             </button>
