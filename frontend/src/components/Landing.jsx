@@ -61,9 +61,9 @@ export default function Landing() {
       />
 
       <Carousel
-        title="Favoritos"
+        title="Nuevos Emprendimientos"
         subtitle="Descubre los favoritos de la comunidad"
-        endpoint="/api/products?ordenar=fecha_desc&limit=10"
+        endpoint="/api/emprendimientos?ordenar=fecha_desc&limit=10"
       />
 
       <Carousel

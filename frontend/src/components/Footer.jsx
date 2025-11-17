@@ -33,76 +33,79 @@ const Footer = () => {
   ];
 
   const quickLinks = [
-    { name: "Inicio", href: "#" },
-    { name: "Sobre Nosotros", href: "#" },
-    { name: "Catálogo", href: "#" },
-    { name: "Emprendedores", href: "#" },
-    { name: "Quiero vender", href: "#" },
+    { name: "Inicio", href: "/" },
+    { name: "Sobre Nosotros", href: "/sobreNosotros" },
+    { name: "Catálogo", href: "/catalog" },
+    { name: "Emprendimientos", href: "/emprendimientos" },
+    { name: "Quiero vender", href: "/vender" },
   ];
 
   const categories = [
-    { name: "Tecnología", href: "#" },
-    { name: "Alimentos", href: "#" },
-    { name: "Ropa", href: "#" },
-    { name: "Deportivos", href: "#" },
-    { name: "Otros", href: "#" },
+    { name: "Ropa", href: "/catalog?categories=17" },
+    { name: "Joyería", href: "/catalog?categories=11" },
+    { name: "Juguetes", href: "/catalog?categories=12" },
+    { name: "Alimentos", href: "/catalog?categories=1" },
+    { name: "Coleccionables", href: "/catalog?categories=2" },
   ];
 
   return (
     <footer className="bg-white text-gray-700 border-t border-gray-200 py-1">
       {/* Main Footer Content */}
-      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-12">
+      <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-10 lg:py-12">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start lg:gap-12">
           {/* About Section */}
           <div className="lg:w-2/6 pb-7">
-            <h3 className="text-[#557051] text-lg font-bold mb-4">Mercaduca</h3>
-            <p className="text-gray-600 leading-relaxed text-sm">
+            <h3 className="text-[#557051] text-base md:text-lg font-bold mb-3 md:mb-4">Mercaduca</h3>
+            <p className="text-gray-600 leading-relaxed text-sm md:text-base">
               Espacio dónde los estudiantes UCA pueden dar vida a sus proyectos
               y comercializar sus productos
             </p>
             <img
               src={logoVerde}
               alt="Logo Mercaduca"
-              className="w-58 h-13 mt-6 lg:mt-10"
+              className="w-40 md:w-52 lg:w-58 h-auto mt-4 md:mt-6 lg:mt-10"
             ></img>
           </div>
 
-          {/* Quick Links */}
-          <div className="lg:w-1/6 pb-7">
-            <h4 className="font-poppins text-[#557051] text-base font-semibold mb-4">
-              Enlaces Rápidos
-            </h4>
-            <ul className="space-y-3 text-sm">
-              {quickLinks.map((link) => (
-                <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="text-gray-600 hover:text-[#557051] transition-colors hover:font-bold duration-300 hover:translate-x-1 inline-block"
-                  >
-                    {link.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
+          {/* Quick Links + Categorias */}
+          <div className="w-full lg:w-2/6 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 pb-4 md:pb-7">
+            {/* Quick Links */}
+            <div className="lg:w-1/6 pb-4 md:pb-7">
+              <h4 className="font-poppins text-[#557051] text-base font-semibold whitespace-nowrap mb-4">
+                Enlaces Rápidos
+              </h4>
+              <ul className="space-y-3 text-sm">
+                {quickLinks.map((link) => (
+                  <li key={link.name}>
+                    <a
+                      href={link.href}
+                      className="text-gray-600 hover:text-[#557051] transition-colors hover:font-bold duration-300 hover:translate-x-1 inline-block"
+                    >
+                      {link.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-          {/* Categories */}
-          <div className="lg:w-1/6 pb-7">
-            <h4 className="text-[#557051] text-base font-semibold font-poppins mb-4">
-              Categorías
-            </h4>
-            <ul className="space-y-3 text-sm">
-              {categories.map((category) => (
-                <li key={category.name}>
-                  <a
-                    href={category.href}
-                    className="text-gray-600 hover:text-[#557051] hover:font-bold transition-colors duration-300 hover:translate-x-1 inline-block"
-                  >
-                    {category.name}
-                  </a>
-                </li>
-              ))}
-            </ul>
+            {/* Categories */}
+            <div className="lg:w-1/6 pb-4 md:pb-7">
+              <h4 className="text-[#557051] text-base font-semibold font-poppins mb-4">
+                Categorías
+              </h4>
+              <ul className="space-y-3 text-sm">
+                {categories.map((category) => (
+                  <li key={category.name}>
+                    <a
+                      href={category.href}
+                      className="text-gray-600 hover:text-[#557051] hover:font-bold transition-colors duration-300 hover:translate-x-1 inline-block"
+                    >
+                      {category.name}
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
           </div>
 
           {/* Contact Info */}
@@ -145,7 +148,7 @@ const Footer = () => {
                 </a>
               </li>
             </ul>
-            <div className="flex gap-4 mt-6">
+            <div className="flex gap-3 mt-5">
               {socialLinks.map((social) => (
                 <a
                   key={social.label}
