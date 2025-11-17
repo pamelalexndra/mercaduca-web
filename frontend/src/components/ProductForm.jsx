@@ -15,6 +15,7 @@ export default function ProductForm({
   producto,
   onDelete,
 }) {
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
   const [nombre, setNombre] = useState("");
   const [categoria, setCategoria] = useState("");
   const [precio, setPrecio] = useState("");
@@ -29,7 +30,7 @@ export default function ProductForm({
   useEffect(() => {
     const fetchCategorias = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/categorias");
+        const res = await fetch(`${API_BASE_URL}/api/categorias`);
         const data = await res.json();
         setCategorias(data || []);
       } catch (error) {
@@ -42,10 +43,20 @@ export default function ProductForm({
   useEffect(() => {
     if (producto) {
       setNombre(producto.nombre || "");
-      setCategoria(producto.category || "");
-      setPrecio(producto.precio ? producto.precio.replace("$", "") : "");
-      setDescripcion(producto.descripcion || "");
-      setImagenes([]);
+      setCategoria(
+        producto.id_categoria !== undefined && producto.id_categoria !== null
+          ? String(producto.id_categoria)
+          : ""
+      );
+      const normalizedPrecio =
+        producto.precio ?? producto.precio_dolares ?? producto.Precio_dolares;
+      setPrecio(
+        normalizedPrecio !== undefined && normalizedPrecio !== null
+          ? normalizedPrecio.toString()
+          : ""
+      );
+      setDescripcion(producto.descripcion || producto.Descripcion || "");
+      setImagenes(producto.imagen ? [producto.imagen] : []);
       setPreviewIndex(0);
     } else {
       setNombre("");
@@ -85,15 +96,19 @@ export default function ProductForm({
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    const data = { nombre, categoria, precio, descripcion, imagenes };
+    const data = {
+      nombre,
+      id_categoria: categoria ? Number(categoria) : null,
+      precio,
+      descripcion,
+      imagenes,
+    };
     onSubmit(data);
-    onClose();
   };
 
   const handleDelete = () => {
     if (producto && onDelete) {
       onDelete(producto);
-      onClose();
     }
   };
 
@@ -259,8 +274,8 @@ export default function ProductForm({
               </option>
               {categorias.map((cat) => (
                 <option
-                  key={cat.id}
-                  value={cat.nombre}
+                  key={cat.id_categoria}
+                  value={cat.nombre_categoria}
                   className="text-zinc-800"
                 >
                   {cat.nombre}

@@ -36,6 +36,13 @@ export default function App() {
     setCurrentUser(userData);
   }, []);
 
+  const handleLogout = useCallback(() => {
+    localStorage.removeItem("user");
+    localStorage.removeItem("isAuthenticated");
+    localStorage.removeItem("token");
+    setCurrentUser(null);
+  }, []);
+
   const handleProfileLoaded = useCallback(
     (profileData) => {
       if (profileData) {
@@ -47,7 +54,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <TopBar user={currentUser} />
+      <TopBar user={currentUser} onLogout={handleLogout} />
 
       <Routes>
         {" "}
@@ -58,7 +65,7 @@ export default function App() {
         <Route path="/sobreNosotros" element={<AboutUs />} />
         <Route path="/detalle/:id" element={<ProductDetailPage />} />
         <Route path="/vender" element={<Login onLoginSuccess={handleLoginSuccess}/>} />
-        <Route path="/perfil" element={<Profile user={currentUser} onProfileLoaded={handleProfileLoaded}/>} />
+        <Route path="/perfil" element={<Profile user={currentUser} onProfileLoader={handleProfileLoaded}/>} />
         <Route path="/registrar" element={<Register />} />
         <Route path="/forbidden" element={<Forbidden />} />
         <Route path="/bad-request" element={<BadRequest />} />

@@ -25,6 +25,29 @@ export default function Profile({ user, onProfileLoaded }) {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
+    const normalizeProducto = (producto) => ({
+    id: producto?.id ?? producto?.id_producto,
+    nombre: producto?.nombre ?? producto?.Nombre ?? "",
+    descripcion: producto?.descripcion ?? producto?.Descripcion ?? "",
+    precio:
+      producto?.precio ??
+      producto?.precio_dolares ??
+      producto?.Precio_dolares ??
+      0,
+    imagen:
+      producto?.imagen ??
+      producto?.imagen_url ??
+      producto?.Imagen_URL ??
+      producto?.Imagen_url ??
+      "",
+    id_categoria: producto?.id_categoria ?? null,
+    stock: producto?.stock ?? producto?.existencias ?? producto?.Existencias ?? 0,
+    disponible: producto?.disponible ?? producto?.Disponible ?? true,
+    id_emprendimiento:
+      producto?.emprendimiento_id ?? producto?.id_emprendimiento ?? null,
+    categoria: producto?.categoria ?? producto?.Categoria,
+  });
+
   const fetchProductos = useCallback(async (emprendimientoId) => {
     setLoadingProductos(true);
     try {
@@ -35,7 +58,10 @@ export default function Profile({ user, onProfileLoaded }) {
         throw new Error("No se pudieron obtener los productos");
       }
       const data = await response.json();
-      setProductos(data.productos || []);
+      const productosNormalizados = (data.productos || []).map((p) =>
+        normalizeProducto(p)
+      );
+      setProductos(productosNormalizados);
     } catch (fetchError) {
       console.error("Error cargando productos:", fetchError);
       setError(fetchError.message || "Error al cargar los productos");
@@ -145,31 +171,107 @@ export default function Profile({ user, onProfileLoaded }) {
     setShowModal(true);
   };
 
-  const handleSubmit = (data) => {
-    if (productoEdit) {
-      const productosActualizados = productos.map((p) =>
-        p.id === productoEdit.id
-          ? { ...p, ...data, precio: data.precio }
-          : p
-      );
-      setProductos(productosActualizados);
-    } else {
-      const nuevoProducto = {
-        id: Date.now(),
-        ...data,
-        precio: `$${data.precio}`,
-        disponible: true,
-      };
-      setProductos([...productos, nuevoProducto]);
+ const handleSubmit = async (data) => {
+    if (!emprendimiento?.id_emprendimiento) {
+      setError("Debes tener un emprendimiento para publicar productos.");
+      return;
     }
-    setShowModal(false);
+
+    const precioNumber = parseFloat(data.precio);
+    if (Number.isNaN(precioNumber)) {
+      setError("Ingresa un precio válido para el producto.");
+      return;
+    }
+
+    const categoriaId = data.id_categoria || productoEdit?.id_categoria;
+    if (!categoriaId) {
+      setError("Selecciona una categoría para tu producto.");
+      return;
+    }
+
+    const payload = {
+      nombre: data.nombre?.trim(),
+      descripcion: data.descripcion?.trim() || "",
+      imagen_url: data.imagenes?.[0] || productoEdit?.imagen || "",
+      precio_dolares: precioNumber,
+      existencias: productoEdit?.stock ?? 1,
+      id_categoria: categoriaId,
+      id_emprendimiento: emprendimiento.id_emprendimiento,
+    };
+
+    try {
+      setError("");
+
+      const endpoint = productoEdit?.id
+        ? `${API_BASE_URL}/api/productos/${productoEdit.id}`
+        : `${API_BASE_URL}/api/productos`;
+      const method = productoEdit?.id ? "PUT" : "POST";
+
+      const response = await fetch(endpoint, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "No se pudo guardar el producto");
+      }
+
+      const savedProduct = normalizeProducto(
+        result.producto || result.product || result
+      );
+      
+      setProductos((prev) => {
+        if (productoEdit?.id) {
+          return prev.map((p) => (p.id === productoEdit.id ? savedProduct : p));
+        }
+        return [...prev, savedProduct];
+      });
+
+      if (emprendimiento?.id_emprendimiento) {
+        await fetchProductos(emprendimiento.id_emprendimiento);
+      }
+
+      setProductoEdit(null);
+      setShowModal(false);
+    } catch (err) {
+      console.error("Error guardando producto:", err);
+      setError(err.message || "No se pudo guardar el producto");
+    }
   };
 
-  const handleEliminarProducto = (producto) => {
-    if (window.confirm(`¿Estás seguro de que quieres eliminar "${producto.nombre}"?`)) {
-      const productosFiltrados = productos.filter((p) => p.id !== producto.id);
-      setProductos(productosFiltrados);
+  const handleEliminarProducto = async (producto) => {
+    if (!producto?.id ||
+      !window.confirm(`¿Estás seguro de que quieres eliminar "${producto.nombre}"?`)) {
+      return;
+    }
+
+    try {
+      setError("");
+      const response = await fetch(
+        `${API_BASE_URL}/api/productos/${producto.id}`,
+        { method: "DELETE" }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "No se pudo eliminar el producto");
+      }
+
+      setProductos((prev) => prev.filter((p) => p.id !== producto.id));
+
+      if (emprendimiento?.id_emprendimiento) {
+        await fetchProductos(emprendimiento.id_emprendimiento);
+      }
+
+      setProductoEdit(null);
       setShowModal(false);
+       } catch (err) {
+      console.error("Error eliminando producto:", err);
+      setError(err.message || "No se pudo eliminar el producto");
     }
   };
 

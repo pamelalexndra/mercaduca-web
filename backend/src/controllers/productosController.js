@@ -30,6 +30,7 @@ export const getProductos = async (req, res) => {
         p.Descripcion AS descripcion,
         p.Imagen_URL AS imagen,
         p.Existencias AS stock,
+        p.id_categoria,
         e.Nombre AS nombre_emprendimiento,
         e.id_emprendimiento AS emprendimiento_id
       FROM Producto AS p
