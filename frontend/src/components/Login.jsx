@@ -19,15 +19,6 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
   };
 
   const handleLoginSuccess = (user) => {
-    // Guardar información del usuario en localStorage
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("isAuthenticated", "true");
-
-    // Guardar token si viene en la respuesta
-    if (user.token) {
-      localStorage.setItem("token", user.token);
-    }
-
     // Ejecutar el callback proporcionado por el padre (si existe)
     if (onLoginSuccess) {
       onLoginSuccess(user);
@@ -63,10 +54,11 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
       if (data.success) {
         const { user, token } = data; // Recibimos user y token
 
-        // GUARDAR EL TOKEN
+        // Guardar token y usuario en localStorage
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
-        
+        localStorage.setItem("isAuthenticated", "true");
+
         if (!user || !user.id) {
           throw new Error("El usuario no tiene ID en la respuesta");
         }
