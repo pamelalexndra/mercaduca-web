@@ -16,44 +16,36 @@ export default function Carousel({
   const isAnimatingRef = useRef(false);
   const activeIndexRef = useRef(0);
 
-  useEffect(() => {
-    if (!endpoint) return;
-    const fetchItems = async () => {
-      try {
-        setError(null);
-        const url = `${import.meta.env.VITE_API_URL}${endpoint}`;
-        const res = await fetch(url);
-        if (!res.ok) throw new Error("No se pudieron cargar los elementos");
-        const data = await res.json();
-        const productos = data.productos || [];
-        if (!Array.isArray(productos) || productos.length === 0)
-          throw new Error("No hay productos para mostrar");
-        setItems(productos);
-      } catch (err) {
-        setError(err.message);
-      }
-    };
-    fetchItems();
-  }, [endpoint]);
+useEffect(() => {
+  if (!endpoint) return;
 
-  useEffect(() => {
-    if (!staticItems) return;
-    staticItems.forEach((item) => {
-      if (item.image) {
-        const img = new Image();
-        img.src = item.image;
+  const fetchItems = async () => {
+    try {
+      setError(null);
+      const url = `${import.meta.env.VITE_API_URL}${endpoint}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error("No se pudieron cargar los elementos");
+
+      const data = await res.json();
+
+      const itemsData =
+        data.productos ||
+        data.emprendimientos ||
+        data.items ||
+        [];
+
+      if (!Array.isArray(itemsData) || itemsData.length === 0) {
+        throw new Error("No hay elementos para mostrar");
       }
-    });
-  }, [staticItems]);
-  useEffect(() => {
-    if (!staticItems) return;
-    const interval = setInterval(() => {
-      if (isAnimatingRef.current) return;
-      const next = (activeIndexRef.current + 1) % items.length;
-      goToIndex(next);
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [items.length, staticItems]);
+
+      setItems(itemsData);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  fetchItems();
+}, [endpoint]);
 
   const scrollBy = (delta) => {
     scrollerRef.current?.scrollBy({ left: delta, behavior: "smooth" });

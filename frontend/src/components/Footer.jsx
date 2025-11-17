@@ -67,7 +67,7 @@ const Footer = () => {
             ></img>
           </div>
 
-          {/* Quick Links + Categorias - CORREGIDO */}
+          {/* Quick Links + Categorias */}
           <div className="w-full lg:w-2/6 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 pb-4 md:pb-7">
             {/* Quick Links */}
             <div className="lg:w-1/6 pb-4 md:pb-7">
