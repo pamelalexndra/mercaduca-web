@@ -9,9 +9,7 @@ export default function Card({ e, p }) {
   const image = data.imagen || productPlaceholder;
   const name = data.nombre || (isProduct ? "Producto" : "Emprendimiento");
   const price = data.precio;
-  const link = isProduct
-    ? `/detalle/${data.id}`
-    : `/emprendimiento/${data.id}`;
+  const link = isProduct ? `/detalle/${data.id}` : `/emprendimiento/${data.id}`;
 
   return (
     <Link to={link}>
@@ -34,10 +32,11 @@ export default function Card({ e, p }) {
         {/* Contenido */}
         <div className="p-3 pt-5 font-montserrat text-[12px]">
           <h3
-            className={`${isProduct
+            className={`${
+              isProduct
                 ? "flex items-center justify-between"
                 : "text-center truncate"
-              } font-semibold text-zinc-900 leading-tight`}
+            } font-semibold text-zinc-900 leading-tight`}
           >
             <span>{name}</span>
             {isProduct && (

@@ -21,7 +21,7 @@ export default function Landing() {
       navigate(`/catalog?categories=${categoriesParam}`);
     } else {
       // Si no hay categorías seleccionadas, ir al catálogo sin filtros
-      navigate('/catalog');
+      navigate("/catalog");
     }
   };
 

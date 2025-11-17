@@ -18,8 +18,7 @@ export default function Map({
     /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   const isAndroid =
-    typeof navigator !== "undefined" &&
-    /Android/i.test(navigator.userAgent);
+    typeof navigator !== "undefined" && /Android/i.test(navigator.userAgent);
 
   const openNavigation = () => {
     let url = "";
@@ -46,17 +45,15 @@ export default function Map({
       style: "https://tiles.stadiamaps.com/styles/alidade_smooth.json",
       center: [lng, lat],
       zoom: 15,
-      attributionControl: false
+      attributionControl: false,
     });
 
     map.current.addControl(
-    new maplibregl.AttributionControl({ compact: true }),
-    "top-left"
-    )
+      new maplibregl.AttributionControl({ compact: true }),
+      "top-left"
+    );
 
-    new maplibregl.Marker()
-      .setLngLat([lng, lat])
-      .addTo(map.current);
+    new maplibregl.Marker().setLngLat([lng, lat]).addTo(map.current);
 
     return () => {
       if (map.current) {
@@ -67,39 +64,39 @@ export default function Map({
   }, []);
 
   return (
-  <div className="relative">
-    <div
-      id="map"
-      ref={mapContainer}
-      className="w-full h-[400px] rounded-xl"
-    ></div>
+    <div className="relative">
+      <div
+        id="map"
+        ref={mapContainer}
+        className="w-full h-[400px] rounded-xl"
+      ></div>
 
-    <button
-      onClick={openNavigation}
-      className="absolute bottom-4 right-4 
+      <button
+        onClick={openNavigation}
+        className="absolute bottom-4 right-4 
         flex items-center gap-2
         bg-[#557051] hover:bg-[#465e44]
         text-white px-5 py-3 rounded-full
         font-semibold shadow-lg hover:shadow-xl
         backdrop-blur-md bg-opacity-90
         transition-all duration-300"
-    >
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        className="h-5 w-5 animate-pulse"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
       >
-        <path
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          strokeWidth={2}
-          d="M12 2l7 19-7-4-7 4 7-19z"
-        />
-      </svg>
-      Cómo llegar
-    </button>
-  </div>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          className="h-5 w-5 animate-pulse"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 2l7 19-7-4-7 4 7-19z"
+          />
+        </svg>
+        Cómo llegar
+      </button>
+    </div>
   );
 }

@@ -6,13 +6,14 @@ import useProducts from "../hooks/useProducts";
 
 export default function Catalog({ onGoHome }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { filteredProducts, loading, error, fetchProducts, resetOrFetchAll } = useProducts();
+  const { filteredProducts, loading, error, fetchProducts, resetOrFetchAll } =
+    useProducts();
 
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [visibleProductsCount, setVisibleProductsCount] = useState(10);
 
-  // Carga inicial / lectura de params 
   useEffect(() => {
     const urlSearch = searchParams.get("search");
     const urlCategories = searchParams.get("categories");
@@ -44,12 +45,18 @@ export default function Catalog({ onGoHome }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, isInitialLoad]);
 
-  // Manejar filtrado por categorías (usa resetOrFetchAll para el caso "vacío")
+  // Resetear contador cuando cambian los filtros
+  useEffect(() => {
+    setVisibleProductsCount(10);
+  }, [selectedCategories, searchTerm]);
+
+  // Manejar filtrado por categorías
   const handleCategoryFilter = (categoryIds) => {
     setSelectedCategories(categoryIds);
 
     const newSearchParams = new URLSearchParams(searchParams);
-    if (categoryIds.length > 0) newSearchParams.set("categories", categoryIds.join(","));
+    if (categoryIds.length > 0)
+      newSearchParams.set("categories", categoryIds.join(","));
     else newSearchParams.delete("categories");
     setSearchParams(newSearchParams);
 
@@ -77,6 +84,21 @@ export default function Catalog({ onGoHome }) {
 
     fetchProducts(selectedCategories, search);
   };
+
+  // Función para cargar más productos
+  const handleLoadMore = () => {
+    setVisibleProductsCount((prevCount) => prevCount + 10);
+  };
+
+  const handleGoHome = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (onGoHome) {
+      onGoHome();
+    }
+  };
+
+  // Obtener solo los productos visibles
+  const visibleProducts = filteredProducts.slice(0, visibleProductsCount);
 
   if (loading) {
     return (
@@ -117,27 +139,40 @@ export default function Catalog({ onGoHome }) {
           <div className="mt-4 text-center text-sm text-zinc-600">
             {searchTerm && `Búsqueda: "${searchTerm}"`}
             {searchTerm && selectedCategories.length > 0 && " • "}
-            {selectedCategories.length > 0 && `Filtrado por ${selectedCategories.length} categoría(s)`}
+            {selectedCategories.length > 0 &&
+              `Filtrado por ${selectedCategories.length} categoría(s)`}
           </div>
         )}
       </section>
 
       <section className="mx-auto max-w-6xl px-6 pb-16">
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-5">
-          {filteredProducts.map((p) => (
+          {visibleProducts.map((p) => (
             <ProductCard key={p.id} p={p} />
           ))}
         </div>
 
         {filteredProducts.length === 0 && !loading && (
-          <div className="text-center py-8 text-zinc-500">No se encontraron productos</div>
+          <div className="text-center py-8 text-zinc-500">
+            No se encontraron productos
+          </div>
         )}
 
         <div className="mt-10 flex flex-col items-center gap-4">
-          <button className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium hover:bg-zinc-100 transition">
-            Ver más
-          </button>
-          <button onClick={onGoHome} className="text-sm text-zinc-600 hover:text-zinc-800">
+          {/* Mostrar botón "Ver más" solo si hay más productos por mostrar */}
+          {visibleProducts.length < filteredProducts.length && (
+            <button
+              onClick={handleLoadMore}
+              className="rounded-xl border border-zinc-300 px-5 py-2.5 text-sm font-medium hover:bg-zinc-100 transition"
+            >
+              Ver más
+            </button>
+          )}
+
+          <button
+            onClick={handleGoHome}
+            className="text-sm text-zinc-600 hover:text-zinc-800"
+          >
             Regresar a Inicio
           </button>
         </div>

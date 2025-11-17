@@ -16,7 +16,7 @@ export default function ArrowButton({ onClick, dir }) {
       "
       aria-label={dir === "prev" ? "Anterior" : "Siguiente"}
     >
-      <Icon className="w-4.5 h-4.5" /> 
+      <Icon className="w-4.5 h-4.5" />
     </button>
   );
 }
