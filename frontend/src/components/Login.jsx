@@ -61,8 +61,12 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
       }
 
       if (data.success) {
-        const user = data.user;
+        const { user, token } = data; // Recibimos user y token
 
+        // GUARDAR EL TOKEN
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        
         if (!user || !user.id) {
           throw new Error("El usuario no tiene ID en la respuesta");
         }
