@@ -12,7 +12,7 @@ export default function SearchBox({
   initialSelectedCategories = [],
   initialSearchTerm = "",
 }) {
-  const { categories, loading, error } = useCategories();
+  const { categories, loading, error } = useCategories(true); // 'true' para categorias con productos
   const [filterOpen, setFilterOpen] = useState(false);
 
   // Estado interno local

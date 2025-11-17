@@ -6,7 +6,7 @@
  * @returns {Object} { query, params, filtrosAplicados }
  */
 export const buildEntrepreneurshipQuery = (filtros) => {
-    const { ids, ordenar = "fecha_desc", search } = filtros;
+    const { ids, ordenar = "fecha_desc", search, limit } = filtros;
 
     // 1. Consulta Base
     let sqlParts = [
@@ -70,6 +70,13 @@ export const buildEntrepreneurshipQuery = (filtros) => {
     const clausulaOrden = ordenamientos[ordenar] || ordenamientos.fecha_desc;
     sqlParts.push(`ORDER BY ${clausulaOrden}`);
     filtrosAplicados.ordenamiento = ordenar;
+
+    // 5. Limit 
+    if (limit && !isNaN(parseInt(limit))) {
+        sqlParts.push(` LIMIT ${getNextIndex()}`);
+        params.push(parseInt(limit));
+        filtrosAplicados.limit = parseInt(limit);
+    }
 
     return {
         query: sqlParts.join(" "),
