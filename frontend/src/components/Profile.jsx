@@ -3,27 +3,29 @@ import { useNavigate } from "react-router-dom";
 import ProductCard from "./Card";
 import ProductForm from "./ProductForm";
 import EditProfile from "./EditProfile";
+import logoVerde from "../images/logoVerde.png";
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
-const PROFILE_PLACEHOLDER = "https://via.placeholder.com/160";
+const PROFILE_PLACEHOLDER = logoVerde;
 
-export default function Profile(user, onProfileLoader) {
+export default function Profile({ user, onProfileLoaded }) {
   const [showModal, setShowModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [productoEdit, setProductoEdit] = useState(null);
 
-  const [emprendimiento, setEmprendimiento] = useState(null);
+  const [emprendimiento, setEmprendimiento] = useState({});
   const [productos, setProductos] = useState([]);
   const [currentUser, setCurrentUser] = useState(() => {
     if (user) return user;
     const stored = localStorage.getItem("user");
     return stored ? JSON.parse(stored) : null;
   });
-    const [loadingProfile, setLoadingProfile] = useState(true);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [loadingProductos, setLoadingProductos] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
-   const fetchProductos = useCallback(async (emprendimientoId) => {
+  const fetchProductos = useCallback(async (emprendimientoId) => {
     setLoadingProductos(true);
     try {
       const response = await fetch(
@@ -65,7 +67,7 @@ export default function Profile(user, onProfileLoader) {
               correo: profileData.correo,
               telefono: profileData.telefono,
             }
-          : null;
+          : {};
 
         setEmprendimiento(normalizedEmprendimiento);
 
@@ -82,9 +84,7 @@ export default function Profile(user, onProfileLoader) {
         const updatedUser = { ...baseUser, profile: profileData };
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setCurrentUser(updatedUser);
-        if (onProfileLoaded) {
-          onProfileLoaded(updatedUser);
-        }
+        onProfileLoaded?.(updatedUser);
 
         if (profileData?.emprendimiento?.id_emprendimiento) {
           await fetchProductos(profileData.emprendimiento.id_emprendimiento);
@@ -111,7 +111,17 @@ export default function Profile(user, onProfileLoader) {
 
     setCurrentUser(storedUser);
     loadProfile(storedUser.id, storedUser);
-  }, [user, loadProfile, navigate]);
+  }, []);
+
+  if (loadingProfile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
+        <p className="text-gray-500 text-sm font-semibold">
+          Cargando tu perfil...
+        </p>
+      </div>
+    );
+  }
 
   const profileImage = emprendimiento?.imagen_url || PROFILE_PLACEHOLDER;
   const emprendimientoNombre =
@@ -137,16 +147,13 @@ export default function Profile(user, onProfileLoader) {
 
   const handleSubmit = (data) => {
     if (productoEdit) {
-      // Actualizar producto existente
       const productosActualizados = productos.map((p) =>
         p.id === productoEdit.id
           ? { ...p, ...data, precio: data.precio }
           : p
       );
       setProductos(productosActualizados);
-      console.log("Producto actualizado:", data);
     } else {
-      // Agregar nuevo producto
       const nuevoProducto = {
         id: Date.now(),
         ...data,
@@ -154,21 +161,15 @@ export default function Profile(user, onProfileLoader) {
         disponible: true,
       };
       setProductos([...productos, nuevoProducto]);
-      console.log("Producto agregado:", nuevoProducto);
     }
     setShowModal(false);
   };
 
   const handleEliminarProducto = (producto) => {
-    if (
-      window.confirm(
-        `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`
-      )
-    ) {
+    if (window.confirm(`¿Estás seguro de que quieres eliminar "${producto.nombre}"?`)) {
       const productosFiltrados = productos.filter((p) => p.id !== producto.id);
       setProductos(productosFiltrados);
       setShowModal(false);
-      console.log("Producto eliminado:", producto.nombre);
     }
   };
 
@@ -177,7 +178,7 @@ export default function Profile(user, onProfileLoader) {
       ...prev,
       ...datos,
     }));
-     setCurrentUser((prevUser) => {
+    setCurrentUser((prevUser) => {
       if (!prevUser) return prevUser;
 
       const { nombres, apellidos, correo, telefono, ...emprendimientoDatos } = datos;
@@ -202,29 +203,20 @@ export default function Profile(user, onProfileLoader) {
       return mergedUser;
     });
   };
-   if (loadingProfile) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
-        <p className="text-gray-500 text-sm font-semibold">
-          Cargando tu perfil...
-        </p>
-      </div>
-    );
-  }
 
   return (
     <>
       <div className="min-h-screen bg-white font-montserrat">
-        {/* Header del perfil*/}
+        {/* Header */}
         <div className="max-w-4xl mx-auto px-4 py-8">
-           {error && (
+          {error && (
             <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
               {error}
             </div>
           )}
-          {/* Desktop Layout */}
+
+          {/* Desktop */}
           <div className="hidden md:flex md:items-center md:gap-20 mb-11">
-            {/* Foto de perfil */}
             <div className="flex-shrink-0">
               <img
                 src={profileImage}
@@ -233,9 +225,7 @@ export default function Profile(user, onProfileLoader) {
               />
             </div>
 
-            {/* Info del perfil */}
             <div className="flex-1">
-              {/* Username y botones */}
               <div className="flex items-center gap-5 mb-5">
                 <h1 className="text-xl font-normal text-gray-900">
                   {emprendimientoNombre}
@@ -254,7 +244,6 @@ export default function Profile(user, onProfileLoader) {
                 </button>
               </div>
 
-              {/* Estadísticas */}
               <div className="flex gap-10 mb-5">
                 <div className="flex gap-1">
                   <span className="font-semibold text-gray-900">
@@ -264,9 +253,8 @@ export default function Profile(user, onProfileLoader) {
                 </div>
               </div>
 
-              {/* Bio */}
               <div className="text-sm space-y-2">
-                {emprendimiento.descripcion && (
+                {emprendimientoDescripcion && (
                   <p className="text-gray-900 whitespace-pre-wrap">
                     {emprendimientoDescripcion}
                   </p>
@@ -293,18 +281,15 @@ export default function Profile(user, onProfileLoader) {
             </div>
           </div>
 
-          {/* Mobile Layout */}
+          {/* Mobile */}
           <div className="md:hidden">
-            {/* Top section */}
             <div className="flex items-center gap-4 mb-4 px-4">
-              {/* Foto de perfil */}
               <img
                 src={profileImage}
                 alt={emprendimientoNombre}
                 className="w-20 h-20 rounded-full object-cover border"
               />
 
-              {/* Estadísticas */}
               <div className="flex-1 flex items-center justify-start text-left ml-4">
                 <div>
                   <div className="font-semibold text-gray-900">
@@ -315,7 +300,6 @@ export default function Profile(user, onProfileLoader) {
               </div>
             </div>
 
-            {/* Bio */}
             <div className="px-4 mb-4 text-sm space-y-2">
               <p className="font-semibold text-gray-900">
                 {emprendimientoNombre}
@@ -323,11 +307,11 @@ export default function Profile(user, onProfileLoader) {
 
               {emprendimientoDescripcion && (
                 <p className="text-gray-900 whitespace-pre-wrap">
-                  {emprendimiento.descripcion}
+                  {emprendimientoDescripcion}
                 </p>
               )}
 
-              {emprendimiento.mercado_presencial && (
+              {emprendimiento?.mercado_presencial && (
                 <div className="flex items-center gap-2 text-gray-700 text-xs">
                   <svg
                     className="w-4 h-4"
@@ -365,13 +349,12 @@ export default function Profile(user, onProfileLoader) {
                     viewBox="0 0 24 24"
                   >
                     <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
-                  </svg>
-                  {instagramLabel || instagramValue}
-                </a>
+                    </svg>
+                    {instagramLabel || instagramValue}
+                  </a>
               )}
             </div>
 
-            {/* Botones */}
             <div className="px-4 flex gap-3">
               <button
                 onClick={() => setShowEditProfileModal(true)}
@@ -388,14 +371,14 @@ export default function Profile(user, onProfileLoader) {
             </div>
           </div>
 
-          {/* Separador */}
+          {/* Divider */}
           <div className="border-t border-gray-300 mt-11"></div>
 
           <div className="flex justify-center">
             <p className="text-sm font-semibold mt-8 pb-4">Productos</p>
           </div>
 
-          {/* Grid de productos */}
+          {/* Productos */}
           {loadingProductos ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
               <p className="text-sm font-semibold">Cargando tus productos...</p>

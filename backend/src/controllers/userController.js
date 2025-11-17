@@ -27,7 +27,7 @@ export const create = async (userData) => {
       `
       INSERT INTO Usuarios (Usuario, Contraseña, id_emprendedor)
       VALUES ($1, $2, $3)
-      RETURNING id_usuario, Usuario
+      RETURNING id_usuario, Usuario AS username
     `,
       [userData.username, hashedPassword, idEmprendedor]
     );
@@ -46,8 +46,8 @@ export const findByUsername = async (username) => {
   try {
     const result = await pool.query(
       `
-      SELECT id_usuario, Usuario as username, Contraseña AS password, Registro_usuario 
-      FROM Usuarios 
+      SELECT id_usuario, Usuario as username, Contraseña AS password
+      FROM Usuarios
       WHERE Usuario = $1
     `,
       [username]
@@ -68,21 +68,21 @@ export const getUserProfile = async (req, res) => {
   try {
     const result = await pool.query(
       `
-        SELECT 
+        SELECT
           u.id_usuario,
-          u.Usuario AS username, 
-          ed.id_emprendedor, 
-          ed.Nombres AS emprendedor_nombres, 
-          ed.Apellidos AS emprendedor_apellidos, 
-          ed.Correo AS correo, 
+          u.Usuario AS username,
+          ed.id_emprendedor,
+          ed.Nombres AS nombres,
+          ed.Apellidos AS apellidos,
+          ed.Correo AS correo,
           ed.Telefono AS telefono,
           ed.id_emprendimiento,
-          em.id_emprendimiento,
-          em.Nombre AS emprendimiento_nombre
-          em.Descripcion AS emprendimiento_descripcion
-          em.Imagen_url AS emprendimiento_imagen_url
-          em.Instagram AS emprendimiento_instagram
-          em.Disponible AS emprendimiento_disponible
+          em.id_emprendimiento AS emprendimiento_id,
+          em.Nombre AS emprendimiento_nombre,
+          em.Descripcion AS emprendimiento_descripcion,
+          em.Imagen_url AS emprendimiento_imagen_url,
+          em.Instagram AS emprendimiento_instagram,
+          em.Disponible AS emprendimiento_disponible,
           em.id_categoria AS emprendimiento_id_categoria
         FROM Usuarios u
         INNER JOIN Emprendedor ed ON u.id_emprendedor = ed.id_emprendedor
@@ -109,15 +109,15 @@ export const getUserProfile = async (req, res) => {
       apellidos: row.apellidos,
       correo: row.correo,
       telefono: row.telefono,
-      emprendimiento: row.id_emprendimiento
+      emprendimiento: row.emprendimiento_id
         ? {
-          id_emprendimiento: row.id_emprendimiento,
+          id_emprendimiento: row.emprendimiento_id,
           nombre: row.emprendimiento_nombre,
           descripcion: row.emprendimiento_descripcion,
-          imagen_url: row.emprendimiento_imagen,
+          imagen_url: row.emprendimiento_imagen_url,
           instagram: row.emprendimiento_instagram,
           disponible: row.emprendimiento_disponible,
-          id_categoria: row.emprendimiento_categoria,
+          id_categoria: row.emprendimiento_id_categoria,
         }
         : null,
     };

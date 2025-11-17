@@ -58,7 +58,7 @@ export default function App() {
         <Route path="/sobreNosotros" element={<AboutUs />} />
         <Route path="/detalle/:id" element={<ProductDetailPage />} />
         <Route path="/vender" element={<Login onLoginSuccess={handleLoginSuccess}/>} />
-        <Route path="/perfil" element={<Profile user={currentUser} onProfileLoader={handleProfileLoaded}/>} />
+        <Route path="/perfil" element={<Profile user={currentUser} onProfileLoaded={handleProfileLoaded}/>} />
         <Route path="/registrar" element={<Register />} />
         <Route path="/forbidden" element={<Forbidden />} />
         <Route path="/bad-request" element={<BadRequest />} />

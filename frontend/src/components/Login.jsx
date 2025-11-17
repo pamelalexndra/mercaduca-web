@@ -33,15 +33,14 @@ const Login = ({ onLoginSuccess }) => {
         throw new Error("No se pudo obtener el perfil del usuario");
       }
 
-      const profiePayload = await profileResponse.json();
-
-      const profileData = profiePayload.profile || profilePayload;
+      const profilePayload = await profileResponse.json();
+      const profileData = profilePayload.profile || profilePayload;
 
       enrichedUser = { ...user, profile: profileData };
     } catch (profileError) {
       console.error("Error al obtener el perfil del usuario:", profileError);
     }
-      const userDetails = await response.json();
+
     localStorage.setItem("user", JSON.stringify(enrichedUser));
     localStorage.setItem("isAuthenticated", "true");
 
