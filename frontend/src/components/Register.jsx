@@ -47,7 +47,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   // Función para registrar usuario con fetch
   const registerUser = async (userData) => {
     try {
-      const response = await fetch(`${API_BASE_URL}/register`, {
+      const response = await fetch(`${API_BASE_URL}/signUp`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
