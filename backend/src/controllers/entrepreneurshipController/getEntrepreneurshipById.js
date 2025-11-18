@@ -1,14 +1,14 @@
 import pool from "../../database/connection.js";
 
 export const getEntrepreneurshipById = async (req, res) => {
-    const { id } = req.params;
+  const { id } = req.params;
 
-    if (!id || isNaN(id)) {
-        return res.status(400).json({ error: "ID de emprendimiento inválido" });
-    }
+  if (!id || isNaN(id)) {
+    return res.status(400).json({ error: "ID de emprendimiento inválido" });
+  }
 
-    try {
-        const query = `
+  try {
+    const query = `
       SELECT 
         e.id_emprendimiento,
         e.nombre, 
@@ -24,18 +24,18 @@ export const getEntrepreneurshipById = async (req, res) => {
       LIMIT 1;
     `;
 
-        const result = await pool.query(query, [id]);
+    const result = await pool.query(query, [id]);
 
-        if (result.rows.length === 0) {
-            return res.status(404).json({ error: "Emprendimiento no encontrado" });
-        }
-
-        res.json(result.rows[0]);
-    } catch (error) {
-        console.error("Error al obtener el emprendimiento:", error);
-        res.status(500).json({
-            error: "Error al obtener emprendimiento",
-            details: error.message,
-        });
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: "Emprendimiento no encontrado" });
     }
+
+    res.json(result.rows[0]);
+  } catch (error) {
+    console.error("Error al obtener el emprendimiento:", error);
+    res.status(500).json({
+      error: "Error al obtener emprendimiento",
+      details: error.message,
+    });
+  }
 };

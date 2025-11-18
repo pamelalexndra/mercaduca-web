@@ -4,18 +4,18 @@ export const createEntrepreneurship = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const { 
-      nombre, 
-      descripcion, 
-      imagen_url, 
-      instagram, 
-      id_categoria, 
-      id_usuario // ID del usuario para vincularlo
+    const {
+      nombre,
+      descripcion,
+      imagen_url,
+      instagram,
+      id_categoria,
+      id_usuario, // ID del usuario para vincularlo
     } = req.body;
 
     // Iniciar transacción
     await client.query("BEGIN");
-    
+
     if (!nombre) {
       await client.query("ROLLBACK");
       return res.status(400).json({ error: "El campo nombre es requerido" });
@@ -36,7 +36,9 @@ export const createEntrepreneurship = async (req, res) => {
 
     if (!emprendedorData || !emprendedorData.id_emprendedor) {
       await client.query("ROLLBACK");
-      return res.status(404).json({ error: "Usuario no es un emprendedor válido o no existe" });
+      return res
+        .status(404)
+        .json({ error: "Usuario no es un emprendedor válido o no existe" });
     }
 
     const idEmprendedor = emprendedorData.id_emprendedor;
@@ -60,7 +62,7 @@ export const createEntrepreneurship = async (req, res) => {
         descripcion?.trim() || "",
         imagen_url?.trim() || "",
         instagram?.trim() || "",
-        true, 
+        true,
       ]
     );
 
@@ -79,18 +81,21 @@ export const createEntrepreneurship = async (req, res) => {
       message: "Emprendimiento creado y vinculado exitosamente",
       emprendimiento: emprendimientoCreado,
     });
-
   } catch (error) {
     await client.query("ROLLBACK");
     console.error("Error creando emprendimiento:", error);
 
     // Manejo de errores específicos de Postgres
     if (error.code === "23503") {
-      return res.status(400).json({ error: "Categoría no válida o referencia incorrecta" });
+      return res
+        .status(400)
+        .json({ error: "Categoría no válida o referencia incorrecta" });
     }
 
     if (error.code === "23505") {
-      return res.status(400).json({ error: "Ya existe un emprendimiento con ese nombre" });
+      return res
+        .status(400)
+        .json({ error: "Ya existe un emprendimiento con ese nombre" });
     }
 
     res.status(500).json({ error: "Error interno del servidor" });

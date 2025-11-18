@@ -12,7 +12,9 @@ export const updateProductPartial = async (req, res) => {
     }
 
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({ error: "No se proporcionaron campos para actualizar" });
+      return res
+        .status(400)
+        .json({ error: "No se proporcionaron campos para actualizar" });
     }
 
     // 2. Usar la utilidad para construir la query
@@ -20,7 +22,9 @@ export const updateProductPartial = async (req, res) => {
 
     // Si count es 0, significa que enviaron campos en el body, pero ninguno era válido (ej: enviaron { "campo_falso": 1 })
     if (count === 0) {
-      return res.status(400).json({ error: "No hay campos válidos para actualizar" });
+      return res
+        .status(400)
+        .json({ error: "No hay campos válidos para actualizar" });
     }
 
     // 3. Ejecutar Query
@@ -34,7 +38,6 @@ export const updateProductPartial = async (req, res) => {
       message: "Producto actualizado exitosamente",
       producto: result.rows[0],
     });
-
   } catch (error) {
     console.error("Error actualizando producto:", error);
     res.status(500).json({ error: "Error interno del servidor" });

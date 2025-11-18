@@ -1,13 +1,13 @@
 import pool from "../../database/connection.js";
 
 export const getProfiles = async (req, res) => {
-    try {
-        // Obtenemos el parámetro de orden (por defecto, mas recientes primero)
-        const { orden } = req.query;
+  try {
+    // Obtenemos el parámetro de orden (por defecto, mas recientes primero)
+    const { orden } = req.query;
 
-        const sortOrder = (orden && orden.toUpperCase() === 'ASC') ? 'ASC' : 'DESC';
+    const sortOrder = orden && orden.toUpperCase() === "ASC" ? "ASC" : "DESC";
 
-        const query = `
+    const query = `
       SELECT 
         u.id_usuario, 
         u.Usuario, 
@@ -24,15 +24,14 @@ export const getProfiles = async (req, res) => {
       ORDER BY ed.Fecha_registro ${sortOrder}
     `;
 
-        const result = await pool.query(query);
+    const result = await pool.query(query);
 
-        res.json({
-            perfiles: result.rows,
-            total: result.rows.length
-        });
-
-    } catch (error) {
-        console.error("Error obteniendo listado de perfiles:", error);
-        res.status(500).json({ error: "Error interno del servidor" });
-    }
+    res.json({
+      perfiles: result.rows,
+      total: result.rows.length,
+    });
+  } catch (error) {
+    console.error("Error obteniendo listado de perfiles:", error);
+    res.status(500).json({ error: "Error interno del servidor" });
+  }
 };

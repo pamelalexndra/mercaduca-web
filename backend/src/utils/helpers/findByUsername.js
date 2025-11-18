@@ -9,8 +9,7 @@ export const findByUsername = async (username) => {
         u.id_usuario, 
         u.Usuario, 
         u.Contraseña, 
-        u.Registro_usuario,
-        e.Activo  
+        u.Registro_usuario
       FROM Usuarios u
       JOIN Emprendedor e ON u.id_emprendedor = e.id_emprendedor
       WHERE u.Usuario = $1

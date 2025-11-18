@@ -5,9 +5,7 @@ import { buildProductQuery } from "../../utils//builders/productQueryBuilder.js"
 export const getProducts = async (req, res) => {
   try {
     // 1. Delegamos la construcción compleja a la utilidad
-    const { query, params, filtrosAplicados } = buildProductQuery(
-      req.query
-    );
+    const { query, params, filtrosAplicados } = buildProductQuery(req.query);
 
     // 2. Ejecutar la consulta
     const result = await pool.query(query, params);

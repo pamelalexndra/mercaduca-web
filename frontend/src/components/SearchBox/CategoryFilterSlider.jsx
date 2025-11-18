@@ -9,8 +9,33 @@ export default function CategoryDropdown({
   loading,
   error,
 }) {
+  const scrollContainerRef = React.useRef(null);
+
   // Helper para verificar selección
   const isSelected = (id) => selectedCategoryIds.includes(id);
+
+  // Manejar scroll horizontal con rueda del ratón
+  React.useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container || !isOpen) return;
+
+    const handleWheel = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      // Multiplicador para hacer el scroll más rápido
+      container.scrollLeft += e.deltaY * 2;
+    };
+
+    // Pequeño delay para asegurar que el DOM está listo
+    const timer = setTimeout(() => {
+      container.addEventListener('wheel', handleWheel, { passive: false });
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      container.removeEventListener('wheel', handleWheel);
+    };
+  }, [isOpen, categories.length]);
 
   return (
     <div
@@ -29,20 +54,23 @@ export default function CategoryDropdown({
         )}
 
         {!loading && !error && (
-          <div className="flex gap-2 overflow-x-auto scroll-smooth pb-2 no-scrollbar">
+          <div 
+            ref={scrollContainerRef}
+            className="flex gap-2 overflow-x-auto scroll-smooth pb-2 no-scrollbar"
+          >
             {categories.map((category, i) => (
               <button
                 key={category.id_categoria || i}
                 type="button"
                 onClick={() => onToggleCategory(category)}
                 className={`
-                                    flex-shrink-0 px-4 py-2 text-sm rounded-full border transition-all duration-200
-                                    ${
-                                      isSelected(category.id_categoria)
-                                        ? "bg-[#557051] text-white border-[#557051]"
-                                        : "border-zinc-300 text-zinc-700 hover:bg-[#557051]/10 hover:text-[#557051]"
-                                    }
-                                `}
+                  flex-shrink-0 px-4 py-2 text-sm rounded-full border transition-all duration-200
+                  ${
+                    isSelected(category.id_categoria)
+                      ? "bg-[#557051] text-white border-[#557051]"
+                      : "border-zinc-300 text-zinc-700 hover:bg-[#557051]/10 hover:text-[#557051]"
+                  }
+                `}
               >
                 {category.categoria || category}
               </button>
