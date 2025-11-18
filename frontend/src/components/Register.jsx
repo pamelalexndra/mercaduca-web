@@ -24,10 +24,6 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   const API_BASE_URL = "http://localhost:5000/api/auth";
 
   const handleRegisterSuccess = () => {
-    // Guardar token y usuario en localStorage
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(user));
-    localStorage.setItem("isAuthenticated", "true");
 
     // Limpiar el formulario
     setFormData({
@@ -249,7 +245,11 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       if (response.data.success) {
         // Extraemos user y token de la respuesta del backend
         const { user, token } = response.data;
-        handleRegisterSuccess(user, token);
+        // Guardar token y usuario en localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("isAuthenticated", "true");
+        handleRegisterSuccess();
       }
     } catch (error) {
       setError(error.message || "Error al registrar usuario");
