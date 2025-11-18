@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import useCategories from "../hooks/useCategories";
 import {
   ChevronLeft,
   ChevronRight,
@@ -21,23 +22,10 @@ export default function ProductForm({
   const [descripcion, setDescripcion] = useState("");
   const [imagenes, setImagenes] = useState([]);
   const [previewIndex, setPreviewIndex] = useState(0);
-  const [categorias, setCategorias] = useState([]);
+  const { categories: categorias } = useCategories();
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef();
   const modalRef = useRef();
-
-  useEffect(() => {
-    const fetchCategorias = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/categories");
-        const data = await res.json();
-        setCategorias(data || []);
-      } catch (error) {
-        console.error("Error al obtener categorías:", error);
-      }
-    };
-    fetchCategorias();
-  }, []);
 
   useEffect(() => {
     if (producto) {
@@ -259,11 +247,11 @@ export default function ProductForm({
               </option>
               {categorias.map((cat) => (
                 <option
-                  key={cat.id}
-                  value={cat.nombre}
+                  key={cat.id_categoria}
+                  value={cat.categoria}
                   className="text-zinc-800"
                 >
-                  {cat.nombre}
+                  {cat.categoria}
                 </option>
               ))}
             </select>
