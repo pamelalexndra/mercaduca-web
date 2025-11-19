@@ -1,13 +1,18 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import chicaFondoLogin from "../images/chicaFondoLogin.png";
 
-const Login = ({ onLoginSuccess, switchToRegister }) => {
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+
+const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
@@ -16,19 +21,57 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
     });
   };
 
+  const handleLoginSuccess = async (user) => {
+    // Guardar información del usuario en localStorage
+    let enrichedUser = user;
+
+    try {
+      const profileResponse = await fetch(
+        `${API_BASE_URL}/api/user/profile/${user.id}`
+      );
+
+      if (!profileResponse.ok) {
+        throw new Error("No se pudo obtener el perfil del usuario");
+      }
+
+      const profilePayload = await profileResponse.json();
+      const profileData = profilePayload.profile || profilePayload;
+
+      enrichedUser = { ...user, profile: profileData };
+    } catch (profileError) {
+      console.error("Error al obtener el perfil del usuario:", profileError);
+    }
+
+    localStorage.setItem("user", JSON.stringify(enrichedUser));
+    localStorage.setItem("isAuthenticated", "true");
+
+    // Guardar token si viene en la respuesta
+    if (enrichedUser.token) {
+      localStorage.setItem("token", enrichedUser.token);
+    }
+
+    // Ejecutar el callback proporcionado por el padre (si existe)
+    if (onLoginSuccess) {
+      onLoginSuccess(enrichedUser);
+    }
+
+    // Redirigir al perfil
+    navigate("/perfil");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch("http://localhost:5000/api/auth/login", {
+      const response = await fetch("http://localhost:5000/api/auth/logIn", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          username: formData.username, 
+          username: formData.username,
           password: formData.password,
         }),
       });
@@ -40,13 +83,18 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
       }
 
       if (data.success) {
-        const user = data.user;
+        const { user, token } = data; // Recibimos user y token
+
+        // Guardar token y usuario en localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("isAuthenticated", "true");
 
         if (!user || !user.id) {
           throw new Error("El usuario no tiene ID en la respuesta");
         }
 
-        onLoginSuccess(user);
+        handleLoginSuccess(user);
       } else {
         throw new Error(data.message || "Error en el login");
       }
@@ -56,6 +104,11 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Función para manejar el registro
+  const handleRegisterClick = () => {
+    navigate("/registrar");
   };
 
   return (
@@ -76,7 +129,7 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
               <input
                 type="text"
                 name="username"
-                value={formData.username} 
+                value={formData.username}
                 onChange={handleChange}
                 required
                 placeholder="Ingrese su usuario"
@@ -118,13 +171,13 @@ const Login = ({ onLoginSuccess, switchToRegister }) => {
               {loading ? "Iniciando sesión..." : "Iniciar sesión"}
             </button>
           </form>
-          
+
           <p className="text-sm text-gray-700 mt-4 font-montserrat">
             ¿Quieres vender?{" "}
             <button
               type="button"
               className="text-[#2563EB] font-semibold hover:underline bg-transparent border-none cursor-pointer"
-              onClick={switchToRegister}
+              onClick={handleRegisterClick}
             >
               Regístrate
             </button>

@@ -9,7 +9,7 @@ export function useEmprendimiento(id) {
   useEffect(() => {
     if (!id) return;
 
-    fetch(`${import.meta.env.VITE_API_URL}/api/emprendimientos/${id}`)
+    fetch(`${import.meta.env.VITE_API_URL}/api/entrepreneurship/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("No se pudo obtener el emprendimiento");
         return res.json();

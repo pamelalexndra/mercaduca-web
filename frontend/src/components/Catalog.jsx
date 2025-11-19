@@ -12,7 +12,7 @@ export default function Catalog({ onGoHome }) {
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [visibleProductsCount, setVisibleProductsCount] = useState(10);
+  const [visibleProductsCount, setVisibleProductsCount] = useState(20);
 
   useEffect(() => {
     const urlSearch = searchParams.get("search");
@@ -47,7 +47,7 @@ export default function Catalog({ onGoHome }) {
 
   // Resetear contador cuando cambian los filtros
   useEffect(() => {
-    setVisibleProductsCount(10);
+    setVisibleProductsCount(20);
   }, [selectedCategories, searchTerm]);
 
   // Manejar filtrado por categorías
@@ -87,7 +87,7 @@ export default function Catalog({ onGoHome }) {
 
   // Función para cargar más productos
   const handleLoadMore = () => {
-    setVisibleProductsCount((prevCount) => prevCount + 10);
+    setVisibleProductsCount((prevCount) => prevCount + 20);
   };
 
   const handleGoHome = () => {

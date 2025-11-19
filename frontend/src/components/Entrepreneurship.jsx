@@ -10,7 +10,7 @@ export default function Emprendedores({ onGoHome }) {
   const fetchEmprendimientos = async () => {
     try {
       setError(null);
-      const response = await fetch("http://localhost:5000/api/emprendimientos");
+      const response = await fetch("http://localhost:5000/api/entrepreneurship");
       if (!response.ok) throw new Error("Error al cargar los emprendimientos");
       const data = await response.json();
 
@@ -75,7 +75,7 @@ export default function Emprendedores({ onGoHome }) {
 
         {emprendimientos.length === 0 && !loading && (
           <div className="text-center py-8 text-zinc-500">
-            No se encontraron productos
+            No se encontraron emprendimientos
           </div>
         )}
 

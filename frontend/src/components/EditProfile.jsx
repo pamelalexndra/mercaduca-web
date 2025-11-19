@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { X, Camera, Upload } from "lucide-react";
+import useCategories from "../hooks/useCategories";
 
 export default function EditProfile({
   visible,
@@ -20,7 +21,7 @@ export default function EditProfile({
     telefono: "",
   });
 
-  const [categorias, setCategorias] = useState([]);
+  const { categories: categorias } = useCategories();
   const [imagenPrevia, setImagenPrevia] = useState("");
   const fileInputRef = React.useRef();
 
@@ -42,18 +43,6 @@ export default function EditProfile({
     }
   }, [emprendimientoData]);
 
-  useEffect(() => {
-    const fetchCategorias = async () => {
-      try {
-        const res = await fetch("http://localhost:5000/api/categorias");
-        const data = await res.json();
-        setCategorias(data || []);
-      } catch (error) {
-        console.error("Error al obtener categorías:", error);
-      }
-    };
-    fetchCategorias();
-  }, []);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -211,7 +200,7 @@ export default function EditProfile({
                   <option value="">Selecciona una categoría</option>
                   {categorias.map((cat) => (
                     <option key={cat.id_categoria} value={cat.id_categoria}>
-                      {cat.nombre}
+                      {cat.categoria}
                     </option>
                   ))}
                 </select>

@@ -15,7 +15,7 @@ export const getEmprendimientos = async (req, res) => {
     );
 
     // Parámetros con valores por defecto
-    const { ids, ordenar = "fecha_desc" } = req.query;
+    const { ids, ordenar = "fecha_desc", limit } = req.query;
 
     const queryParts = [
       `SELECT
@@ -63,6 +63,11 @@ export const getEmprendimientos = async (req, res) => {
       `ORDER BY ${ordenamientos[ordenar] || ordenamientos.fecha_desc}`
     );
     filtros.ordenamiento = ordenar;
+
+    if (limit && !isNaN(limit)) {
+      queryParts.push(`LIMIT $${params.length + 1}`);
+      params.push(parseInt(limit));
+    }
 
     // Ejecutar consulta
     const query = queryParts.join(" ");
