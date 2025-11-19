@@ -1,16 +1,45 @@
 import pool from "../../database/connection.js";
 
 export const getCategories = async (req, res) => {
+  const { available } = req.query;
+
+  const isAvailable = (available || "").toString().toLowerCase() === "true";
+
   try {
-    const result = await pool.query(
-      "SELECT * FROM categorias ORDER BY id_categoria"
-    );
-    res.json(result.rows);
+    let query;
+
+    if (isAvailable) {
+      // Si available=true, solo categorías con productos
+      query = `
+        SELECT c.id_categoria, c.categoria
+        FROM categorias c
+        WHERE EXISTS (
+          SELECT 1 FROM producto p
+          WHERE p.id_categoria = c.id_categoria
+        )
+        ORDER BY c.categoria;
+      `;
+    } else {
+      // Todas las categorías
+      query = `
+        SELECT id_categoria, categoria
+        FROM categorias
+        ORDER BY categoria;
+      `;
+    }
+
+    const result = await pool.query(query);
+
+    return res.json({
+      success: true,
+      count: result.rows.length,
+      data: result.rows,
+    });
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    res.status(500).json({
+    return res.status(500).json({
+      success: false,
       error: "Error al obtener categorías",
-      details: error.message,
+      message: error.message,
     });
   }
 };

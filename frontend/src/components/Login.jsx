@@ -2,7 +2,8 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import chicaFondoLogin from "../images/chicaFondoLogin.png";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
 const Login = ({ onLoginSuccess }) => {
   const [formData, setFormData] = useState({
@@ -64,7 +65,7 @@ const Login = ({ onLoginSuccess }) => {
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/logIn`, {
+      const response = await fetch("http://localhost:5000/api/auth/logIn", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -84,10 +85,11 @@ const Login = ({ onLoginSuccess }) => {
       if (data.success) {
         const { user, token } = data; // Recibimos user y token
 
-        // GUARDAR EL TOKEN
+        // Guardar token y usuario en localStorage
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
-        
+        localStorage.setItem("isAuthenticated", "true");
+
         if (!user || !user.id) {
           throw new Error("El usuario no tiene ID en la respuesta");
         }

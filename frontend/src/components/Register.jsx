@@ -24,6 +24,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   const API_BASE_URL = "http://localhost:5000/api/auth";
 
   const handleRegisterSuccess = () => {
+
     // Limpiar el formulario
     setFormData({
       username: "",
@@ -41,7 +42,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     }
 
     // Redirigir al login
-    navigate("/vender");
+    navigate("/perfil");
   };
 
   // Función para registrar usuario con fetch
@@ -242,6 +243,12 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     try {
       const response = await registerUser(formData);
       if (response.data.success) {
+        // Extraemos user y token de la respuesta del backend
+        const { user, token } = response.data;
+        // Guardar token y usuario en localStorage
+        localStorage.setItem("token", token);
+        localStorage.setItem("user", JSON.stringify(user));
+        localStorage.setItem("isAuthenticated", "true");
         handleRegisterSuccess();
       }
     } catch (error) {
@@ -431,7 +438,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                       <li
                         className={
                           /[a-z]/.test(formData.password) &&
-                          /[A-Z]/.test(formData.password)
+                            /[A-Z]/.test(formData.password)
                             ? "text-green-600 font-semibold"
                             : ""
                         }
@@ -501,11 +508,10 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
 
         <button
           type="submit"
-          className={`w-full py-3 px-4 rounded-md font-semibold transition-colors ${
-            !isFormValid() || loading
-              ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-              : "bg-green-600 text-white hover:bg-green-700"
-          }`}
+          className={`w-full py-3 px-4 rounded-md font-semibold transition-colors ${!isFormValid() || loading
+            ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+            : "bg-green-600 text-white hover:bg-green-700"
+            }`}
           disabled={!isFormValid() || loading}
         >
           {loading ? "Registrando..." : "Registrarse"}

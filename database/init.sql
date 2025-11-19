@@ -7,12 +7,12 @@ CREATE TABLE Categorias (
 -- Crear la tabla Emprendimiento
 CREATE TABLE Emprendimiento (
   id_emprendimiento SERIAL PRIMARY KEY NOT NULL,
-  id_categoria INT,
-  Nombre VARCHAR(500),
+	id_categoria INT,
+  Nombre VARCHAR(500) UNIQUE,
   Descripcion TEXT, 
   Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
   Imagen_URL TEXT,
-  Instagram TEXT,
+	Instagram TEXT,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Emprendimiento_Categoria FOREIGN KEY (id_categoria) 
     REFERENCES Categorias(id_categoria)
@@ -21,15 +21,33 @@ CREATE TABLE Emprendimiento (
 -- Crear la tabla Emprendedor
 CREATE TABLE Emprendedor (
   id_emprendedor SERIAL PRIMARY KEY NOT NULL,
-  id_emprendimiento INT,
+	id_emprendimiento INT,
   Nombres VARCHAR(500),
   Apellidos VARCHAR(500),
-  Correo TEXT,
-  Telefono VARCHAR(8),
-  Activo BOOLEAN DEFAULT TRUE,
+  Correo TEXT UNIQUE,
+  Telefono VARCHAR(8) UNIQUE,
+	Activo BOOLEAN DEFAULT TRUE,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_Emprendedor_Emprendimiento FOREIGN KEY (id_emprendimiento) 
+	CONSTRAINT fk_Emprendedor_Emprendimiento FOREIGN KEY (id_emprendimiento) 
     REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE
+);
+
+-- Crear la tabla Producto
+CREATE TABLE Producto(
+  id_producto SERIAL PRIMARY KEY NOT NULL,
+  id_emprendimiento INT,
+	id_categoria INT,
+  Nombre VARCHAR(500),
+  Descripcion TEXT,
+  Imagen_URL TEXT, 
+  Precio_dolares DECIMAL(18,2),
+  Existencias INT,
+  Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
+  Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT fk_Producto_Emprendimiento FOREIGN KEY (id_emprendimiento) 
+    REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE,
+  CONSTRAINT fk_Producto_Categoria FOREIGN KEY (id_categoria) 
+    REFERENCES Categorias(id_categoria)
 );
 
 -- Crear tabla usuarios
@@ -42,24 +60,6 @@ CREATE TABLE Usuarios (
 	Registro_contraseña TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT fk_Usuarios_Emprendedor FOREIGN KEY (id_emprendedor) 
 		REFERENCES Emprendedor (id_emprendedor)
-);
-
--- Crear la tabla Producto
-CREATE TABLE Producto(
-  id_producto SERIAL PRIMARY KEY NOT NULL,
-  id_emprendimiento INT,
-  id_categoria INT,
-  Nombre VARCHAR(500),
-  Descripcion TEXT,
-  Imagen_URL TEXT, 
-  Precio_dolares DECIMAL(18,2),
-  Existencias INT,
-  Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
-  Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT fk_Producto_Emprendimiento FOREIGN KEY (id_emprendimiento) 
-    REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE,
-  CONSTRAINT fk_Producto_Categoria FOREIGN KEY (id_categoria) 
-    REFERENCES Categorias(id_categoria)
 );
 
 -- Crear tabla actividades

@@ -1,7 +1,7 @@
 import express from "express";
 import { signUp } from "../controllers/authenticationController/signUp.js";
 import { logIn } from "../controllers/authenticationController/logIn.js";
-import { checkUsername } from "../utils/helpers/checkUsername.js";
+import {checkUsername} from "../utils/helpers/checkUsername.js";
 
 const router = express.Router();
 

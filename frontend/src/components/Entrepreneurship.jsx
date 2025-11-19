@@ -75,7 +75,7 @@ export default function Emprendedores({ onGoHome }) {
 
         {emprendimientos.length === 0 && !loading && (
           <div className="text-center py-8 text-zinc-500">
-            No se encontraron productos
+            No se encontraron emprendimientos
           </div>
         )}
 
