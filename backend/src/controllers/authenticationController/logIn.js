@@ -3,6 +3,7 @@ import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import { findByUsername } from "../../utils/helpers/findByUsername.js";
 import { verifyPassword } from "../../utils/security/verifyPassword.js";
+import rateLimit from "express-rate-limit";
 dotenv.config();
 
 export const logIn = async (req, res) => {
@@ -63,3 +64,15 @@ export const logIn = async (req, res) => {
     res.status(500).json({ success: false, message: "Error del servidor" });
   }
 };
+
+export const loginLimiter = rateLimit({
+  windowsMs: 15 * 60 * 1000,
+  max: 5,
+  message: {
+    success: false,
+    message: "Demasiados intentos de inicio de seión"
+  },
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+})

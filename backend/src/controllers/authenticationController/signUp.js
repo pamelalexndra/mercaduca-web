@@ -1,24 +1,31 @@
 // src/controllers/authenticationController/signUp.js
 import jwt from "jsonwebtoken";
 import { createProfile } from "../../services/createProfile.js";
+import { validateSignUp } from "../../validators/authValidator.js";
+import { sanitizeInput } from "../../utils/helpers/sanitizer.js";
+import rateLimit from 'express-rate-limit';
 
 export const signUp = async (req, res) => {
   try {
-    const { username, password, nombres, apellidos, correo, telefono } =
-      req.body;
+    const sanitizedData = {
+      username: sanitizeInput(req.body.username),
+      password: req.body.password,
+      nombres: sanitizeInput(req.body.nombres),
+      apellidos: sanitizeInput(req.body.apellidos),
+      correo: sanitizeInput(req.body.correo?.toLowerCase()),
+      telefono: sanitizeInput(req.body.telefono),
+    };
 
-    // Validación básica (puedes mover esto a un middleware de validación luego)
-    if (
-      !username ||
-      !password ||
-      !nombres ||
-      !apellidos ||
-      !correo ||
-      !telefono
-    ) {
-      return res
-        .status(400)
-        .json({ success: false, message: "Complete todos los campos" });
+    const { error, value } = validateSignUp(sanitizedData);
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Datos inválidos",
+        errores: error.details.map((err) => ({
+          field: err.path[0],
+          message: err.message,
+        })),
+      });
     }
 
     // Crear usuario
@@ -52,5 +59,16 @@ export const signUp = async (req, res) => {
     }
     console.error("Error en registro:", error);
     res.status(500).json({ success: false, message: "Error del servidor" });
-  }
+  };
 };
+
+export const signUpLimiter = rateLimit({
+  windowMs: 24 * 60 * 60 * 1000, // 24 horas
+  max: 2, // 2 intentos por Ip
+  message: {
+    success: false,
+    message: "Demasiados intentos de registro, intenta en 15 minutos"
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+});

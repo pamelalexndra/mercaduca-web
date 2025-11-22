@@ -119,9 +119,14 @@ const Footer = () => {
                   size={18}
                   className="text-[#557051] mt-1 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
-                <span className="text-gray-600 hover:font-bold ">
+                <a 
+                  href="https://maps.google.com/?q=Universidad+Centroamericana+José+Simeón+Cañas,+San+Salvador,+El+Salvador"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-[#557051] hover:font-bold transition-colors"
+                >
                   UCA, San Salvador, El Salvador
-                </span>
+                </a>
               </li>
               <li className="flex items-start gap-3 group">
                 <Phone

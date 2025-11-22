@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-const Register = ({ onRegisterSuccess, switchToLogin }) => {
+const Register = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     username: "",
     password: "",
@@ -12,20 +12,22 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     telefono: "",
   });
   const [error, setError] = useState("");
+  const [validationErrors, setValidationErrors] = useState({});
   const [loading, setLoading] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [checkingUsername, setCheckingUsername] = useState(false);
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
     feedback: [],
   });
   const navigate = useNavigate();
 
-  // URL base del backend
   const API_BASE_URL = "http://localhost:5000/api/auth";
 
-  const handleRegisterSuccess = () => {
+  // Debounce para verificación de username
+  const debounceTimeout = React.useRef(null);
 
-    // Limpiar el formulario
+  const handleRegisterSuccess = () => {
     setFormData({
       username: "",
       password: "",
@@ -36,16 +38,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       telefono: "",
     });
 
-    // Ejecutar el callback proporcionado por el padre (si existe)
     if (onRegisterSuccess) {
       onRegisterSuccess();
     }
 
-    // Redirigir al login
     navigate("/perfil");
   };
 
-  // Función para registrar usuario con fetch
   const registerUser = async (userData) => {
     try {
       const response = await fetch(`${API_BASE_URL}/signUp`, {
@@ -59,39 +58,46 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       const data = await response.json();
 
       if (!response.ok) {
+        // Manejar errores de validación del backend
+        if (data.errors && Array.isArray(data.errors)) {
+          const errorObj = {};
+          data.errors.forEach(err => {
+            errorObj[err.field] = err.message;
+          });
+          setValidationErrors(errorObj);
+        }
         throw new Error(data.message || "Error en el registro");
       }
 
       return { data };
     } catch (error) {
-      throw new Error(error.message || "Error de conexión");
+      throw error;
     }
   };
 
-  // Función para verificar username con fetch
   const checkUsernameAvailability = async (username) => {
     if (username.length < 3) {
       setUsernameAvailable(null);
       return;
     }
 
+    setCheckingUsername(true);
     try {
       const response = await fetch(
         `${API_BASE_URL}/check-username/${username}`
       );
       const data = await response.json();
 
-      if (!response.ok) {
-        throw new Error(data.message || "Error al verificar usuario");
+      if (response.ok) {
+        setUsernameAvailable(data.available);
       }
-
-      setUsernameAvailable(data.available);
     } catch (error) {
       setUsernameAvailable(null);
+    } finally {
+      setCheckingUsername(false);
     }
   };
 
-  // Función para evaluar la fortaleza de la contraseña
   const evaluatePasswordStrength = (password) => {
     const feedback = [];
     let score = 0;
@@ -114,10 +120,10 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       feedback.push("Al menos un número");
     }
 
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+    if (/[@$!%*?&]/.test(password)) {
       score += 1;
     } else {
-      feedback.push("Al menos un carácter especial (!@#$% etc.)");
+      feedback.push("Al menos un símbolo (@$!%*?&)");
     }
 
     if (password.length >= 12) {
@@ -127,46 +133,70 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     return { score, feedback };
   };
 
-  // Función para verificar si todos los campos están llenos
-  const areAllFieldsFilled = () => {
-    return (
-      formData.username.trim() !== "" &&
-      formData.password.trim() !== "" &&
-      formData.confirmPassword.trim() !== "" &&
-      formData.nombres.trim() !== "" &&
-      formData.apellidos.trim() !== "" &&
-      formData.correo.trim() !== "" &&
-      formData.telefono.trim() !== ""
-    );
-  };
-
-  // Función para verificar si las contraseñas coinciden
-  const doPasswordsMatch = () => {
-    return (
-      formData.password === formData.confirmPassword && formData.password !== ""
-    );
-  };
-
-  // Función para verificar si el formulario es válido
   const isFormValid = () => {
     return (
-      areAllFieldsFilled() &&
-      doPasswordsMatch() &&
+      formData.username.trim().length >= 3 &&
+      formData.password === formData.confirmPassword &&
       passwordStrength.score >= 3 &&
+      formData.nombres.trim() !== "" &&
+      formData.apellidos.trim() !== "" &&
+      isValidEmail(formData.correo) &&
+      /^\d{8}$/.test(formData.telefono) &&
       usernameAvailable !== false
     );
   };
 
+  const isValidEmail = (email) => {
+    return /\S+@\S+\.\S+/.test(email);
+  }
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+
+    if (validationErrors[name]) {
+      setValidationErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
 
     setFormData({
       ...formData,
       [name]: value,
     });
 
+    if (name === "correo") {
+      if (value && !isValidEmail(value)) {
+        setValidationErrors(prev => ({
+          ...prev,
+          correo: "Ingresa un correo válido",
+        }));
+      } else {
+        setValidationErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.correo;
+          return newErrors;
+        });
+      }
+    }
+
     if (name === "password") {
       setPasswordStrength(evaluatePasswordStrength(value));
+    }
+
+    if (name === "username") {
+      if (debounceTimeout.current) {
+        clearTimeout(debounceTimeout.current);
+      }
+
+      debounceTimeout.current = setTimeout(() => {
+        if (value.length >= 3) {
+          checkUsernameAvailability(value);
+        } else {
+          setUsernameAvailable(null);
+        }
+      }, 500);
     }
   };
 
@@ -194,48 +224,10 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setValidationErrors({});
 
     if (!isFormValid()) {
       setError("Por favor completa todos los campos correctamente");
-      return;
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      setError("Las contraseñas no coinciden");
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres");
-      return;
-    }
-
-    if (passwordStrength.score < 3) {
-      setError(
-        "La contraseña no cumple con los requisitos de seguridad mínimos"
-      );
-      return;
-    }
-
-    if (
-      !formData.nombres ||
-      !formData.apellidos ||
-      !formData.correo ||
-      !formData.telefono
-    ) {
-      setError("Todos los campos de información personal son requeridos");
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(formData.correo)) {
-      setError("Por favor ingresa un correo electrónico válido");
-      return;
-    }
-
-    const phoneRegex = /^\d{8}$/;
-    if (!phoneRegex.test(formData.telefono)) {
-      setError("El teléfono debe tener 8 dígitos");
       return;
     }
 
@@ -243,12 +235,14 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     try {
       const response = await registerUser(formData);
       if (response.data.success) {
-        // Extraemos user y token de la respuesta del backend
         const { user, token } = response.data;
-        // Guardar token y usuario en localStorage
+
+        // ⚠️ IMPORTANTE: Nunca guardar tokens en localStorage en producción
+        // Es vulnerable a XSS. El backend debería enviar httpOnly cookies
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("isAuthenticated", "true");
+
         handleRegisterSuccess();
       }
     } catch (error) {
@@ -258,17 +252,8 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     }
   };
 
-  const handleUsernameCheck = (username) => {
-    checkUsernameAvailability(username);
-  };
-
-  // Función para manejar el inicio de sesión
-  const handleLoginClick = () => {
-    navigate("/vender");
-  };
-
   return (
-    <div className="bg-gray-300 p-8 rounded-lg shadow-md w-full max-w-4xl mx-auto">
+    <div className="bg-gray-300 p-8 rounded-lg shadow-md w-full max-w-4xl mx-auto my-8">
       <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
         Registro
       </h2>
@@ -291,9 +276,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.nombres}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.nombres ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 placeholder="Ingresa tus nombres"
               />
+              {validationErrors.nombres && (
+                <p className="text-red-600 text-sm mt-1">{validationErrors.nombres}</p>
+              )}
             </div>
 
             <div>
@@ -306,9 +295,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.apellidos}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.apellidos ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 placeholder="Ingresa tus apellidos"
               />
+              {validationErrors.apellidos && (
+                <p className="text-red-600 text-sm mt-1">{validationErrors.apellidos}</p>
+              )}
             </div>
           </div>
 
@@ -323,9 +316,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.correo}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.correo ? 'border-red-500' : 'border-gray-300'
+                  }`}
                 placeholder="ejemplo@correo.com"
               />
+              {validationErrors.correo && (
+                <p className="text-red-600 text-sm mt-1">{validationErrors.correo}</p>
+              )}
             </div>
 
             <div>
@@ -338,11 +335,14 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.telefono}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="12345678"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.telefono ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                placeholder="72355678"
                 maxLength="8"
-                pattern="[0-9]{8}"
               />
+              {validationErrors.telefono && (
+                <p className="text-red-600 text-sm mt-1">{validationErrors.telefono}</p>
+              )}
             </div>
           </div>
         </div>
@@ -362,23 +362,29 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 type="text"
                 name="username"
                 value={formData.username}
-                onChange={(e) => {
-                  handleChange(e);
-                  handleUsernameCheck(e.target.value);
-                }}
+                onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Ingresa tu usuario"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.username ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                placeholder="Mínimo 3 caracteres"
               />
-              {usernameAvailable === true && (
+              {checkingUsername && (
+                <div className="text-gray-600 text-sm mt-2">
+                  Verificando disponibilidad...
+                </div>
+              )}
+              {!checkingUsername && usernameAvailable === true && (
                 <div className="text-green-600 text-sm font-semibold mt-2">
                   ✓ Usuario disponible
                 </div>
               )}
-              {usernameAvailable === false && (
+              {!checkingUsername && usernameAvailable === false && (
                 <div className="text-red-600 text-sm font-semibold mt-2">
                   ✗ Usuario no disponible
                 </div>
+              )}
+              {validationErrors.username && (
+                <p className="text-red-600 text-sm mt-1">{validationErrors.username}</p>
               )}
             </div>
 
@@ -392,11 +398,14 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos"
+                className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${validationErrors.password ? 'border-red-500' : 'border-gray-300'
+                  }`}
+                placeholder="Contraseña segura"
               />
+              {validationErrors.password && (
+                <p className="text-red-600 text-sm mt-1">{validationErrors.password}</p>
+              )}
 
-              {/* Indicador de fortaleza de contraseña */}
               {formData.password && (
                 <div className="mt-3 space-y-2">
                   <div className="w-full bg-gray-200 rounded-full h-2">
@@ -420,7 +429,6 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                     </span>
                   </div>
 
-                  {/* Lista de requisitos */}
                   <div className="bg-white p-3 rounded-md border border-gray-200 mt-2">
                     <p className="text-sm font-medium text-gray-700 mb-2">
                       La contraseña debe contener:
@@ -456,14 +464,12 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                       </li>
                       <li
                         className={
-                          /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(
-                            formData.password
-                          )
+                          /[@$!%*?&]/.test(formData.password)
                             ? "text-green-600 font-semibold"
                             : ""
                         }
                       >
-                        ✓ Al menos un carácter especial
+                        ✓ Al menos un símbolo especial
                       </li>
                     </ul>
                   </div>
@@ -521,8 +527,8 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       <p className="text-center text-gray-950 mt-6">
         ¿Ya tienes cuenta?{" "}
         <span
-          className="text-blue-600 cursor-pointer hover:underline font-semibold"
-          onClick={handleLoginClick}
+          className="text-green-800 cursor-pointer hover:underline font-semibold"
+          onClick={() => navigate("/vender")}
         >
           Inicia sesión aquí
         </span>
