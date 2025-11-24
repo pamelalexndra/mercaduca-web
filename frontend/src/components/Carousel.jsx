@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import ProductCard from "./Card";
 import ArrowButton from "./ArrowButton";
+import { API_BASE_URL } from "../utils/api";
 
 export default function Carousel({
   title,
@@ -22,7 +23,7 @@ useEffect(() => {
   const fetchItems = async () => {
     try {
       setError(null);
-      const url = `${import.meta.env.VITE_API_URL}${endpoint}`;
+      const url = `${API_BASE_URL}${endpoint}`;
       const res = await fetch(url);
       if (!res.ok) throw new Error("No se pudieron cargar los elementos");
 

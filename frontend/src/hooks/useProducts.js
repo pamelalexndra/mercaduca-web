@@ -1,5 +1,6 @@
 // hooks/useProducts.js
 import { useCallback, useState } from "react";
+import { API_BASE_URL } from "../utils/api";
 
 /**
  * useProducts
@@ -7,7 +8,7 @@ import { useCallback, useState } from "react";
  * - NOTA: no fuerza setLoading(true) dentro de cada fetch para evitar "parpadeos".
  */
 export default function useProducts(
-  baseUrl = "http://localhost:5000/api/products"
+  baseUrl = `${API_BASE_URL}/api/products`
 ) {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
