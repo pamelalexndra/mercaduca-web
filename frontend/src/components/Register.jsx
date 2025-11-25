@@ -22,12 +22,20 @@ const Register = ({ onRegisterSuccess }) => {
   });
   const navigate = useNavigate();
 
-  const API_BASE_URL = "http://localhost:5000/api/auth";
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL || "http://localhost:5000";
 
   // Debounce para verificación de username
   const debounceTimeout = React.useRef(null);
 
-  const handleRegisterSuccess = () => {
+  const handleRegisterSuccess = (user, token) => {
+
+    // ⚠️ IMPORTANTE: Nunca guardar tokens en localStorage en producción
+    // Es vulnerable a XSS. El backend debería enviar httpOnly cookies
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("isAuthenticated", "true");
+
     setFormData({
       username: "",
       password: "",
@@ -39,40 +47,34 @@ const Register = ({ onRegisterSuccess }) => {
     });
 
     if (onRegisterSuccess) {
-      onRegisterSuccess();
+      onRegisterSuccess(user);
     }
 
     navigate("/perfil");
   };
 
   const registerUser = async (userData) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/signUp`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(userData),
-      });
+    
+    const response = await fetch(`${API_BASE_URL}/api/auth/signUp`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(userData),
+    });
 
-      const data = await response.json();
+    const data = await response.json();
 
-      if (!response.ok) {
-        // Manejar errores de validación del backend
-        if (data.errors && Array.isArray(data.errors)) {
-          const errorObj = {};
-          data.errors.forEach(err => {
-            errorObj[err.field] = err.message;
-          });
-          setValidationErrors(errorObj);
-        }
-        throw new Error(data.message || "Error en el registro");
+    if (!response.ok) {
+      if (data.errors && Array.isArray(data.errors)) {
+        const errorObj = {};
+        data.errors.forEach((err) => {
+          errorObj[err.field] = err.message;
+        });
+        setValidationErrors(errorObj);
       }
-
-      return { data };
-    } catch (error) {
-      throw error;
+      throw new Error(data.message || "Error en el registro");
     }
+
+    return data; // { success: true, user: {...}, token: "..." }
   };
 
   const checkUsernameAvailability = async (username) => {
@@ -84,7 +86,7 @@ const Register = ({ onRegisterSuccess }) => {
     setCheckingUsername(true);
     try {
       const response = await fetch(
-        `${API_BASE_URL}/check-username/${username}`
+        `${API_BASE_URL}/api/auth/check-username/${username}`
       );
       const data = await response.json();
 
@@ -234,16 +236,10 @@ const Register = ({ onRegisterSuccess }) => {
     setLoading(true);
     try {
       const response = await registerUser(formData);
-      if (response.data.success) {
-        const { user, token } = response.data;
+      if (response.success) {
+        const { user, token } = response;
 
-        // ⚠️ IMPORTANTE: Nunca guardar tokens en localStorage en producción
-        // Es vulnerable a XSS. El backend debería enviar httpOnly cookies
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("isAuthenticated", "true");
-
-        handleRegisterSuccess();
+        handleRegisterSuccess(user, token);
       }
     } catch (error) {
       setError(error.message || "Error al registrar usuario");
