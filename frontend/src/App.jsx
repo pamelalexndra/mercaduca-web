@@ -76,7 +76,7 @@ export default function App() {
             <Profile user={currentUser} onProfileLoader={handleProfileLoaded} />
           }
         />
-        <Route path="/registrar" element={<Register />} />
+        <Route path="/registrar" element={<Register onRegisterSuccess={handleLoginSuccess} />} />
         <Route path="/forbidden" element={<Forbidden />} />
         <Route path="/bad-request" element={<BadRequest />} />
         <Route
