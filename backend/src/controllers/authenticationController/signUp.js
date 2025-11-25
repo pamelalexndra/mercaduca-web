@@ -1,9 +1,9 @@
 // src/controllers/authenticationController/signUp.js
 import jwt from "jsonwebtoken";
+import rateLimit from 'express-rate-limit';
 import { createProfile } from "../../services/createProfile.js";
 import { validateSignUp } from "../../validators/authValidator.js";
 import { sanitizeInput } from "../../utils/helpers/sanitizer.js";
-import rateLimit from 'express-rate-limit';
 
 export const signUp = async (req, res) => {
   try {
@@ -21,7 +21,7 @@ export const signUp = async (req, res) => {
       return res.status(400).json({
         success: false,
         message: "Datos inválidos",
-        errores: error.details.map((err) => ({
+        errors: error.details.map((err) => ({
           field: err.path[0],
           message: err.message,
         })),
@@ -29,19 +29,12 @@ export const signUp = async (req, res) => {
     }
 
     // Crear usuario
-    const user = await createProfile({
-      username,
-      password,
-      nombres,
-      apellidos,
-      correo,
-      telefono,
-    });
+    const user = await createProfile(sanitizedData);
 
     // Generar token inmediatamente para que el usuario quede logueado al registrarse
     const token = jwt.sign(
       { id: user.id_usuario, username: user.usuario },
-      process.env.JWT_SECRET,
+      import.meta.env.VITE_JWT_SECRET,
       { expiresIn: "1h" }
     );
 
