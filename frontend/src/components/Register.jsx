@@ -20,6 +20,8 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     feedback: [],
   });
   const navigate = useNavigate();
+  const inputClass =
+    "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] border border-gray-200 transition-all placeholder:text-gray-400";
 
   // URL base del backend
   const AUTH_BASE_URL = `${API_BASE_URL}/api/auth`;
@@ -153,7 +155,8 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     return (
       areAllFieldsFilled() &&
       doPasswordsMatch() &&
-      passwordStrength.score >= 3 &&
+      // Comentado temporalmente para no limitar los registros por la fuerza de la contraseña
+      // passwordStrength.score >= 3 &&
       usernameAvailable !== false
     );
   };
@@ -211,12 +214,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       return;
     }
 
-    if (passwordStrength.score < 3) {
-      setError(
-        "La contraseña no cumple con los requisitos de seguridad mínimos"
-      );
-      return;
-    }
+    // Comentado temporalmente para no limitar los registros por la fuerza de la contraseña
+    // if (passwordStrength.score < 3) {
+    //   setError(
+    //     "La contraseña no cumple con los requisitos de seguridad mínimos"
+    //   );
+    //   return;
+    // }
 
     if (
       !formData.nombres ||
@@ -269,21 +273,21 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   };
 
   return (
-    <div className="bg-gray-300 p-8 rounded-lg shadow-md w-full max-w-4xl mx-auto">
-      <h2 className="text-2xl font-bold text-center text-gray-800 mb-6">
+    <div className="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200 w-full max-w-4xl mx-auto font-montserrat">
+      <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
         Registro
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
         {/* SECCIÓN DE INFORMACIÓN PERSONAL */}
-        <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+        <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
             Información Personal
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Nombres:
               </label>
               <input
@@ -292,13 +296,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.nombres}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
                 placeholder="Ingresa tus nombres"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Apellidos:
               </label>
               <input
@@ -307,7 +311,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.apellidos}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
                 placeholder="Ingresa tus apellidos"
               />
             </div>
@@ -315,7 +319,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Correo Electrónico:
               </label>
               <input
@@ -324,13 +328,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.correo}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
                 placeholder="ejemplo@correo.com"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Teléfono:
               </label>
               <input
@@ -339,7 +343,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.telefono}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
                 placeholder="12345678"
                 maxLength="8"
                 pattern="[0-9]{8}"
@@ -349,14 +353,14 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
         </div>
 
         {/* SECCIÓN DE CREDENCIALES */}
-        <div className="border border-gray-200 rounded-lg p-6 bg-gray-50">
-          <h3 className="text-lg font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-200">
+        <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
             Credenciales de Acceso
           </h3>
 
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Usuario:
               </label>
               <input
@@ -368,7 +372,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                   handleUsernameCheck(e.target.value);
                 }}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
                 placeholder="Ingresa tu usuario"
               />
               {usernameAvailable === true && (
@@ -384,7 +388,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Contraseña:
               </label>
               <input
@@ -393,7 +397,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.password}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
                 placeholder="Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos"
               />
 
@@ -473,7 +477,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-gray-800 mb-2">
                 Confirmar Contraseña:
               </label>
               <input
@@ -482,7 +486,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
                 value={formData.confirmPassword}
                 onChange={handleChange}
                 required
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className={inputClass}
                 placeholder="Confirma tu contraseña"
               />
               {formData.confirmPassword &&
@@ -509,9 +513,9 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
 
         <button
           type="submit"
-          className={`w-full py-3 px-4 rounded-md font-semibold transition-colors ${!isFormValid() || loading
-            ? "bg-gray-400 text-gray-200 cursor-not-allowed"
-            : "bg-green-600 text-white hover:bg-green-700"
+          className={`w-full py-3 px-4 rounded-xl font-semibold transition-colors shadow-md ${!isFormValid() || loading
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-gradient-to-r from-[#557051] to-[#6a8a62] text-white hover:from-[#445a3f] hover:to-[#557051]"
             }`}
           disabled={!isFormValid() || loading}
         >

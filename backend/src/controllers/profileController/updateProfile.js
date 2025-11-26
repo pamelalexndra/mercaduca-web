@@ -1,5 +1,4 @@
 import pool from "../../database/connection.js";
-import bcrypt from "bcrypt";
 import { generateHash } from "../../utils/hash/generateHash.js";
 
 export const updateProfile = async (req, res) => {
@@ -12,17 +11,27 @@ export const updateProfile = async (req, res) => {
 
     await client.query("BEGIN");
 
+    // Obtener datos actuales del usuario para usar como respaldo
+    const userResult = await client.query(
+      "SELECT Usuario, Registro_contraseña FROM Usuarios WHERE id_usuario = $1",
+      [userId]
+    );
+
+    if (!userResult.rowCount) {
+      await client.query("ROLLBACK");
+      return res.status(404).json({
+        error: "Usuario no encontrado",
+      });
+    }
+
+    const ultimoCambio = userResult.rows[0]?.registro_contraseña;
+    const usernameActual = userResult.rows[0]?.usuario;
+    const nombreDeUsuario = username?.trim() || usernameActual;
+    const nuevaPassword = nuevaContraseña?.trim();
+
     //  Lógica de Cambio de Contraseña
-    if (nuevaContraseña) {
-      // Obtener fecha del último cambio
-      const userResult = await client.query(
-        "SELECT Registro_contraseña FROM Usuarios WHERE id_usuario = $1",
-        [userId]
-      );
-
-      const ultimoCambio = userResult.rows[0]?.Registro_contraseña;
-
-      // Si existe una fecha previa, validamos los 30 días
+    if (nuevaPassword) {
+      // Si existe una fecha previa, validamos los 15 días
       if (ultimoCambio) {
         const fechaUltimoCambio = new Date(ultimoCambio);
         const fechaActual = new Date();
@@ -30,27 +39,27 @@ export const updateProfile = async (req, res) => {
         const diferenciaDias =
           (fechaActual - fechaUltimoCambio) / (1000 * 60 * 60 * 24);
 
-        if (diferenciaDias < 30) {
+        if (diferenciaDias < 15) {
           await client.query("ROLLBACK");
           return res.status(400).json({
-            error: `Debes esperar ${Math.ceil(30 - diferenciaDias)} días más para cambiar tu contraseña.`,
+            error: `Debes esperar ${Math.ceil(15 - diferenciaDias)} días más para cambiar tu contraseña.`,
           });
         }
       }
 
-      const hashedPassword = generateHash(nuevaContraseña);
+      const hashedPassword = await generateHash(nuevaPassword);
 
       await client.query(
-        `UPDATE Usuarios 
+        `UPDATE Usuarios
                  SET Usuario = $1, Contraseña = $2, Registro_contraseña = CURRENT_TIMESTAMP
                  WHERE id_usuario = $3`,
-        [username, hashedPassword, userId]
+        [nombreDeUsuario, hashedPassword, userId]
       );
     } else {
       // Solo actualizar username si no hay cambio de pass
       await client.query(
         "UPDATE Usuarios SET Usuario = $1 WHERE id_usuario = $2",
-        [username, userId]
+        [nombreDeUsuario, userId]
       );
     }
 

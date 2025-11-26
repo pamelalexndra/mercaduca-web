@@ -49,12 +49,15 @@ export default function EntrepreneurshipForm({
 
   if (!visible) return null;
 
+  const inputClass =
+    "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white transition-all placeholder:text-gray-400";
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm pt-12"
       onClick={handleBackgroundClick}
     >
-      <div className="bg-white rounded-2xl w-[95%] sm:w-[480px] max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 relative animate-slide-up">
+      <div className="bg-white rounded-2xl w-[95%] sm:w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 relative animate-slide-up font-montserrat">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-all rounded-full p-2"
@@ -63,12 +66,12 @@ export default function EntrepreneurshipForm({
           ✕
         </button>
 
-        <div className="p-6 font-montserrat">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">
+        <div className="p-6">
+          <h2 className="text-2xl font-semibold text-gray-900 mb-1 text-center">
             {initialData?.id_emprendimiento ? "Editar emprendimiento" : "Crear emprendimiento"}
           </h2>
-          <p className="text-sm text-gray-500 mb-5">
-            Completa la información de tu emprendimiento. El nombre es obligatorio.
+          <p className="text-sm text-gray-600 mb-6 text-center">
+            Completa la información de tu emprendimiento para comenzar a compartir tus productos.
           </p>
 
           {errorMessage && (
@@ -77,7 +80,7 @@ export default function EntrepreneurshipForm({
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1">
               <label className="block text-sm font-semibold text-gray-800">Nombre *</label>
               <input
@@ -86,7 +89,7 @@ export default function EntrepreneurshipForm({
                 value={formData.nombre}
                 onChange={handleChange}
                 required
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051]"
+                className={inputClass}
                 placeholder="Nombre del emprendimiento"
               />
             </div>
@@ -98,7 +101,7 @@ export default function EntrepreneurshipForm({
                 value={formData.descripcion}
                 onChange={handleChange}
                 rows={3}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] resize-none"
+                className={`${inputClass} resize-none`}
                 placeholder="¿Qué ofreces?"
               />
             </div>
@@ -112,7 +115,7 @@ export default function EntrepreneurshipForm({
                 value={formData.id_categoria}
                 onChange={handleChange}
                 required
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051]"
+                className={inputClass}
               >
                 <option value="">Selecciona una categoría</option>
                 {categories.map((categoria) => (
@@ -130,7 +133,7 @@ export default function EntrepreneurshipForm({
                 name="imagen_url"
                 value={formData.imagen_url}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051]"
+                className={inputClass}
                 placeholder="https://..."
               />
             </div>
@@ -142,7 +145,7 @@ export default function EntrepreneurshipForm({
                 name="instagram"
                 value={formData.instagram}
                 onChange={handleChange}
-                className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051]"
+                className={inputClass}
                 placeholder="@usuario o enlace"
               />
             </div>

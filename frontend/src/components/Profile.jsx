@@ -433,6 +433,14 @@ export default function Profile({ user, onProfileLoaded }) {
   const profileDataForForm = {
     ...(currentUser?.profile || {}),
     ...(emprendimiento || {}),
+    username:
+      currentUser?.profile?.username ||
+      currentUser?.username ||
+      currentUser?.profile?.Usuario ||
+      "",
+  };
+  const entrepreneurshipFormData = {
+    ...emprendimiento,
   };
   const instagramValue = emprendimiento?.instagram || "";
   const instagramHref = instagramValue
@@ -475,10 +483,9 @@ export default function Profile({ user, onProfileLoaded }) {
     }
   };
 
-  const handleEditar = (producto) => {
+  const handleEditar = () => {
     setError("");
-    setProductoEdit(producto);
-    setShowModal(true);
+    setShowEntrepreneurshipModal(true);
   };
 
   const handleSubmit = async (data) => {
@@ -697,6 +704,14 @@ export default function Profile({ user, onProfileLoaded }) {
     }
 
     try {
+      if (
+        datos.nuevaContraseña &&
+        datos.nuevaContraseña !== datos.confirmarContraseña
+      ) {
+        setError("Las contraseñas no coinciden.");
+        return false;
+      }
+
       setSavingProfile(true);
       setError("");
 
@@ -714,9 +729,11 @@ export default function Profile({ user, onProfileLoaded }) {
             correo: datos.correo?.trim(),
             telefono: datos.telefono?.trim(),
             username:
+              datos.username?.trim() ||
               currentUser?.username ||
               currentUser?.profile?.username ||
               currentUser?.profile?.Usuario,
+            nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
           }),
         }
       );
@@ -736,9 +753,17 @@ export default function Profile({ user, onProfileLoaded }) {
           apellidos: datos.apellidos?.trim() ?? prevUser.profile?.apellidos,
           correo: datos.correo?.trim() ?? prevUser.profile?.correo,
           telefono: datos.telefono?.trim() ?? prevUser.profile?.telefono,
+          username:
+            datos.username?.trim() ??
+            prevUser.profile?.username ??
+            prevUser.profile?.Usuario,
         };
 
-        const mergedUser = { ...prevUser, profile: updatedProfile };
+        const mergedUser = {
+          ...prevUser,
+          username: updatedProfile.username || prevUser.username,
+          profile: updatedProfile,
+        };
         localStorage.setItem("user", JSON.stringify(mergedUser));
         return mergedUser;
       });
@@ -979,7 +1004,7 @@ export default function Profile({ user, onProfileLoaded }) {
                 <div key={p.id} className="aspect-square">
                   <ProductCard
                     p={p}
-                    onClick={() => handleEditar(p)}
+                    onClick={handleEditar}
                     disableLink
                   />
                 </div>
@@ -1015,7 +1040,7 @@ export default function Profile({ user, onProfileLoaded }) {
           setShowEntrepreneurshipModal(false);
           setError("");
         }}
-        initialData={emprendimiento}
+        initialData={entrepreneurshipFormData}
         onSubmit={handleSaveEntrepreneurship}
         loading={savingEntrepreneurship}
         errorMessage={error}

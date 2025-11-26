@@ -14,7 +14,13 @@ export default function EditProfile({
     apellidos: "",
     correo: "",
     telefono: "",
+    username: "",
+    nuevaContraseña: "",
+    confirmarContraseña: "",
   });
+  const [localError, setLocalError] = useState("");
+  const inputClass =
+    "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
 
   useEffect(() => {
     if (emprendimientoData) {
@@ -23,17 +29,43 @@ export default function EditProfile({
         apellidos: emprendimientoData.apellidos || "",
         correo: emprendimientoData.correo || "",
         telefono: emprendimientoData.telefono || "",
+        username:
+          emprendimientoData.username ||
+          emprendimientoData.Usuario ||
+          emprendimientoData.usuario ||
+          "",
+        nuevaContraseña: "",
+        confirmarContraseña: "",
       });
     }
   }, [emprendimientoData]);
 
+  useEffect(() => {
+    if (visible) {
+      setLocalError("");
+    }
+  }, [visible]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "nuevaContraseña" || name === "confirmarContraseña") {
+      setLocalError("");
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (
+      (formData.nuevaContraseña || formData.confirmarContraseña) &&
+      formData.nuevaContraseña !== formData.confirmarContraseña
+    ) {
+      setLocalError("Las contraseñas no coinciden.");
+      return;
+    }
+
+    setLocalError("");
     const success = await onSave?.(formData);
     if (success !== false) {
       onClose?.();
@@ -66,9 +98,9 @@ export default function EditProfile({
             Editar Perfil
           </h2>
 
-          {errorMessage && (
+          {(errorMessage || localError) && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-              {errorMessage}
+              {localError || errorMessage}
             </div>
           )}
 
@@ -83,7 +115,7 @@ export default function EditProfile({
                 value={formData.nombres}
                 onChange={handleChange}
                 required
-                className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all"
+                className={inputClass}
               />
             </div>
 
@@ -97,7 +129,7 @@ export default function EditProfile({
                 value={formData.apellidos}
                 onChange={handleChange}
                 required
-                className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all"
+                className={inputClass}
               />
             </div>
 
@@ -111,7 +143,7 @@ export default function EditProfile({
                 value={formData.correo}
                 onChange={handleChange}
                 required
-                className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all"
+                className={inputClass}
               />
             </div>
 
@@ -125,8 +157,51 @@ export default function EditProfile({
                 value={formData.telefono}
                 onChange={handleChange}
                 maxLength="8"
-                className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all"
+                className={inputClass}
               />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                Usuario de acceso
+              </label>
+              <input
+                type="text"
+                name="username"
+                value={formData.username}
+                onChange={handleChange}
+                className={inputClass}
+                placeholder="Nombre de usuario"
+              />
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Nueva contraseña
+                </label>
+                <input
+                  type="password"
+                  name="nuevaContraseña"
+                  value={formData.nuevaContraseña}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="Actualizar contraseña"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Confirmar contraseña
+                </label>
+                <input
+                  type="password"
+                  name="confirmarContraseña"
+                  value={formData.confirmarContraseña}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="Repite la nueva contraseña"
+                />
+              </div>
             </div>
 
             <div className="flex gap-3 pt-4">

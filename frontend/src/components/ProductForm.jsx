@@ -15,6 +15,8 @@ export default function ProductForm({
   const [precioDolares, setPrecioDolares] = useState("");
   const [existencias, setExistencias] = useState("0");
   const modalRef = useRef();
+  const inputClass =
+    "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all placeholder:text-gray-400";
 
   useEffect(() => {
     if (producto) {
@@ -112,7 +114,7 @@ export default function ProductForm({
               value={nombre}
               onChange={(e) => setNombre(e.target.value)}
               placeholder="Ej. Jabón artesanal de lavanda"
-              className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all placeholder:text-zinc-400"
+              className={inputClass}
             />
           </div>
 
@@ -124,7 +126,7 @@ export default function ProductForm({
               value={descripcion}
               onChange={(e) => setDescripcion(e.target.value)}
               placeholder="Describe las características, beneficios y usos de tu producto..."
-              className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all placeholder:text-zinc-400 resize-none min-h-[100px] leading-relaxed"
+              className={`${inputClass} resize-none min-h-[100px] leading-relaxed`}
             />
           </div>
 
@@ -137,7 +139,7 @@ export default function ProductForm({
               value={imagenUrl}
               onChange={(e) => setImagenUrl(e.target.value)}
               placeholder="https://..."
-              className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all placeholder:text-zinc-400"
+              className={inputClass}
             />
           </div>
 
@@ -155,7 +157,7 @@ export default function ProductForm({
                 value={precioDolares}
                 onChange={(e) => setPrecioDolares(e.target.value)}
                 placeholder="0.00"
-                className="w-full bg-zinc-50 text-zinc-800 rounded-xl pl-9 pr-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all placeholder:text-zinc-400"
+                className={`${inputClass} pl-9`}
               />
             </div>
           </div>
@@ -169,7 +171,7 @@ export default function ProductForm({
               min="0"
               value={existencias}
               onChange={(e) => setExistencias(e.target.value)}
-              className="w-full bg-zinc-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border-0 transition-all"
+              className={inputClass}
             />
           </div>
 
