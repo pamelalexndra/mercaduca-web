@@ -55,7 +55,9 @@ const Footer = () => {
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start lg:gap-12">
           {/* About Section */}
           <div className="lg:w-2/6 pb-7">
-            <h3 className="text-[#557051] text-base md:text-lg font-bold mb-3 md:mb-4">Mercaduca</h3>
+            <h3 className="text-[#557051] text-base md:text-lg font-bold mb-3 md:mb-4">
+              Mercaduca
+            </h3>
             <p className="text-gray-600 leading-relaxed text-sm md:text-base">
               Espacio dónde los estudiantes UCA pueden dar vida a sus proyectos
               y comercializar sus productos
@@ -119,7 +121,7 @@ const Footer = () => {
                   size={18}
                   className="text-[#557051] mt-1 flex-shrink-0 group-hover:scale-110 transition-transform"
                 />
-                <a 
+                <a
                   href="https://maps.google.com/?q=Universidad+Centroamericana+José+Simeón+Cañas,+San+Salvador,+El+Salvador"
                   target="_blank"
                   rel="noopener noreferrer"

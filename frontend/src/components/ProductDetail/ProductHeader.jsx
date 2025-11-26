@@ -1,7 +1,6 @@
 import React from "react";
 
 export default function ProductHeader({ nombre, numero, imagen, instagram }) {
-  console.log("ProductHeader recibió:", { nombre, numero, imagen, instagram });
   const getInstagramHandle = (instagramUrl) => {
     if (!instagramUrl) return "";
     if (instagramUrl.startsWith("@")) return instagramUrl;

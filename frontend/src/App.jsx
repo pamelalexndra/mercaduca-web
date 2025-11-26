@@ -45,6 +45,7 @@ export default function App() {
     localStorage.removeItem("user");
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("token");
+    localStorage.removeItem("emprendimientoCache");
     setCurrentUser(null);
   }, []);
 
@@ -73,10 +74,16 @@ export default function App() {
         <Route
           path="/perfil"
           element={
-            <Profile user={currentUser} onProfileLoader={handleProfileLoaded} />
+            <Profile user={currentUser} onProfileLoaded={handleProfileLoaded} />
           }
         />
-        <Route path="/registrar" element={<Register onRegisterSuccess={handleLoginSuccess} />} />
+        <Route
+          path="/perfil/producto/nuevo"
+          element={
+            <Profile user={currentUser} onProfileLoaded={handleProfileLoaded} />
+          }
+        />
+        <Route path="/registrar" element={<Register />} />
         <Route path="/forbidden" element={<Forbidden />} />
         <Route path="/bad-request" element={<BadRequest />} />
         <Route

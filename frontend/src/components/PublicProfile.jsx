@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ProductCard from "./Card";
+import { API_BASE_URL } from "../utils/api";
 
 export default function PublicProfile() {
   const { id } = useParams();
@@ -18,14 +19,14 @@ export default function PublicProfile() {
     setIsLoading(true);
 
     // Traer emprendimiento desde el backend
-    fetch(`http://localhost:5000/api/entrepreneurship/${id}`)
+    fetch(`${API_BASE_URL}/api/entrepreneurship/${id}`)
       .then((res) => res.json())
       .then((data) => setEmprendimiento(data))
       .catch((err) => console.error("Error cargando emprendimiento:", err))
       .finally(() => setIsLoading(false));
 
     // Traer productos del emprendimiento
-    fetch(`http://localhost:5000/api/products?emprendimiento_id=${id}`)
+    fetch(`${API_BASE_URL}/api/products?emprendimiento_id=${id}`)
       .then((res) => res.json())
       .then((data) => setProductos(data.productos))
       .catch((err) => console.error("Error cargando productos:", err));

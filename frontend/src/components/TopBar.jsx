@@ -1,18 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import logoVerde from "../images/logoVerde.png";
 import { Menu, X } from "lucide-react";
 
-const PROFILE_PLACEHOLDER = "https://via.placeholder.com/80?text=Perfil";
+const PROFILE_PLACEHOLDER = logoVerde;
 
 export default function TopBar({ user, onLogout }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [catalogWindow, setCatalogWindow] = useState(null);
+  const [profileMenuOpen, setProfileMenuOpen] = useState(false);
+  const desktopProfileMenuRef = useRef(null);
+  const mobileProfileMenuRef = useRef(null);
   const navigate = useNavigate();
 
   const isAuthenticated = Boolean(user);
 
-  const emprendimientoData = user?.profile?.emprendimiento;
+  const emprendimientoData =
+    user?.profile?.emprendimiento || user?.profile?.enterper;
   const profileImage =
     emprendimientoData?.imagen_url ||
     emprendimientoData?.imagen ||
@@ -24,8 +28,25 @@ export default function TopBar({ user, onLogout }) {
   const handleLogoutClick = () => {
     if (onLogout) onLogout();
     setMenuOpen(false);
+    setProfileMenuOpen(false);
     navigate("/");
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const desktopMenu = desktopProfileMenuRef.current;
+      const clickedOutsideDesktop = desktopMenu
+        ? !desktopMenu.contains(event.target)
+        : true;
+
+      if (clickedOutsideDesktop) {
+        setProfileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const abrirCatalogo = () => {
     if (!catalogWindow || catalogWindow.closed) {
@@ -86,25 +107,37 @@ export default function TopBar({ user, onLogout }) {
               </Link>
 
               {isAuthenticated ? (
-                <div className="flex items-center gap-3">
+                <div className="relative" ref={desktopProfileMenuRef}>
                   <button
-                    onClick={handleLogoutClick}
-                    className="inline-flex items-center rounded-full border-2 border-[#557051] text-[#557051] px-4 py-2 font-medium hover:bg-[#557051] hover:text-white transition-colors duration-300"
-                  >
-                    Cerrar sesión
-                  </button>
-
-                  <Link
-                    to="/perfil"
-                    className="inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-[#557051] overflow-hidden hover:border-[#3f523d] transition-colors"
-                    title={profileLabel}
+                    onClick={() => setProfileMenuOpen((prev) => !prev)}
+                    className="rounded-full border-2 border-[#557051] hover:border-[#3f523d] focus:outline-none focus:ring-2 focus:ring-[#557051]/40 overflow-hidden w-12 h-12"
                   >
                     <img
                       src={profileImage}
                       alt={profileLabel}
                       className="w-full h-full object-cover"
                     />
-                  </Link>
+                  </button>
+
+                  {profileMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-44 rounded-lg bg-[#557051] shadow-lg ring-1 ring-black/5 overflow-hidden">
+                      <Link
+                        to="/perfil"
+                        onClick={() => {
+                          setProfileMenuOpen(false);
+                        }}
+                        className="block px-4 py-2 text-sm text-white hover:bg-[#445a3f]"
+                      >
+                        Perfil
+                      </Link>
+                      <button
+                        onClick={handleLogoutClick}
+                        className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-[#445a3f]"
+                      >
+                        Cerrar sesión
+                      </button>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Link
@@ -161,28 +194,39 @@ export default function TopBar({ user, onLogout }) {
                 Sobre nosotros
               </Link>
 
-              {isAuthenticated ? (
-                <>
-                  <Link
-                    to="/perfil"
-                    onClick={() => setMenuOpen(false)}
-                    className="mt-2 inline-flex items-center justify-center w-10 h-10 rounded-full border-2 border-white overflow-hidden hover:border-white/70 transition"
-                  >
-                    <img
-                      src={profileImage}
-                      alt={profileLabel}
-                      className="w-full h-full object-cover"
-                    />
-                  </Link>
+              {isAuthenticated && (
+                <div className="w-full mt-8">
+                  {/* Separamos los elementos del perfil para mobile */}
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden">
+                      <img
+                        src={profileImage}
+                        alt={profileLabel}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <span className="text-white">{profileLabel}</span>
+                  </div>
 
-                  <button
-                    onClick={handleLogoutClick}
-                    className="mt-2 inline-block rounded-full border-2 border-white text-white px-5 py-2 hover:bg-white hover:text-[#557051] transition"
-                  >
-                    Cerrar sesión
-                  </button>
-                </>
-              ) : (
+                  <div className="flex flex-col gap-3 ml-2">
+                    <Link
+                      to="/perfil"
+                      onClick={() => setMenuOpen(false)}
+                      className="text-white hover:text-gray-200"
+                    >
+                      Perfil
+                    </Link>
+                    <button
+                      onClick={handleLogoutClick}
+                      className="text-white hover:text-gray-200 text-left"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {!isAuthenticated && (
                 <Link
                   to="/vender"
                   onClick={() => setMenuOpen(false)}

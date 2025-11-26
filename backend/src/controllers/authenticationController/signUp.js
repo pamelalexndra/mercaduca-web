@@ -1,9 +1,12 @@
 // src/controllers/authenticationController/signUp.js
 import jwt from "jsonwebtoken";
-import rateLimit from 'express-rate-limit';
+import dotenv from "dotenv";
+import rateLimit from "express-rate-limit";
 import { createProfile } from "../../services/createProfile.js";
 import { validateSignUp } from "../../validators/authValidator.js";
 import { sanitizeInput } from "../../utils/helpers/sanitizer.js";
+
+dotenv.config();
 
 export const signUp = async (req, res) => {
   try {
@@ -34,7 +37,7 @@ export const signUp = async (req, res) => {
     // Generar token inmediatamente para que el usuario quede logueado al registrarse
     const token = jwt.sign(
       { id: user.id_usuario, username: user.usuario },
-      import.meta.env.VITE_JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
@@ -52,7 +55,7 @@ export const signUp = async (req, res) => {
     }
     console.error("Error en registro:", error);
     res.status(500).json({ success: false, message: "Error del servidor" });
-  };
+  }
 };
 
 export const signUpLimiter = rateLimit({
@@ -60,7 +63,7 @@ export const signUpLimiter = rateLimit({
   max: 2, // 2 intentos por Ip
   message: {
     success: false,
-    message: "Demasiados intentos de registro, intenta en 15 minutos"
+    message: "Demasiados intentos de registro, intenta en 15 minutos",
   },
   standardHeaders: true,
   legacyHeaders: false,
