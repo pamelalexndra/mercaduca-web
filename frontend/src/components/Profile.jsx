@@ -4,8 +4,9 @@ import ProductCard from "./Card";
 import ProductForm from "./ProductForm";
 import EditProfile from "./EditProfile";
 import EntrepreneurshipForm from "./EntrepreneurshipForm";
-import logoVerde from "../images/logoVerde.png";
 import { API_BASE_URL } from "../utils/api";
+import logoVerde from "../images/logoVerde.png";
+
 const PROFILE_PLACEHOLDER = logoVerde;
 const EMPRENDIMIENTO_CACHE_KEY = "emprendimientoCache";
 
