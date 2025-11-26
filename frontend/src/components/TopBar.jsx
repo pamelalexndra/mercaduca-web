@@ -207,6 +207,7 @@ export default function TopBar({ user, onLogout }) {
                     </div>
                     <span className="text-white">{profileLabel}</span>
                   </div>
+<<<<<<< HEAD
                   
                   <div className="flex flex-col gap-3 ml-2">
                     <Link
@@ -226,6 +227,27 @@ export default function TopBar({ user, onLogout }) {
                 </div>
               )}
 
+=======
+
+                  <div className="flex flex-col gap-3 ml-2">
+                    <Link
+                      to="/perfil"
+                      onClick={() => setMenuOpen(false)}
+                      className="text-white hover:text-gray-200"
+                    >
+                      Perfil
+                    </Link>
+                    <button
+                      onClick={handleLogoutClick}
+                      className="text-white hover:text-gray-200 text-left"
+                    >
+                      Cerrar sesión
+                    </button>
+                  </div>
+                </div>
+              )}
+
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
               {!isAuthenticated && (
                 <Link
                   to="/vender"

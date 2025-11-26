@@ -1,8 +1,13 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../utils/api";
+<<<<<<< HEAD
 import CredentialsSection from "./register/CredentialsSection";
 import PersonalInfoSection from "./register/PersonalInfoSection";
+=======
+import CredentialsSection from "./Register/CredentialsSection";
+import PersonalInfoSection from "./Register/PersonalInfoSection";
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
 
 const evaluatePasswordStrength = (password) => {
   const feedback = [];
@@ -87,7 +92,10 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   const AUTH_BASE_URL = `${API_BASE_URL}/api/auth`;
 
   const handleRegisterSuccess = () => {
+<<<<<<< HEAD
 
+=======
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
     // Limpiar el formulario
     setFormData({
       username: "",
@@ -273,14 +281,30 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
         <button
           type="submit"
           className={`w-full py-3 px-4 rounded-xl font-semibold transition-colors shadow-md ${
+<<<<<<< HEAD
             !isRegisterFormValid(formData, usernameAvailable, passwordStrength) ||
             loading
+=======
+            !isRegisterFormValid(
+              formData,
+              usernameAvailable,
+              passwordStrength
+            ) || loading
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
               ? "bg-gray-300 text-gray-500 cursor-not-allowed"
               : "bg-gradient-to-r from-[#557051] to-[#6a8a62] text-white hover:from-[#445a3f] hover:to-[#557051]"
           }`}
           disabled={
+<<<<<<< HEAD
             !isRegisterFormValid(formData, usernameAvailable, passwordStrength) ||
             loading
+=======
+            !isRegisterFormValid(
+              formData,
+              usernameAvailable,
+              passwordStrength
+            ) || loading
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
           }
         >
           {loading ? "Registrando..." : "Registrarse"}

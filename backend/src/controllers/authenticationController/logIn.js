@@ -1,9 +1,10 @@
 // src/controllers/authenticationController/logIn.js
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
+import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
 import { findByUsername } from "../../utils/helpers/findByUsername.js";
 import { verifyPassword } from "../../utils/security/verifyPassword.js";
-import rateLimit from "express-rate-limit";
+
 dotenv.config();
 
 export const logIn = async (req, res) => {
@@ -66,13 +67,13 @@ export const logIn = async (req, res) => {
 };
 
 export const loginLimiter = rateLimit({
-  windowsMs: 15 * 60 * 1000,
+  windowMs: 15 * 60 * 1000,
   max: 5,
   message: {
     success: false,
-    message: "Demasiados intentos de inicio de seión"
+    message: "Demasiados intentos de inicio de seión",
   },
   skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
-})
+});

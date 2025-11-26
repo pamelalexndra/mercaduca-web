@@ -21,7 +21,6 @@ export default function ProductDetailPage() {
         if (!productRes.ok) throw new Error("No se pudo obtener el producto");
         const productData = await productRes.json();
         const producto = productData.producto;
-        console.log("📦 Datos del producto:", producto); // DEBUG
         setProduct(producto);
 
         // 2. Obtener el emprendimiento usando el id_emprendimiento del producto
@@ -32,9 +31,6 @@ export default function ProductDetailPage() {
           if (emprendimientoRes.ok) {
             const emprendimientoData = await emprendimientoRes.json();
             setEmprendimiento(emprendimientoData);
-            console.log("Datos del emprendimiento:", emprendimientoData);
-            console.log("✅ Respuesta API emprendimiento:", emprendimientoData);
-            console.log("📸 URL de imagen:", emprendimientoData.imagen_url); // Para debug
           }
         }
       } catch (err) {

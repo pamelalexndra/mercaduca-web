@@ -19,7 +19,15 @@ const getStoredToken = (userData) => {
   const fallbackToken =
     userData?.token || userData?.profile?.token || userData?.accessToken;
 
+<<<<<<< HEAD
   if (fallbackToken && fallbackToken !== "undefined" && fallbackToken !== "null") {
+=======
+  if (
+    fallbackToken &&
+    fallbackToken !== "undefined" &&
+    fallbackToken !== "null"
+  ) {
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
     return fallbackToken;
   }
 
@@ -39,7 +47,14 @@ const normalizeProducto = (producto) => ({
   nombre: producto?.nombre ?? producto?.Nombre ?? "",
   descripcion: producto?.descripcion ?? producto?.Descripcion ?? "",
   precio:
+<<<<<<< HEAD
     producto?.precio ?? producto?.precio_dolares ?? producto?.Precio_dolares ?? 0,
+=======
+    producto?.precio ??
+    producto?.precio_dolares ??
+    producto?.Precio_dolares ??
+    0,
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
   imagen:
     producto?.imagen ??
     producto?.imagen_url ??
@@ -91,24 +106,47 @@ const normalizeEmprendimiento = (data = {}) => ({
     null,
   nombre: data.nombre || data.Nombre || data.emprendimiento_nombre || "",
   descripcion:
+<<<<<<< HEAD
     data.descripcion || data.Descripcion || data.emprendimiento_descripcion || "",
+=======
+    data.descripcion ||
+    data.Descripcion ||
+    data.emprendimiento_descripcion ||
+    "",
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
   imagen_url:
     data.imagen_url ||
     data.Imagen_URL ||
     data.imagen ||
     data.emprendimiento_imagen_url ||
     "",
+<<<<<<< HEAD
   instagram: data.instagram || data.Instagram || data.emprendimiento_instagram || "",
   disponible: data.disponible ?? data.Disponible ?? true,
   id_categoria:
     data.id_categoria || data.idCategoria || data.emprendimiento_id_categoria || null,
+=======
+  instagram:
+    data.instagram || data.Instagram || data.emprendimiento_instagram || "",
+  disponible: data.disponible ?? data.Disponible ?? true,
+  id_categoria:
+    data.id_categoria ||
+    data.idCategoria ||
+    data.emprendimiento_id_categoria ||
+    null,
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
 });
 
 export default function Profile({ user, onProfileLoaded }) {
   const [showModal, setShowModal] = useState(false);
   const [showEditProfileModal, setShowEditProfileModal] = useState(false);
   const [productoEdit, setProductoEdit] = useState(null);
+<<<<<<< HEAD
   const [showEntrepreneurshipModal, setShowEntrepreneurshipModal] = useState(false);
+=======
+  const [showEntrepreneurshipModal, setShowEntrepreneurshipModal] =
+    useState(false);
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
   const [savingEntrepreneurship, setSavingEntrepreneurship] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
   const [emprendimiento, setEmprendimiento] = useState(() => {
@@ -256,8 +294,17 @@ export default function Profile({ user, onProfileLoaded }) {
         const payload = await response.json();
         const profileData = payload.profile || payload;
 
+<<<<<<< HEAD
         if (Array.isArray(profileData?.productos) && profileData.productos.length) {
           const normalizedProductos = profileData.productos.map(normalizeProducto);
+=======
+        if (
+          Array.isArray(profileData?.productos) &&
+          profileData.productos.length
+        ) {
+          const normalizedProductos =
+            profileData.productos.map(normalizeProducto);
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
           setProductos(normalizedProductos);
           updateStoredUserProfile((prevProfile) => ({
             ...prevProfile,
@@ -323,8 +370,20 @@ export default function Profile({ user, onProfileLoaded }) {
           emprendimiento: normalizedEmprendimiento,
         };
 
+<<<<<<< HEAD
         const updatedUser = { ...baseUser, token: authToken, profile: updatedProfile };
         saveCachedEmprendimiento(getUserId(updatedUser), normalizedEmprendimiento);
+=======
+        const updatedUser = {
+          ...baseUser,
+          token: authToken,
+          profile: updatedProfile,
+        };
+        saveCachedEmprendimiento(
+          getUserId(updatedUser),
+          normalizedEmprendimiento
+        );
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
         localStorage.setItem("user", JSON.stringify(updatedUser));
         setCurrentUser(updatedUser);
       } catch (profileError) {
@@ -654,7 +713,10 @@ export default function Profile({ user, onProfileLoaded }) {
     }
   };
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
   const handleEliminarProducto = async (producto) => {
     if (
       !producto?.id ||
@@ -822,7 +884,12 @@ export default function Profile({ user, onProfileLoaded }) {
                 <button
                   onClick={handleOpenEntrepreneurship}
                   className="px-6 py-2 bg-gradient-to-r from-[#557051] to-[#6a8a62] hover:from-[#445a3f] hover:to-[#557051] text-white rounded-xl text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-95"
+<<<<<<< HEAD
                 >{emprendimientoActionLabel}
+=======
+                >
+                  {emprendimientoActionLabel}
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
                 </button>
               </div>
 
@@ -1003,11 +1070,15 @@ export default function Profile({ user, onProfileLoaded }) {
             <div className="grid grid-cols-3 gap-1 md:gap-7 mt-4">
               {productos.map((p) => (
                 <div key={p.id} className="aspect-square">
+<<<<<<< HEAD
                   <ProductCard
                     p={p}
                     onClick={handleEditar}
                     disableLink
                   />
+=======
+                  <ProductCard p={p} onClick={handleEditar} disableLink />
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
                 </div>
               ))}
             </div>

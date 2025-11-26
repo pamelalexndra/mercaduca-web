@@ -52,9 +52,7 @@ const PasswordStrengthMeter = ({ password, passwordStrength }) => {
         <ul className="text-sm text-gray-600 space-y-1">
           <li
             className={
-              password.length >= 8
-                ? "text-green-600 font-semibold"
-                : ""
+              password.length >= 8 ? "text-green-600 font-semibold" : ""
             }
           >
             ✓ Mínimo 8 caracteres
@@ -70,9 +68,7 @@ const PasswordStrengthMeter = ({ password, passwordStrength }) => {
           </li>
           <li
             className={
-              /\d/.test(password)
-                ? "text-green-600 font-semibold"
-                : ""
+              /\d/.test(password) ? "text-green-600 font-semibold" : ""
             }
           >
             ✓ Al menos un número

@@ -26,7 +26,9 @@ export default function EntrepreneurshipForm({
         imagen_url: initialData.imagen_url || initialData.Imagen_URL || "",
         instagram: initialData.instagram || initialData.Instagram || "",
         id_categoria:
-          initialData.id_categoria || initialData.emprendimiento_id_categoria || "",
+          initialData.id_categoria ||
+          initialData.emprendimiento_id_categoria ||
+          "",
       });
     }
   }, [initialData]);
@@ -68,10 +70,13 @@ export default function EntrepreneurshipForm({
 
         <div className="p-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-1 text-center">
-            {initialData?.id_emprendimiento ? "Editar emprendimiento" : "Crear emprendimiento"}
+            {initialData?.id_emprendimiento
+              ? "Editar emprendimiento"
+              : "Crear emprendimiento"}
           </h2>
           <p className="text-sm text-gray-600 mb-6 text-center">
-            Completa la información de tu emprendimiento para comenzar a compartir tus productos.
+            Completa la información de tu emprendimiento para comenzar a
+            compartir tus productos.
           </p>
 
           {errorMessage && (
@@ -82,7 +87,9 @@ export default function EntrepreneurshipForm({
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div className="space-y-1">
-              <label className="block text-sm font-semibold text-gray-800">Nombre *</label>
+              <label className="block text-sm font-semibold text-gray-800">
+                Nombre *
+              </label>
               <input
                 type="text"
                 name="nombre"
@@ -95,7 +102,9 @@ export default function EntrepreneurshipForm({
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-semibold text-gray-800">Descripción</label>
+              <label className="block text-sm font-semibold text-gray-800">
+                Descripción
+              </label>
               <textarea
                 name="descripcion"
                 value={formData.descripcion}
@@ -119,7 +128,10 @@ export default function EntrepreneurshipForm({
               >
                 <option value="">Selecciona una categoría</option>
                 {categories.map((categoria) => (
-                  <option key={categoria.id_categoria} value={categoria.id_categoria}>
+                  <option
+                    key={categoria.id_categoria}
+                    value={categoria.id_categoria}
+                  >
                     {categoria.categoria}
                   </option>
                 ))}
@@ -127,7 +139,9 @@ export default function EntrepreneurshipForm({
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-semibold text-gray-800">Imagen de perfil (URL)</label>
+              <label className="block text-sm font-semibold text-gray-800">
+                Imagen de perfil (URL)
+              </label>
               <input
                 type="url"
                 name="imagen_url"
@@ -139,7 +153,9 @@ export default function EntrepreneurshipForm({
             </div>
 
             <div className="space-y-1">
-              <label className="block text-sm font-semibold text-gray-800">Instagram</label>
+              <label className="block text-sm font-semibold text-gray-800">
+                Instagram
+              </label>
               <input
                 type="text"
                 name="instagram"

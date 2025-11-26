@@ -7,9 +7,13 @@ import { API_BASE_URL } from "../utils/api";
  * - Encapsula fetchProducts + estados relacionados (allProducts, filteredProducts, loading, error).
  * - NOTA: no fuerza setLoading(true) dentro de cada fetch para evitar "parpadeos".
  */
+<<<<<<< HEAD
 export default function useProducts(
   baseUrl = `${API_BASE_URL}/api/products`
 ) {
+=======
+export default function useProducts(baseUrl = `${API_BASE_URL}/api/products`) {
+>>>>>>> b857643a838bb07cb0416bd4cc783a16ddb22934
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true); // true hasta la primera respuesta

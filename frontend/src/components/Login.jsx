@@ -12,7 +12,11 @@ const normalizeProducto = (producto) => ({
   id: producto?.id ?? producto?.id_producto,
   nombre: producto?.nombre ?? producto?.Nombre ?? "",
   descripcion: producto?.descripcion ?? producto?.Descripcion ?? "",
-  precio: producto?.precio ?? producto?.precio_dolares ?? producto?.Precio_dolares ?? 0,
+  precio:
+    producto?.precio ??
+    producto?.precio_dolares ??
+    producto?.Precio_dolares ??
+    0,
   imagen:
     producto?.imagen ||
     producto?.imagen_url ||
@@ -97,10 +101,15 @@ const Login = ({ onLoginSuccess }) => {
 
           if (productosResponse.ok) {
             const productosPayload = await productosResponse.json();
-            productos = (productosPayload.productos || []).map(normalizeProducto);
+            productos = (productosPayload.productos || []).map(
+              normalizeProducto
+            );
           }
         } catch (productosError) {
-          console.error("No se pudieron obtener los productos al iniciar sesión", productosError);
+          console.error(
+            "No se pudieron obtener los productos al iniciar sesión",
+            productosError
+          );
         }
       }
 
