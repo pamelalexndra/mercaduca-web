@@ -1,8 +1,11 @@
 // src/controllers/authenticationController/logIn.js
+import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
 import { findByUsername } from "../../utils/helpers/findByUsername.js";
 import { verifyPassword } from "../../utils/security/verifyPassword.js";
+
+dotenv.config();
 
 export const logIn = async (req, res) => {
   try {
@@ -42,7 +45,7 @@ export const logIn = async (req, res) => {
     // 3. Generar Token
     const token = jwt.sign(
       { id: user.id_usuario, username: user.usuario },
-      import.meta.env.VITE_JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 

@@ -1,9 +1,12 @@
 // src/controllers/authenticationController/signUp.js
 import jwt from "jsonwebtoken";
+import dotenv from "dotenv";
 import rateLimit from 'express-rate-limit';
 import { createProfile } from "../../services/createProfile.js";
 import { validateSignUp } from "../../validators/authValidator.js";
 import { sanitizeInput } from "../../utils/helpers/sanitizer.js";
+
+dotenv.config();
 
 export const signUp = async (req, res) => {
   try {
@@ -34,7 +37,7 @@ export const signUp = async (req, res) => {
     // Generar token inmediatamente para que el usuario quede logueado al registrarse
     const token = jwt.sign(
       { id: user.id_usuario, username: user.usuario },
-      import.meta.env.VITE_JWT_SECRET,
+      process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
