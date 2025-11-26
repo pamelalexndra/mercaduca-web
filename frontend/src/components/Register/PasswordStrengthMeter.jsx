@@ -1,75 +1,95 @@
-const PersonalInfoSection = ({ formData, onChange, inputClass }) => (
-  <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
-    <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-      Información Personal
-    </h3>
+const getPasswordStrengthColor = (score) => {
+  if (score === 0) return "bg-transparent";
+  if (score <= 2) return "bg-red-500";
+  if (score <= 3) return "bg-yellow-500";
+  return "bg-green-500";
+};
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <div>
-        <label className="block text-sm font-semibold text-gray-800 mb-2">
-          Nombres:
-        </label>
-        <input
-          type="text"
-          name="nombres"
-          value={formData.nombres}
-          onChange={onChange}
-          required
-          className={inputClass}
-          placeholder="Ingresa tus nombres"
-        />
+const getPasswordStrengthText = (score) => {
+  if (score === 0) return "";
+  if (score <= 2) return "Débil";
+  if (score <= 3) return "Media";
+  return "Fuerte";
+};
+
+const getPasswordStrengthTextColor = (score) => {
+  if (score === 0) return "text-gray-500";
+  if (score <= 2) return "text-red-600";
+  if (score <= 3) return "text-yellow-600";
+  return "text-green-600";
+};
+
+const PasswordStrengthMeter = ({ password, passwordStrength }) => {
+  if (!password) return null;
+
+  return (
+    <div className="mt-3 space-y-2">
+      <div className="w-full bg-gray-200 rounded-full h-2">
+        <div
+          className={`h-2 rounded-full transition-all duration-300 ${getPasswordStrengthColor(
+            passwordStrength.score
+          )}`}
+          style={{
+            width: `${(passwordStrength.score / 5) * 100}%`,
+          }}
+        ></div>
+      </div>
+      <div className="flex justify-between text-sm">
+        <span>Fortaleza: </span>
+        <span
+          className={`font-semibold ${getPasswordStrengthTextColor(
+            passwordStrength.score
+          )}`}
+        >
+          {getPasswordStrengthText(passwordStrength.score)}
+        </span>
       </div>
 
-      <div>
-        <label className="block text-sm font-semibold text-gray-800 mb-2">
-          Apellidos:
-        </label>
-        <input
-          type="text"
-          name="apellidos"
-          value={formData.apellidos}
-          onChange={onChange}
-          required
-          className={inputClass}
-          placeholder="Ingresa tus apellidos"
-        />
+      <div className="bg-white p-3 rounded-md border border-gray-200 mt-2">
+        <p className="text-sm font-medium text-gray-700 mb-2">
+          La contraseña debe contener:
+        </p>
+        <ul className="text-sm text-gray-600 space-y-1">
+          <li
+            className={
+              password.length >= 8
+                ? "text-green-600 font-semibold"
+                : ""
+            }
+          >
+            ✓ Mínimo 8 caracteres
+          </li>
+          <li
+            className={
+              /[a-z]/.test(password) && /[A-Z]/.test(password)
+                ? "text-green-600 font-semibold"
+                : ""
+            }
+          >
+            ✓ Mayúsculas y minúsculas
+          </li>
+          <li
+            className={
+              /\d/.test(password)
+                ? "text-green-600 font-semibold"
+                : ""
+            }
+          >
+            ✓ Al menos un número
+          </li>
+          <li
+            className={
+              /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
+                ? "text-green-600 font-semibold"
+                : ""
+            }
+          >
+            ✓ Al menos un carácter especial
+          </li>
+        </ul>
       </div>
     </div>
+  );
+};
 
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-      <div>
-        <label className="block text-sm font-semibold text-gray-800 mb-2">
-          Correo Electrónico:
-        </label>
-        <input
-          type="email"
-          name="correo"
-          value={formData.correo}
-          onChange={onChange}
-          required
-          className={inputClass}
-          placeholder="ejemplo@correo.com"
-        />
-      </div>
-
-      <div>
-        <label className="block text-sm font-semibold text-gray-800 mb-2">
-          Teléfono:
-        </label>
-        <input
-          type="tel"
-          name="telefono"
-          value={formData.telefono}
-          onChange={onChange}
-          required
-          className={inputClass}
-          placeholder="12345678"
-          maxLength="8"
-          pattern="[0-9]{8}"
-        />
-      </div>
-    </div>
-  </div>
-);
-
-export default PersonalInfoSection;
+export default PasswordStrengthMeter;

@@ -1,4 +1,4 @@
-import PasswordStrengthMeter from "./PasswordStrengthMeter";
+import PasswordStrengthMeter from "./PasswordStrengthMeter.jsx";
 
 const CredentialsSection = ({
   formData,
