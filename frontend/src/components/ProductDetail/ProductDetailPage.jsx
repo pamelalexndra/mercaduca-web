@@ -147,21 +147,21 @@ export default function ProductDetailPage() {
               <div className="space-y-3 mt-6">
                 {emprendimiento?.telefono && (
                   <a
-                    href={`https://wa.me/502${emprendimiento.telefono}?text=Hola! Me interesa el producto: ${product.nombre}`}
+                    href={`https://wa.me/503${emprendimiento.telefono}?text=Hola! Me interesa el producto: ${product.nombre}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full bg-green-500 hover:bg-green-600 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium"
+                    className="w-full bg-green-800 hover:bg-green-800 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium"
                   >
-                    💬 Contactar por WhatsApp
+                    Contactar por WhatsApp
                   </a>
                 )}
 
                 {emprendimiento?.correo && (
                   <a
                     href={`mailto:${emprendimiento.correo}?subject=Consulta sobre ${product.nombre}`}
-                    className="w-full bg-blue-500 hover:bg-blue-600 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium"
+                    className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium"
                   >
-                    📧 Enviar Email
+                    Enviar Email
                   </a>
                 )}
               </div>

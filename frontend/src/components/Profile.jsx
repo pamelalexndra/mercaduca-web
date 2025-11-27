@@ -1028,7 +1028,7 @@ export default function Profile({ user, onProfileLoaded }) {
             <div className="grid grid-cols-3 gap-1 md:gap-7 mt-4">
               {productos.map((p) => (
                 <div key={p.id} className="aspect-square">
-                  <ProductCard p={p} onClick={handleEditar} disableLink />
+                  <ProductCard p={p} />
                 </div>
               ))}
             </div>
