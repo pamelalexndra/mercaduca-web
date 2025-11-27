@@ -6,14 +6,15 @@ import { createProduct } from "../controllers/productController/createProduct.js
 import { updateProduct } from "../controllers/productController/updateProduct.js";
 import { updateProductPartial } from "../controllers/productController/updateProductPartial.js";
 import { deleteProduct } from "../controllers/productController/deleteProduct.js";
+import { verifyToken } from "../middlewares/verifyToken.js";
 
 const router = express.Router();
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
-router.post("/", createProduct);
-router.put("/:id", updateProduct);
-router.patch("/:id", updateProductPartial);
-router.delete("/:id", deleteProduct);
+router.post("/", verifyToken, createProduct);
+router.put("/:id", verifyToken, updateProduct);
+router.patch("/:id", verifyToken, updateProductPartial);
+router.delete("/:id", verifyToken, deleteProduct);
 
 export default router;
