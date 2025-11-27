@@ -9,7 +9,6 @@ dotenv.config();
 import categoriesRoutes from "./routes/categoriesRoutes.js";
 import productsRoutes from "./routes/productsRoutes.js";
 import entrepreneurshipRoutes from "./routes/entrepreneurshipRoutes.js";
-import imageRoutes from "./routes/imageRoutes.js";
 import authenticationRoutes from "./routes/authenticationRoutes.js";
 import userRoutes from "./routes/profileRoutes.js";
 
@@ -33,7 +32,6 @@ app.get("/api/health", (req, res) => {
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/entrepreneurship", entrepreneurshipRoutes);
-app.use("/api", imageRoutes);
 app.use("/api/auth", authenticationRoutes);
 app.use("/api/user", userRoutes);
 
@@ -56,9 +54,8 @@ app.use("*", (req, res) => {
       "/api/categories",
       "/api/products",
       "/api/entrepreneurship",
-      "/api/proxy-image",
-      "/api/image-proxy-status",
-      "/api/db-info",
+      "/api/auth",
+      "/api/user",
     ],
   });
 });
@@ -66,14 +63,6 @@ app.use("*", (req, res) => {
 // Inicializar servidor
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
-  console.log("Endpoints disponibles:");
-  console.log(`- GET http://localhost:${PORT}/api/health`);
-  console.log(`- GET http://localhost:${PORT}/api/categories`);
-  console.log(`- CRUD http://localhost:${PORT}/api/products`);
-  console.log(`- CRUD http://localhost:${PORT}/api/entrepreneurship`);
-  console.log(`- GET  http://localhost:${PORT}/api/proxy-image`);
-  console.log(`- GET  http://localhost:${PORT}/api/image-proxy-status`);
-  console.log(`- GET http://localhost:${PORT}/api/db-info`);
 });
 
 // Manejar cierre de PostgreSQL

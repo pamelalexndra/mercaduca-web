@@ -1,6 +1,6 @@
 // backend/src/services/createProfile.js
 import pool from "../database/connection.js";
-import { generateHash } from "../utils/hash/generateHash.js";
+import { generateHash } from "../utils/security/generateHash.js";
 
 export const createProfile = async (userData) => {
   const client = await pool.connect();

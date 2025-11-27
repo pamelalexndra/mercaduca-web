@@ -1,4 +1,4 @@
-import { findByUsername } from "./findByUsername.js";
+import { findByUsername } from "../../services/findByUsername.js";
 
 export const checkUsername = async (req, res) => {
   try {

@@ -2,7 +2,7 @@
 import dotenv from "dotenv";
 import jwt from "jsonwebtoken";
 import rateLimit from "express-rate-limit";
-import { findByUsername } from "../../utils/helpers/findByUsername.js";
+import { findByUsername } from "../../services/findByUsername.js";
 import { verifyPassword } from "../../utils/security/verifyPassword.js";
 
 dotenv.config();
