@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from "react";
 import useCategories from "../hooks/useCategories";
+import { useEmprendimiento } from "../hooks/useEmprendimiento"; 
 
 export default function EntrepreneurshipForm({
   visible,
   onClose,
   initialData = {},
   onSubmit,
-  loading = false,
-  errorMessage = "",
+  loading = false, 
+  errorMessage = "", 
 }) {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -16,7 +17,10 @@ export default function EntrepreneurshipForm({
     instagram: "",
     id_categoria: "",
   });
+  
   const { categories } = useCategories();
+  
+  const { removeEntrepreneurship, loadingDelete, errorDelete } = useEmprendimiento();
 
   useEffect(() => {
     if (initialData) {
@@ -43,6 +47,23 @@ export default function EntrepreneurshipForm({
     onSubmit?.(formData);
   };
 
+  // 3. FUNCIÓN PARA ELIMINAR
+  const handleDelete = async () => {
+    if (!window.confirm("¿Estás seguro de eliminar este emprendimiento?")) return;
+
+    const idToDelete = initialData.id_emprendimiento || initialData.Id_Emprendimiento;
+
+    if (!idToDelete) return;
+
+    const success = await removeEntrepreneurship(idToDelete);
+
+    if (success) {
+      alert("Emprendimiento eliminado correctamente");
+      onClose(); 
+      window.location.reload(); 
+    }
+  };
+
   const handleBackgroundClick = (e) => {
     if (e.target === e.currentTarget) {
       onClose?.();
@@ -53,6 +74,10 @@ export default function EntrepreneurshipForm({
 
   const inputClass =
     "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white transition-all placeholder:text-gray-400";
+
+  const isEditing = !!(initialData?.id_emprendimiento || initialData?.Id_Emprendimiento);
+
+  const displayError = errorMessage || errorDelete;
 
   return (
     <div
@@ -70,18 +95,16 @@ export default function EntrepreneurshipForm({
 
         <div className="p-6">
           <h2 className="text-2xl font-semibold text-gray-900 mb-1 text-center">
-            {initialData?.id_emprendimiento
-              ? "Editar emprendimiento"
-              : "Crear emprendimiento"}
+            {isEditing ? "Editar emprendimiento" : "Crear emprendimiento"}
           </h2>
           <p className="text-sm text-gray-600 mb-6 text-center">
             Completa la información de tu emprendimiento para comenzar a
             compartir tus productos.
           </p>
 
-          {errorMessage && (
+          {displayError && (
             <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {errorMessage}
+              {displayError}
             </div>
           )}
 
@@ -166,20 +189,25 @@ export default function EntrepreneurshipForm({
               />
             </div>
 
+            {/* SECCIÓN DE BOTONES */}
             <div className="flex justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
-              >
-                Cancelar
-              </button>
+              {isEditing && (
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={loading || loadingDelete}
+                  className="flex-1 px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 text-sm font-medium transition disabled:opacity-50"
+                >
+                  {loadingDelete ? "Eliminando..." : "Eliminar emprendimiento"}
+                </button>
+              )}
+              
               <button
                 type="submit"
-                disabled={loading}
-                className="px-4 py-2 rounded-xl text-sm font-semibold text-white bg-gradient-to-r from-[#557051] to-[#6a8a62] hover:from-[#445a3f] hover:to-[#557051] transition-colors disabled:opacity-60"
+                disabled={loading || loadingDelete}
+                className="flex-1 px-4 py-3 rounded-xl bg-[#557051] text-white hover:bg-[#445a3f] text-sm font-medium transition disabled:opacity-60"
               >
-                {loading ? "Guardando..." : "Guardar"}
+                {loading ? "Guardando..." : "Guardar cambios"}
               </button>
             </div>
           </form>
