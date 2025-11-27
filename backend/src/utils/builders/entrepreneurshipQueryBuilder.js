@@ -14,6 +14,7 @@ export const buildEntrepreneurshipQuery = (filtros) => {
         e.id_emprendimiento AS id,
         e.Nombre AS nombre,
         e.Descripcion AS descripcion,
+        e.Disponible AS disponible,
         e.Imagen_URL AS imagen,
         e.Instagram AS instagram,
         e.Fecha_registro,

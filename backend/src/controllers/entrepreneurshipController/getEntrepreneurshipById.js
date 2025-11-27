@@ -13,6 +13,7 @@ export const getEntrepreneurshipById = async (req, res) => {
         e.id_emprendimiento,
         e.nombre, 
         e.descripcion,
+        e.disponible,
         e.Imagen_URL as imagen_url,
         e.instagram,
         em.correo,

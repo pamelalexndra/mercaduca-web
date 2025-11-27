@@ -11,11 +11,8 @@ export default function ProductHeader({ nombre, numero, imagen, instagram }) {
   };
 
   const instagramHandle = getInstagramHandle(instagram);
-
-  // Imagen por defecto si no hay imagen
+  
   const imageSrc = imagen
-    ? `http://localhost:5000/api/proxy-image?url=${encodeURIComponent(imagen)}`
-    : "https://via.placeholder.com/150?text=Sin+Imagen";
 
   return (
     <div className="flex items-center gap-4 bg-gray-100 rounded-lg p-4 w-full shadow-sm">
