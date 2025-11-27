@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from "react";
 import useCategories from "../hooks/useCategories";
-import { useEmprendimiento } from "../hooks/useEmprendimiento"; 
+import { useEmprendimiento } from "../hooks/useEmprendimiento";
 
 export default function EntrepreneurshipForm({
   visible,
   onClose,
   initialData = {},
   onSubmit,
-  loading = false, 
-  errorMessage = "", 
+  loading = false,
+  errorMessage = "",
 }) {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -17,10 +17,11 @@ export default function EntrepreneurshipForm({
     instagram: "",
     id_categoria: "",
   });
-  
+
   const { categories } = useCategories();
-  
-  const { removeEntrepreneurship, loadingDelete, errorDelete } = useEmprendimiento();
+
+  const { removeEntrepreneurship, deleting: loadingDelete,
+    deleteError: errorDelete } = useEmprendimiento();
 
   useEffect(() => {
     if (initialData) {
@@ -59,8 +60,8 @@ export default function EntrepreneurshipForm({
 
     if (success) {
       alert("Emprendimiento eliminado correctamente");
-      onClose(); 
-      window.location.reload(); 
+      onClose();
+      window.location.reload();
     }
   };
 
@@ -201,7 +202,7 @@ export default function EntrepreneurshipForm({
                   {loadingDelete ? "Eliminando..." : "Eliminar emprendimiento"}
                 </button>
               )}
-              
+
               <button
                 type="submit"
                 disabled={loading || loadingDelete}

@@ -33,7 +33,7 @@ export function useEmprendimiento(id) {
       });
   }, [id]);
 
-  const removeEmprendimiento = async (idToDelete) => {
+  const removeEntrepreneurship = async (idToDelete) => {
     setDeleting(true);
     setDeleteError(null);
     try {
@@ -54,7 +54,7 @@ export function useEmprendimiento(id) {
       emprendimiento, 
       loading, 
       error,
-      removeEmprendimiento,
+      removeEntrepreneurship,
       deleting,
       deleteError 
   };

@@ -2,7 +2,7 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const deleteUserProfile = async (userId, token) => {
   try {
-    const response = await fetch(`${BASE_URL}/profile/${userId}`, {
+    const response = await fetch(`${BASE_URL}/api/user/profile/${userId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",

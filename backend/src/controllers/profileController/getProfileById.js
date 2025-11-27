@@ -11,9 +11,11 @@ export const getProfileById = async (req, res) => {
           ed.Apellidos,
           ed.Correo,
           ed.Telefono,
+          ed.activo,
           ed.id_emprendimiento,
           e.Nombre AS emprendimiento_nombre,
           e.Descripcion AS emprendimiento_descripcion,
+          e.Disponible AS emprendimiento_disponible,
           e.Imagen_URL AS emprendimiento_imagen_url,
           e.Instagram AS emprendimiento_instagram,
           e.id_categoria AS emprendimiento_id_categoria
@@ -38,6 +40,7 @@ export const getProfileById = async (req, res) => {
       apellidos: profileRow.apellidos,
       correo: profileRow.correo,
       telefono: profileRow.telefono,
+      activo: profileRow.activo,
     };
 
     if (profileRow.id_emprendimiento) {
@@ -45,6 +48,7 @@ export const getProfileById = async (req, res) => {
         id_emprendimiento: profileRow.id_emprendimiento,
         nombre: profileRow.emprendimiento_nombre,
         descripcion: profileRow.emprendimiento_descripcion,
+        disponible: profileRow.emprendimiento_disponible,
         imagen_url: profileRow.emprendimiento_imagen_url,
         instagram: profileRow.emprendimiento_instagram,
         id_categoria: profileRow.emprendimiento_id_categoria,
