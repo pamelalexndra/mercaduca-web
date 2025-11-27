@@ -114,8 +114,6 @@ export default function ProductDetailPage() {
   };
 
   const handleDeleteProduct = async () => {
-      if(!window.confirm("¿Estás seguro de eliminar este producto? Esta acción no se puede deshacer.")) return;
-
       try {
           const response = await fetch(`${API_BASE_URL}/api/products/${product.id}`, {
               method: "DELETE",
