@@ -5,7 +5,7 @@ import {checkUsername} from "../controllers/authenticationController/checkUserna
 
 const router = express.Router();
 
-router.post("/signUp", signUpLimiter, signUp);
+router.post("/signUp", signUp);
 router.post("/logIn", logIn);
 router.get("/check-username/:username", checkUsername);
 

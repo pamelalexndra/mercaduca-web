@@ -31,10 +31,8 @@ export const signUp = async (req, res) => {
       });
     }
 
-    // Crear usuario
     const user = await createProfile(sanitizedData);
 
-    // Generar token inmediatamente para que el usuario quede logueado al registrarse
     const token = jwt.sign(
       { id: user.id_usuario, username: user.usuario },
       process.env.JWT_SECRET,
@@ -44,8 +42,8 @@ export const signUp = async (req, res) => {
     res.status(201).json({
       success: true,
       message: "Usuario registrado exitosamente",
-      token, // Enviamos el token
-      user: { id: user.id_usuario, username: user.usuario }, // NO enviamos password
+      token,
+      user: { id: user.id_usuario, username: user.usuario },
     });
   } catch (error) {
     if (error.code === "23505") {
@@ -59,8 +57,8 @@ export const signUp = async (req, res) => {
 };
 
 export const signUpLimiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 24 horas
-  max: 2, // 2 intentos por Ip
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 2,
   message: {
     success: false,
     message: "Demasiados intentos de registro, intenta en 15 minutos",

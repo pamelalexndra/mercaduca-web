@@ -16,7 +16,6 @@ export default function ProductHeader({ nombre, numero, imagen, instagram }) {
 
   return (
     <div className="flex items-center gap-4 bg-gray-100 rounded-lg p-4 w-full shadow-sm">
-      {/* Imagen del emprendimiento */}
       <div className="flex-shrink-0">
         <img
           src={imageSrc}
@@ -28,7 +27,6 @@ export default function ProductHeader({ nombre, numero, imagen, instagram }) {
         />
       </div>
 
-      {/* Información del emprendimiento */}
       <div className="flex-1 min-w-0">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-800 truncate mb-1">
           {nombre || "Sin nombre"}

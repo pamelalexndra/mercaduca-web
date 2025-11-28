@@ -15,7 +15,6 @@ export default function InternalServerError() {
           <AlertCircle className="w-12 h-12 text-blue-500 mx-auto" />
         </div>
 
-        {/* Código de error y título arriba de la imagen */}
         <h1 className="text-4xl font-bold text-gray-800 mb-2">
           500 Internal Server Error
         </h1>
@@ -23,7 +22,6 @@ export default function InternalServerError() {
           Error del Servidor
         </h2>
 
-        {/* Imagen */}
         <div className="mb-8">
           <img
             src={serverErrorImage}
@@ -36,7 +34,6 @@ export default function InternalServerError() {
           />
         </div>
 
-        {/* Información adicional debajo de la imagen */}
         <div className="space-y-4 mb-8">
           <p className="text-gray-600">
             Ha ocurrido un error interno en el servidor.
@@ -46,7 +43,6 @@ export default function InternalServerError() {
           </p>
         </div>
 
-        {/* Botones */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={handleGoBack}

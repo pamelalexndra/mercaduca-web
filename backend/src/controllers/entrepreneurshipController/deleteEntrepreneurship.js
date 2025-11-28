@@ -1,6 +1,8 @@
 import pool from "../../database/connection.js";
 
 export const deleteEntrepreneurship = async (req, res) => {
+  const client = await pool.connect();
+
   try {
     const { id } = req.params;
 
@@ -8,21 +10,34 @@ export const deleteEntrepreneurship = async (req, res) => {
       return res.status(400).json({ error: "ID de emprendimiento inválido" });
     }
 
-    const result = await pool.query(
-      `DELETE FROM Emprendimiento WHERE id_emprendimiento = $1 RETURNING id_emprendimiento, Nombre`,
-      [parseInt(id)]
+    const idEmprendimiento = parseInt(id);
+
+    await client.query("BEGIN");
+
+    const emprendedoresActualizados = await client.query(
+      `UPDATE Emprendedor 
+       SET id_emprendimiento = NULL 
+       WHERE id_emprendimiento = $1
+       RETURNING id_emprendedor, nombres, apellidos`,
+      [idEmprendimiento]
     );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({ error: "Emprendimiento no encontrado" });
-    }
+    const resultEmprendimiento = await client.query(
+      `DELETE FROM Emprendimiento WHERE id_emprendimiento = $1 RETURNING id_emprendimiento, Nombre`,
+      [idEmprendimiento]
+    );
+
+    await client.query("COMMIT");
 
     res.json({
-      message: "Emprendimiento y todos sus datos asociados eliminados",
-      emprendimiento: result.rows[0],
+      message: "Emprendimiento eliminado exitosamente",
+      emprendimiento: resultEmprendimiento.rows[0],
     });
   } catch (error) {
+    await client.query("ROLLBACK");
     console.error("Error eliminando emprendimiento:", error);
     res.status(500).json({ error: "Error interno del servidor" });
+  } finally {
+    client.release();
   }
 };

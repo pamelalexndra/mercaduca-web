@@ -8,7 +8,6 @@
 export const buildEntrepreneurshipQuery = (filtros) => {
     const { ids, ordenar = "fecha_desc", search, limit } = filtros;
 
-  // 1. Consulta Base
   let sqlParts = [
     `SELECT
         e.id_emprendimiento AS id,
@@ -30,7 +29,6 @@ export const buildEntrepreneurshipQuery = (filtros) => {
 
   const getNextIndex = () => `$${params.length + 1}`;
 
-  // 2. NUEVO: Filtro por Búsqueda de Texto
   if (search && search.trim() !== "") {
     const searchTerm = `%${search.trim().toLowerCase()}%`;
     const idx = getNextIndex();
@@ -43,7 +41,6 @@ export const buildEntrepreneurshipQuery = (filtros) => {
     filtrosAplicados.search = search.trim();
   }
 
-  // 3. Filtro por Categorías
   if (ids) {
     const categoriasIds = ids
       .split(",")
@@ -60,7 +57,6 @@ export const buildEntrepreneurshipQuery = (filtros) => {
     }
   }
 
-  // 4. Ordenamiento
   const ordenamientos = {
     fecha_desc: "e.Fecha_registro DESC",
     fecha_asc: "e.Fecha_registro ASC",
@@ -72,7 +68,6 @@ export const buildEntrepreneurshipQuery = (filtros) => {
     sqlParts.push(`ORDER BY ${clausulaOrden}`);
     filtrosAplicados.ordenamiento = ordenar;
 
-    // 5. Limit 
     if (limit && !isNaN(parseInt(limit))) {
         sqlParts.push(` LIMIT ${getNextIndex()}`);
         params.push(parseInt(limit));
@@ -92,7 +87,6 @@ export const buildEntrepreneurshipQuery = (filtros) => {
  * @param {Object} updates
  */
 export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
-  // Mapa: req.body -> Columna DB
   const dbMap = {
     nombre: "Nombre",
     descripcion: "Descripcion",

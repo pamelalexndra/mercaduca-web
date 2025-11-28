@@ -11,7 +11,6 @@ export const updateProfile = async (req, res) => {
 
     await client.query("BEGIN");
 
-    // Obtener datos actuales del usuario para usar como respaldo
     const userResult = await client.query(
       "SELECT Usuario, Registro_contraseña FROM Usuarios WHERE id_usuario = $1",
       [userId]
@@ -29,13 +28,10 @@ export const updateProfile = async (req, res) => {
     const nombreDeUsuario = username?.trim() || usernameActual;
     const nuevaPassword = nuevaContraseña?.trim();
 
-    //  Lógica de Cambio de Contraseña
     if (nuevaPassword) {
-      // Si existe una fecha previa, validamos los 15 días
       if (ultimoCambio) {
         const fechaUltimoCambio = new Date(ultimoCambio);
         const fechaActual = new Date();
-        // Diferencia en milisegundos -> días
         const diferenciaDias =
           (fechaActual - fechaUltimoCambio) / (1000 * 60 * 60 * 24);
 
@@ -56,14 +52,12 @@ export const updateProfile = async (req, res) => {
         [nombreDeUsuario, hashedPassword, userId]
       );
     } else {
-      // Solo actualizar username si no hay cambio de pass
       await client.query(
         "UPDATE Usuarios SET Usuario = $1 WHERE id_usuario = $2",
         [nombreDeUsuario, userId]
       );
     }
 
-    // Actualizar Datos Personales (Emprendedor)
     await client.query(
       `
             UPDATE Emprendedor 

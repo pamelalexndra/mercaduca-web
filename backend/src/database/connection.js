@@ -1,11 +1,10 @@
 import pkg from "pg";
-import dotenv from "dotenv"; // Importa manejador de variables de entorno
+import dotenv from "dotenv";
 
-dotenv.config(); // Carga las variables del archivo .env
+dotenv.config();
 
 const { Pool } = pkg;
 
-// Configurar pool de conexiones a PostgreSQL
 const pool = new Pool({
   host: process.env.DB_HOST,
   port: process.env.DB_PORT,

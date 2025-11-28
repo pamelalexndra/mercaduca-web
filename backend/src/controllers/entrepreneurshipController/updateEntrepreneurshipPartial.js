@@ -16,7 +16,6 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
         .json({ error: "No se proporcionaron campos para actualizar" });
     }
 
-    // 1. Construir Query
     const { query, params, count } = buildEntrepreneurshipQueryUpdate(
       id,
       updates
@@ -28,7 +27,6 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
         .json({ error: "No hay campos válidos para actualizar" });
     }
 
-    // 2. Ejecutar Query
     const result = await pool.query(query, params);
 
     if (result.rows.length === 0) {

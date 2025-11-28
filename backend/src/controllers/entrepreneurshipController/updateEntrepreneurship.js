@@ -16,7 +16,6 @@ export const updateEntrepreneurship = async (req, res) => {
       return res.status(400).json({ error: "ID de emprendimiento inválido" });
     }
 
-    // Verificar que el emprendimiento existe
     const emprendimientoCheck = await pool.query(
       "SELECT id_emprendimiento FROM Emprendimiento WHERE id_emprendimiento = $1",
       [parseInt(id)]
@@ -26,7 +25,6 @@ export const updateEntrepreneurship = async (req, res) => {
       return res.status(404).json({ error: "Emprendimiento no encontrado" });
     }
 
-    // Actualizar emprendimiento
     const result = await pool.query(
       `
             UPDATE Emprendimiento 

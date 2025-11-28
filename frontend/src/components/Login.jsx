@@ -61,7 +61,6 @@ const Login = ({ onLoginSuccess }) => {
   };
 
   const handleLoginSuccess = async (user, token) => {
-    // Guardar información del usuario en localStorage
     const initialUserId = getUserId(user);
     let enrichedUser = { ...user, id: initialUserId, token };
 
@@ -131,12 +130,10 @@ const Login = ({ onLoginSuccess }) => {
     localStorage.setItem("user", JSON.stringify(enrichedUser));
     localStorage.setItem("isAuthenticated", "true");
 
-    // Ejecutar el callback proporcionado por el padre (si existe)
     if (onLoginSuccess) {
       onLoginSuccess(enrichedUser);
     }
 
-    // Redirigir al perfil
     navigate("/perfil");
   };
 
@@ -164,7 +161,7 @@ const Login = ({ onLoginSuccess }) => {
       }
 
       if (data.success) {
-        const { user, token } = data; // Recibimos user y token
+        const { user, token } = data;
 
         const userId = getUserId(user);
         if (!user || !userId) {
@@ -183,7 +180,6 @@ const Login = ({ onLoginSuccess }) => {
     }
   };
 
-  // Función para manejar el registro
   const handleRegisterClick = () => {
     navigate("/registrar");
   };

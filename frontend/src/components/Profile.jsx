@@ -153,6 +153,9 @@ export default function Profile({ user, onProfileLoaded }) {
     return stored ? JSON.parse(stored) : null;
   });
 
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
   const currentUserRef = useRef(currentUser);
   const lastLoadedUserIdRef = useRef(null);
   const lastLoadedTokenRef = useRef(null);
@@ -162,8 +165,6 @@ export default function Profile({ user, onProfileLoaded }) {
   const [error, setError] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
   const [shouldRefresh, setShouldRefresh] = useState(false);
   const updateStoredUserProfile = useCallback((profileUpdater) => {
     setCurrentUser((prev) => {
@@ -457,6 +458,24 @@ export default function Profile({ user, onProfileLoaded }) {
     }
   }, [shouldRefresh, currentUser, loadProfile]);
 
+  const handleSuccessClose = () => {
+    setShowSuccessDialog(false);
+
+    if (successMessage.includes("Perfil eliminado")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("emprendimientoCache");
+      window.location.href = "/";
+    } else if (successMessage.includes("Emprendimiento eliminado")) {
+      window.location.reload();
+    }
+  };
+
+  const handleSuccessFromChild = (message) => {
+    setSuccessMessage(message);
+    setShowSuccessDialog(true);
+  };
+
   if (loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
@@ -498,7 +517,6 @@ export default function Profile({ user, onProfileLoaded }) {
     : "Agregar emprendimiento";
   const hasEmprendimiento = Boolean(emprendimiento?.id_emprendimiento);
 
-  // Función para manejar eliminación exitosa de emprendimiento
   const handleEntrepreneurshipDeleteSuccess = () => {
     setSuccessMessage("Emprendimiento eliminado correctamente");
     setShowSuccessDialog(true);
@@ -506,28 +524,11 @@ export default function Profile({ user, onProfileLoaded }) {
     setShowEntrepreneurshipModal(false);
   };
 
-  // Función para manejar eliminación exitosa de perfil
   const handleProfileDeleteSuccess = () => {
     setSuccessMessage(
       "Perfil eliminado correctamente. Serás redirigido a la página de inicio."
     );
     setShowSuccessDialog(true);
-  };
-
-  // Función para cerrar el diálogo de éxito
-  const handleSuccessClose = () => {
-    setShowSuccessDialog(false);
-
-    if (successMessage.includes("Perfil eliminado")) {
-      // Limpiar localStorage y redirigir
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("emprendimientoCache");
-      window.location.href = "/";
-    } else if (successMessage.includes("Emprendimiento eliminado")) {
-      // Recargar la página
-      window.location.reload();
-    }
   };
 
   const handleOpenEntrepreneurship = () => {
@@ -636,6 +637,13 @@ export default function Profile({ user, onProfileLoaded }) {
         await fetchProductos(emprendimiento.id_emprendimiento);
       }
 
+      setSuccessMessage(
+        productoEdit
+          ? "Producto actualizado correctamente"
+          : "Producto creado correctamente"
+      );
+      setShowSuccessDialog(true);
+
       closeProductForm();
       return true;
     } catch (err) {
@@ -722,6 +730,13 @@ export default function Profile({ user, onProfileLoaded }) {
       if (normalized.id_emprendimiento) {
         await fetchProductos(normalized.id_emprendimiento);
       }
+
+      setSuccessMessage(
+        emprendimiento?.id_emprendimiento
+          ? "Emprendimiento actualizado correctamente"
+          : "Emprendimiento creado correctamente"
+      );
+      setShowSuccessDialog(true);
 
       return true;
     } catch (err) {
@@ -866,7 +881,6 @@ export default function Profile({ user, onProfileLoaded }) {
   return (
     <>
       <div className="min-h-screen bg-white font-montserrat">
-        {/* Header */}
         <div className="max-w-4xl mx-auto px-4 py-8">
           {error && (
             <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -874,7 +888,6 @@ export default function Profile({ user, onProfileLoaded }) {
             </div>
           )}
 
-          {/* Desktop */}
           <div className="hidden md:flex md:items-center md:gap-20 mb-11">
             <div className="flex-shrink-0">
               <img
@@ -940,7 +953,6 @@ export default function Profile({ user, onProfileLoaded }) {
             </div>
           </div>
 
-          {/* Mobile */}
           <div className="md:hidden">
             <div className="flex items-center gap-4 mb-4 px-4">
               <img
@@ -1030,7 +1042,6 @@ export default function Profile({ user, onProfileLoaded }) {
             </div>
           </div>
 
-          {/* Divider */}
           <div className="relative mt-11 mb-2 flex items-center">
             <div className="flex-1 border-t border-gray-300" />
             <button
@@ -1051,7 +1062,6 @@ export default function Profile({ user, onProfileLoaded }) {
             <p className="text-sm font-semibold mt-8 pb-4">Productos</p>
           </div>
 
-          {/* Productos */}
           {loadingProductos ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
               <p className="text-sm font-semibold">Cargando tus productos...</p>
@@ -1108,6 +1118,11 @@ export default function Profile({ user, onProfileLoaded }) {
         errorMessage={error}
         loading={savingProfile}
         onDeleteSuccess={handleProfileDeleteSuccess}
+        onSuccess={(message) => {
+          setSuccessMessage(message);
+          setShowSuccessDialog(true);
+          setShowEditProfileModal(false);
+        }}
       />
 
       <EntrepreneurshipForm

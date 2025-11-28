@@ -1,16 +1,14 @@
--- Crear la tabla Categorias
 CREATE TABLE Categorias (
   id_categoria SERIAL PRIMARY KEY NOT NULL, 
   Categoria VARCHAR(100)
 );
 
--- Crear la tabla Emprendimiento
 CREATE TABLE Emprendimiento (
   id_emprendimiento SERIAL PRIMARY KEY NOT NULL,
 	id_categoria INT,
   Nombre VARCHAR(500) UNIQUE,
   Descripcion TEXT, 
-  Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
+  Disponible BOOLEAN DEFAULT TRUE,
   Imagen_URL TEXT,
 	Instagram TEXT,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -18,7 +16,6 @@ CREATE TABLE Emprendimiento (
     REFERENCES Categorias(id_categoria)
 );
 
--- Crear la tabla Emprendedor
 CREATE TABLE Emprendedor (
   id_emprendedor SERIAL PRIMARY KEY NOT NULL,
 	id_emprendimiento INT,
@@ -32,7 +29,6 @@ CREATE TABLE Emprendedor (
     REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE
 );
 
--- Crear la tabla Producto
 CREATE TABLE Producto(
   id_producto SERIAL PRIMARY KEY NOT NULL,
   id_emprendimiento INT,
@@ -42,7 +38,7 @@ CREATE TABLE Producto(
   Imagen_URL TEXT, 
   Precio_dolares DECIMAL(18,2),
   Existencias INT,
-  Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
+  Disponible BOOLEAN DEFAULT TRUE,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Producto_Emprendimiento FOREIGN KEY (id_emprendimiento) 
     REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE,
@@ -50,7 +46,6 @@ CREATE TABLE Producto(
     REFERENCES Categorias(id_categoria)
 );
 
--- Crear tabla usuarios
 CREATE TABLE Usuarios (
 	id_usuario SERIAL PRIMARY KEY NOT NULL,
 	id_emprendedor INT, 
@@ -62,7 +57,6 @@ CREATE TABLE Usuarios (
 		REFERENCES Emprendedor (id_emprendedor) ON DELETE CASCADE
 );
 
--- Insertar categorías
 INSERT INTO Categorias (Categoria) VALUES 
 ('Alimentos y bebidas'),
 ('Coleccionables'),

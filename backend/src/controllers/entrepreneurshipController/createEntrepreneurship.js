@@ -10,10 +10,9 @@ export const createEntrepreneurship = async (req, res) => {
       imagen_url,
       instagram,
       id_categoria,
-      id_usuario, // ID del usuario para vincularlo
+      id_usuario,
     } = req.body;
 
-    // Iniciar transacción
     await client.query("BEGIN");
 
     if (!nombre) {
@@ -26,7 +25,6 @@ export const createEntrepreneurship = async (req, res) => {
       return res.status(400).json({ error: "El ID de usuario es requerido" });
     }
 
-    // 1. Obtener el id_emprendedor basado en el id_usuario
     const emprendedorCheck = await client.query(
       "SELECT id_emprendedor FROM Usuarios WHERE id_usuario = $1",
       [parseInt(id_usuario)]
@@ -43,7 +41,6 @@ export const createEntrepreneurship = async (req, res) => {
 
     const idEmprendedor = emprendedorData.id_emprendedor;
 
-    // 2. Insertar el emprendimiento
     const nuevoEmprendimiento = await client.query(
       `
       INSERT INTO Emprendimiento (
@@ -68,13 +65,11 @@ export const createEntrepreneurship = async (req, res) => {
 
     const emprendimientoCreado = nuevoEmprendimiento.rows[0];
 
-    // 3. Actualizar la tabla Emprendedor con el nuevo id_emprendimiento
     await client.query(
       "UPDATE Emprendedor SET id_emprendimiento = $1 WHERE id_emprendedor = $2",
       [emprendimientoCreado.id_emprendimiento, idEmprendedor]
     );
 
-    // Confirmar transacción
     await client.query("COMMIT");
 
     res.status(201).json({
@@ -85,7 +80,6 @@ export const createEntrepreneurship = async (req, res) => {
     await client.query("ROLLBACK");
     console.error("Error creando emprendimiento:", error);
 
-    // Manejo de errores específicos de Postgres
     if (error.code === "23503") {
       return res
         .status(400)

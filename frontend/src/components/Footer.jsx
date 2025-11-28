@@ -50,10 +50,8 @@ const Footer = () => {
 
   return (
     <footer className="bg-white text-gray-700 border-t border-gray-200 py-1">
-      {/* Main Footer Content */}
       <div className="max-w-7xl mx-auto px-4 md:px-6 lg:px-8 py-6 md:py-10 lg:py-12">
         <div className="flex flex-col lg:flex-row lg:justify-between lg:items-start lg:gap-12">
-          {/* About Section */}
           <div className="lg:w-2/6 pb-7">
             <h3 className="text-[#557051] text-base md:text-lg font-bold mb-3 md:mb-4">
               Mercaduca
@@ -69,9 +67,7 @@ const Footer = () => {
             ></img>
           </div>
 
-          {/* Quick Links + Categorias */}
           <div className="w-full lg:w-2/6 grid grid-cols-2 gap-6 sm:grid-cols-2 md:grid-cols-1 lg:grid-cols-2 pb-4 md:pb-7">
-            {/* Quick Links */}
             <div className="lg:w-1/6 pb-4 md:pb-7">
               <h4 className="font-poppins text-[#557051] text-base font-semibold whitespace-nowrap mb-4">
                 Enlaces Rápidos
@@ -90,7 +86,6 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Categories */}
             <div className="lg:w-1/6 pb-4 md:pb-7">
               <h4 className="text-[#557051] text-base font-semibold font-poppins mb-4">
                 Categorías
@@ -110,7 +105,6 @@ const Footer = () => {
             </div>
           </div>
 
-          {/* Contact Info */}
           <div className="lg:w-2/6">
             <h4 className="text-[#557051] text-base font-semibold font-poppins mb-4">
               Contacto

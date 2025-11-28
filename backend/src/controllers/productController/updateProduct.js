@@ -17,7 +17,6 @@ export const updateProduct = async (req, res) => {
       return res.status(400).json({ error: "ID de producto inválido" });
     }
 
-    // Verificar que el producto existe
     const productoCheck = await pool.query(
       "SELECT id_producto FROM Producto WHERE id_producto = $1",
       [parseInt(id)]
@@ -27,7 +26,6 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    // Actualizar producto
     const result = await pool.query(
       `
             UPDATE Producto 

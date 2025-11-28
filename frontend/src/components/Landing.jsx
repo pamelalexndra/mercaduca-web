@@ -10,17 +10,14 @@ export default function Landing() {
   const navigate = useNavigate();
 
   const handleSearchFromLanding = (searchTerm) => {
-    // Redirigir al catálogo con el término de búsqueda
     navigate(`/catalog?search=${encodeURIComponent(searchTerm)}`);
   };
 
   const handleCategoryFilterFromLanding = (categoryIds) => {
-    // Redirigir al catálogo con las categorías seleccionadas
     if (categoryIds.length > 0) {
       const categoriesParam = categoryIds.join(",");
       navigate(`/catalog?categories=${categoriesParam}`);
     } else {
-      // Si no hay categorías seleccionadas, ir al catálogo sin filtros
       navigate("/catalog");
     }
   };
@@ -48,7 +45,7 @@ export default function Landing() {
             <SearchBox
               onSearch={handleSearchFromLanding}
               onCategoryFilter={handleCategoryFilterFromLanding}
-              enableDebounce={false} // deshabilitar debounce en Landing
+              enableDebounce={false}
             />
           </div>
         </div>

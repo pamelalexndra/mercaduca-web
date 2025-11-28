@@ -6,7 +6,6 @@ export const updateProductPartial = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // 1. Validaciones iniciales simples
     if (!id || isNaN(id)) {
       return res.status(400).json({ error: "ID de producto inválido" });
     }
@@ -17,17 +16,14 @@ export const updateProductPartial = async (req, res) => {
         .json({ error: "No se proporcionaron campos para actualizar" });
     }
 
-    // 2. Usar la utilidad para construir la query
     const { query, params, count } = buildProductQueryUpdate(id, updates);
 
-    // Si count es 0, significa que enviaron campos en el body, pero ninguno era válido (ej: enviaron { "campo_falso": 1 })
     if (count === 0) {
       return res
         .status(400)
         .json({ error: "No hay campos válidos para actualizar" });
     }
 
-    // 3. Ejecutar Query
     const result = await pool.query(query, params);
 
     if (result.rows.length === 0) {

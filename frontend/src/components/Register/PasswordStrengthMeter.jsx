@@ -75,12 +75,10 @@ const PasswordStrengthMeter = ({ password, passwordStrength }) => {
           </li>
           <li
             className={
-              /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)
-                ? "text-green-600 font-semibold"
-                : ""
+              /[@$!%*?&#]/.test(password) ? "text-green-600 font-semibold" : ""
             }
           >
-            ✓ Al menos un carácter especial
+            ✓ Al menos un símbolo (@$!%*?&#)
           </li>
         </ul>
       </div>

@@ -8,10 +8,8 @@ export const createProfile = async (userData) => {
   try {
     await client.query("BEGIN");
 
-    // 1. Hashear contraseña
     const hashedPassword = await generateHash(userData.password);
 
-    // 2. Crear emprendedor primero
     const emprendedorResult = await client.query(
       `
       INSERT INTO Emprendedor (Nombres, Apellidos, Correo, Telefono)
@@ -23,7 +21,6 @@ export const createProfile = async (userData) => {
 
     const idEmprendedor = emprendedorResult.rows[0].id_emprendedor;
 
-    // 3. Crear usuario
     const userResult = await client.query(
       `
       INSERT INTO Usuarios (Usuario, Contraseña, id_emprendedor)

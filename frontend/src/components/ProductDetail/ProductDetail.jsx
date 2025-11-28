@@ -1,10 +1,17 @@
-import React from "react";
+import React, { useState } from "react";
 import { useParams } from "react-router-dom";
 import { useEmprendimiento } from "../../hooks/useEmprendimiento";
 import ProductHeader from "./ProductHeader";
+import SuccessDialog from "./SuccessDialog";
 
 export default function ProductDetail({ id }) {
   const { emprendimiento, loading, error } = useEmprendimiento(id);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+  };
 
   if (loading) {
     return (
@@ -54,10 +61,8 @@ export default function ProductDetail({ id }) {
           />
         </div>
 
-        {/* Información adicional del emprendimiento */}
         <div className="max-w-2xl mx-auto bg-white rounded-2xl shadow-lg p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Información de contacto */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800">
                 Información de Contacto
@@ -89,7 +94,6 @@ export default function ProductDetail({ id }) {
               </div>
             </div>
 
-            {/* Botones de acción */}
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-gray-800">Contactar</h3>
               <div className="space-y-3">
@@ -116,7 +120,6 @@ export default function ProductDetail({ id }) {
             </div>
           </div>
 
-          {/* Descripción (si la tienes en tu API) */}
           {emprendimiento.descripcion && (
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-lg font-semibold text-gray-800 mb-3">
@@ -129,6 +132,12 @@ export default function ProductDetail({ id }) {
           )}
         </div>
       </div>
+
+      <SuccessDialog
+        show={showSuccess}
+        message={successMessage}
+        onConfirm={handleSuccessClose}
+      />
     </div>
   );
 }

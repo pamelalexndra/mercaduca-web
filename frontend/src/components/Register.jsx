@@ -26,10 +26,10 @@ const evaluatePasswordStrength = (password) => {
     feedback.push("Al menos un número");
   }
 
-  if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+  if (/[@$!%*?&#]/.test(password)) {
     score += 1;
   } else {
-    feedback.push("Al menos un carácter especial (!@#$% etc.)");
+    feedback.push("Al menos un símbolo (@$!%*?&)");
   }
 
   if (password.length >= 12) {
@@ -53,13 +53,26 @@ const doPasswordsMatch = (password, confirmPassword) =>
 
 const isEmailValid = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-const isPhoneValid = (phone) => /^\d{8}$/.test(phone);
+const isPhoneValid = (phone) =>
+  /^\+?[\d\s\-()]+$/.test(phone) &&
+  phone.replace(/[\s\-()]/g, "").length >= 8 &&
+  phone.replace(/[\s\-()]/g, "").length <= 20;
+
+const isNameValid = (name) => /^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/.test(name);
+
+const isPasswordValid = (password) => {
+  return (
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/.test(
+      password
+    ) && password.length >= 8
+  );
+};
+
+const isUsernameValid = (username) => /^[a-zA-Z0-9]{3,30}$/.test(username);
 
 const isRegisterFormValid = (formData, usernameAvailable, passwordStrength) =>
   areAllFieldsFilled(formData) &&
   doPasswordsMatch(formData.password, formData.confirmPassword) &&
-  // Comentado temporalmente para no limitar los registros por la fuerza de la contraseña
-  // passwordStrength.score >= 3 &&
   usernameAvailable !== false;
 
 const Register = ({ onRegisterSuccess, switchToLogin }) => {
@@ -83,11 +96,9 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   const inputClass =
     "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] border border-gray-200 transition-all placeholder:text-gray-400";
 
-  // URL base del backend
   const AUTH_BASE_URL = `${API_BASE_URL}/api/auth`;
 
   const handleRegisterSuccess = () => {
-    // Limpiar el formulario
     setFormData({
       username: "",
       password: "",
@@ -98,16 +109,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       telefono: "",
     });
 
-    // Ejecutar el callback proporcionado por el padre (si existe)
     if (onRegisterSuccess) {
       onRegisterSuccess();
     }
 
-    // Redirigir al login
     navigate("/perfil");
   };
 
-  // Función para registrar usuario con fetch
   const registerUser = async (userData) => {
     try {
       const response = await fetch(`${AUTH_BASE_URL}/signUp`, {
@@ -121,16 +129,28 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || "Error en el registro");
+        let errorMessage = "Error en el registro";
+
+        if (data.errors && Array.isArray(data.errors)) {
+          errorMessage = data.errors
+            .map((err) => `${err.field}: ${err.message}`)
+            .join(", ");
+        } else if (data.message) {
+          errorMessage = data.message;
+        } else {
+          errorMessage = `Error ${response.status}: ${response.statusText}`;
+        }
+
+        throw new Error(errorMessage);
       }
 
       return { data };
     } catch (error) {
-      throw new Error(error.message || "Error de conexión");
+      console.error("Error en registerUser:", error);
+      throw new Error(error.message || "Error de conexión con el servidor");
     }
   };
 
-  // Función para verificar username con fetch
   const checkUsernameAvailability = async (username) => {
     if (username.length < 3) {
       setUsernameAvailable(null);
@@ -139,7 +159,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
 
     try {
       const response = await fetch(
-        `${AUTH_BASE_URL}/check-username/${username}`
+        `${AUTH_BASE_URL}/check-username/${encodeURIComponent(username)}`
       );
       const data = await response.json();
 
@@ -149,6 +169,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
 
       setUsernameAvailable(data.available);
     } catch (error) {
+      console.error("Error verificando username:", error);
       setUsernameAvailable(null);
     }
   };
@@ -170,8 +191,22 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     e.preventDefault();
     setError("");
 
-    if (!isRegisterFormValid(formData, usernameAvailable, passwordStrength)) {
-      setError("Por favor completa todos los campos correctamente");
+    if (!areAllFieldsFilled(formData)) {
+      setError("Por favor completa todos los campos");
+      return;
+    }
+
+    if (!isUsernameValid(formData.username)) {
+      setError(
+        "El usuario debe contener solo letras y números (3-30 caracteres)"
+      );
+      return;
+    }
+
+    if (!isPasswordValid(formData.password)) {
+      setError(
+        "La contraseña debe tener al menos 8 caracteres con mayúsculas, minúsculas, números y símbolos (@$!%*?&#)"
+      );
       return;
     }
 
@@ -180,26 +215,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       return;
     }
 
-    if (formData.password.length < 8) {
-      setError("La contraseña debe tener al menos 8 caracteres");
+    if (!isNameValid(formData.nombres)) {
+      setError("El nombre solo puede contener letras");
       return;
     }
 
-    // Comentado temporalmente para no limitar los registros por la fuerza de la contraseña
-    // if (passwordStrength.score < 3) {
-    //   setError(
-    //     "La contraseña no cumple con los requisitos de seguridad mínimos"
-    //   );
-    //   return;
-    // }
-
-    if (
-      !formData.nombres ||
-      !formData.apellidos ||
-      !formData.correo ||
-      !formData.telefono
-    ) {
-      setError("Todos los campos de información personal son requeridos");
+    if (!isNameValid(formData.apellidos)) {
+      setError("Los apellidos solo pueden contener letras");
       return;
     }
 
@@ -209,20 +231,37 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     }
 
     if (!isPhoneValid(formData.telefono)) {
-      setError("El teléfono debe tener 8 dígitos");
+      setError(
+        "Ingresa un teléfono válido (8-20 caracteres, puede incluir +, -, (), o espacios)"
+      );
+      return;
+    }
+
+    if (usernameAvailable === false) {
+      setError("El nombre de usuario no está disponible");
       return;
     }
 
     setLoading(true);
     try {
-      const response = await registerUser(formData);
+      const userDataForBackend = {
+        username: formData.username,
+        password: formData.password,
+        nombres: formData.nombres,
+        apellidos: formData.apellidos,
+        correo: formData.correo,
+        telefono: formData.telefono,
+      };
+
+      const response = await registerUser(userDataForBackend);
+
       if (response.data.success) {
-        // Extraemos user y token de la respuesta del backend
         const { user, token } = response.data;
-        // Guardar token y usuario en localStorage
+
         localStorage.setItem("token", token);
         localStorage.setItem("user", JSON.stringify(user));
         localStorage.setItem("isAuthenticated", "true");
+
         handleRegisterSuccess();
       }
     } catch (error) {
@@ -236,9 +275,8 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     checkUsernameAvailability(username);
   };
 
-  // Función para manejar el inicio de sesión
   const handleLoginClick = () => {
-    navigate("/vender");
+    navigate("/login");
   };
 
   return (

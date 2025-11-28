@@ -9,7 +9,6 @@ export const getCategories = async (req, res) => {
     let query;
 
     if (isAvailable) {
-      // Si available=true, solo categorías con productos
       query = `
         SELECT c.id_categoria, c.categoria
         FROM categorias c
@@ -20,7 +19,6 @@ export const getCategories = async (req, res) => {
         ORDER BY c.categoria;
       `;
     } else {
-      // Todas las categorías
       query = `
         SELECT id_categoria, categoria
         FROM categorias

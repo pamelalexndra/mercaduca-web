@@ -2,22 +2,16 @@
 import { useCallback, useState } from "react";
 import { API_BASE_URL } from "../utils/api";
 
-/**
- * useProducts
- * - Encapsula fetchProducts + estados relacionados (allProducts, filteredProducts, loading, error).
- * - NOTA: no fuerza setLoading(true) dentro de cada fetch para evitar "parpadeos".
- */
 export default function useProducts(baseUrl = `${API_BASE_URL}/api/products`) {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
-  const [loading, setLoading] = useState(true); // true hasta la primera respuesta
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   const fetchProducts = useCallback(
     async (categoryIds = [], search = "") => {
       try {
         setError(null);
-        // IMPORTANT: no setLoading(true) aquí para evitar parpadeos en fetchs posteriores.
 
         let url = baseUrl;
         const params = [];
@@ -47,11 +41,6 @@ export default function useProducts(baseUrl = `${API_BASE_URL}/api/products`) {
     [baseUrl]
   );
 
-  /**
-   * resetOrFetchAll:
-   * - Si allProducts ya existe, lo usa para setFilteredProducts (respuesta instantánea).
-   * - Si no hay allProducts, hace fetchProducts() sin filtros.
-   */
   const resetOrFetchAll = useCallback(() => {
     if (allProducts.length > 0) {
       setFilteredProducts(allProducts);

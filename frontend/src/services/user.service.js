@@ -6,7 +6,7 @@ export const deleteUserProfile = async (userId, token) => {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${token}`, 
+        Authorization: `Bearer ${token}`,
       },
     });
 
@@ -16,8 +16,8 @@ export const deleteUserProfile = async (userId, token) => {
       throw new Error(data.message || "Error al eliminar el perfil");
     }
 
-    return data; 
+    return data;
   } catch (error) {
-    throw error; 
+    throw error;
   }
 };
