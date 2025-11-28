@@ -63,7 +63,7 @@ export const signUpLimiter = rateLimit({
   max: 2, // 2 intentos por Ip
   message: {
     success: false,
-    message: "Demasiados intentos de registro, intenta en 15 minutos",
+    message: "Demasiados intentos de registro, intenta mañana",
   },
   standardHeaders: true,
   legacyHeaders: false,
