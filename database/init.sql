@@ -28,8 +28,10 @@ CREATE TABLE Emprendedor (
   Telefono VARCHAR(8) UNIQUE,
 	Activo BOOLEAN DEFAULT TRUE,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT fk_Emprendedor_Emprendimiento FOREIGN KEY (id_emprendimiento) 
-    REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE
+	CONSTRAINT fk_Emprendedor_Emprendimiento
+  FOREIGN KEY (id_emprendimiento)
+  REFERENCES Emprendimiento(id_emprendimiento)
+  ON DELETE SET NULL
 );
 
 -- Crear la tabla Producto
