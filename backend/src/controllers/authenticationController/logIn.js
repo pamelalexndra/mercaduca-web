@@ -62,7 +62,7 @@ export const logIn = async (req, res) => {
 
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 30,
   message: {
     success: false,
     message: "Demasiados intentos de inicio de seión",

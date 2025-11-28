@@ -58,7 +58,7 @@ export const signUp = async (req, res) => {
 
 export const signUpLimiter = rateLimit({
   windowMs: 24 * 60 * 60 * 1000,
-  max: 2,
+  max: 20,
   message: {
     success: false,
     message: "Demasiados intentos de registro, intenta en 15 minutos",
