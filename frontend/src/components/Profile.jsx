@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import SuccessDialog from "./SuccessDialog";
 import ProductCard from "./Card";
 import ProductForm from "./ProductForm";
 import EditProfile from "./EditProfile";
@@ -126,6 +127,7 @@ export default function Profile({ user, onProfileLoaded }) {
     useState(false);
   const [savingEntrepreneurship, setSavingEntrepreneurship] = useState(false);
   const [savingProfile, setSavingProfile] = useState(false);
+
   const [emprendimiento, setEmprendimiento] = useState(() => {
     const stored = user || localStorage.getItem("user");
     const parsed = typeof stored === "string" ? JSON.parse(stored) : stored;
@@ -137,17 +139,20 @@ export default function Profile({ user, onProfileLoaded }) {
 
     return {};
   });
+
   const [productos, setProductos] = useState(() => {
     const stored = user || localStorage.getItem("user");
     const parsed = typeof stored === "string" ? JSON.parse(stored) : stored;
     const storedProductos = parsed?.profile?.productos || [];
     return storedProductos.map(normalizeProducto);
   });
+
   const [currentUser, setCurrentUser] = useState(() => {
     if (user) return user;
     const stored = localStorage.getItem("user");
     return stored ? JSON.parse(stored) : null;
   });
+
   const currentUserRef = useRef(currentUser);
   const lastLoadedUserIdRef = useRef(null);
   const lastLoadedTokenRef = useRef(null);
@@ -157,7 +162,9 @@ export default function Profile({ user, onProfileLoaded }) {
   const [error, setError] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
-
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+  const [shouldRefresh, setShouldRefresh] = useState(false);
   const updateStoredUserProfile = useCallback((profileUpdater) => {
     setCurrentUser((prev) => {
       if (!prev) return prev;
@@ -440,6 +447,16 @@ export default function Profile({ user, onProfileLoaded }) {
     }
   }, [currentUser, onProfileLoaded]);
 
+  useEffect(() => {
+    if (shouldRefresh) {
+      const userId = getUserId(currentUser);
+      if (userId) {
+        loadProfile(userId, currentUser);
+      }
+      setShouldRefresh(false);
+    }
+  }, [shouldRefresh, currentUser, loadProfile]);
+
   if (loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
@@ -481,6 +498,38 @@ export default function Profile({ user, onProfileLoaded }) {
     : "Agregar emprendimiento";
   const hasEmprendimiento = Boolean(emprendimiento?.id_emprendimiento);
 
+  // Función para manejar eliminación exitosa de emprendimiento
+  const handleEntrepreneurshipDeleteSuccess = () => {
+    setSuccessMessage("Emprendimiento eliminado correctamente");
+    setShowSuccessDialog(true);
+    setShouldRefresh(true);
+    setShowEntrepreneurshipModal(false);
+  };
+
+  // Función para manejar eliminación exitosa de perfil
+  const handleProfileDeleteSuccess = () => {
+    setSuccessMessage(
+      "Perfil eliminado correctamente. Serás redirigido a la página de inicio."
+    );
+    setShowSuccessDialog(true);
+  };
+
+  // Función para cerrar el diálogo de éxito
+  const handleSuccessClose = () => {
+    setShowSuccessDialog(false);
+
+    if (successMessage.includes("Perfil eliminado")) {
+      // Limpiar localStorage y redirigir
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("emprendimientoCache");
+      window.location.href = "/";
+    } else if (successMessage.includes("Emprendimiento eliminado")) {
+      // Recargar la página
+      window.location.reload();
+    }
+  };
+
   const handleOpenEntrepreneurship = () => {
     setError("");
     setShowEntrepreneurshipModal(true);
@@ -517,26 +566,26 @@ export default function Profile({ user, onProfileLoaded }) {
   const handleSubmit = async (data) => {
     if (!emprendimiento?.id_emprendimiento) {
       setError("Debes tener un emprendimiento para publicar productos.");
-      return;
+      return false;
     }
 
     const precioNumber = parseFloat(data.precio_dolares);
     if (Number.isNaN(precioNumber)) {
       setError("Ingresa un precio válido para el producto.");
-      return;
+      return false;
     }
 
     const existenciasNumber = parseInt(data.existencias ?? "0", 10);
     if (Number.isNaN(existenciasNumber) || existenciasNumber < 0) {
       setError("Ingresa una cantidad de existencias válida.");
-      return;
+      return false;
     }
 
     const categoriaId =
       productoEdit?.id_categoria || emprendimiento?.id_categoria || null;
     if (!categoriaId) {
       setError("Selecciona una categoría para tu emprendimiento.");
-      return;
+      return false;
     }
 
     const payload = {
@@ -588,28 +637,30 @@ export default function Profile({ user, onProfileLoaded }) {
       }
 
       closeProductForm();
+      return true;
     } catch (err) {
       console.error("Error guardando producto:", err);
       setError(err.message || "No se pudo guardar el producto");
+      return false;
     }
   };
 
   const handleSaveEntrepreneurship = async (data) => {
     if (!data?.nombre?.trim()) {
       setError("El nombre del emprendimiento es obligatorio.");
-      return;
+      return false;
     }
 
     if (!data?.id_categoria) {
       setError("Selecciona una categoría para tu emprendimiento.");
-      return;
+      return false;
     }
 
     const userId = getUserId(currentUser);
 
     if (!emprendimiento?.id_emprendimiento && !userId) {
       setError("No se encontró el usuario para crear el emprendimiento.");
-      return;
+      return false;
     }
 
     try {
@@ -671,23 +722,19 @@ export default function Profile({ user, onProfileLoaded }) {
       if (normalized.id_emprendimiento) {
         await fetchProductos(normalized.id_emprendimiento);
       }
+
+      return true;
     } catch (err) {
       console.error("Error guardando emprendimiento:", err);
       setError(err.message || "No se pudo guardar el emprendimiento");
+      return false;
     } finally {
       setSavingEntrepreneurship(false);
     }
   };
 
   const handleEliminarProducto = async (producto) => {
-    if (
-      !producto?.id ||
-      !window.confirm(
-        `¿Estás seguro de que quieres eliminar "${producto.nombre}"?`
-      )
-    ) {
-      return;
-    }
+    if (!producto?.id) return false;
 
     try {
       setError("");
@@ -709,14 +756,19 @@ export default function Profile({ user, onProfileLoaded }) {
 
       setProductos((prev) => prev.filter((p) => p.id !== producto.id));
 
+      setSuccessMessage(`Producto eliminado correctamente`);
+      setShowSuccessDialog(true);
+
       if (emprendimiento?.id_emprendimiento) {
         await fetchProductos(emprendimiento.id_emprendimiento);
       }
 
       closeProductForm();
+      return true;
     } catch (err) {
       console.error("Error eliminando producto:", err);
       setError(err.message || "No se pudo eliminar el producto");
+      return false;
     }
   };
 
@@ -1055,7 +1107,9 @@ export default function Profile({ user, onProfileLoaded }) {
         onSave={handleSaveProfile}
         errorMessage={error}
         loading={savingProfile}
+        onDeleteSuccess={handleProfileDeleteSuccess}
       />
+
       <EntrepreneurshipForm
         visible={showEntrepreneurshipModal}
         onClose={() => {
@@ -1066,6 +1120,13 @@ export default function Profile({ user, onProfileLoaded }) {
         onSubmit={handleSaveEntrepreneurship}
         loading={savingEntrepreneurship}
         errorMessage={error}
+        onDeleteSuccess={handleEntrepreneurshipDeleteSuccess}
+      />
+
+      <SuccessDialog
+        show={showSuccessDialog}
+        message={successMessage}
+        onConfirm={handleSuccessClose}
       />
     </>
   );

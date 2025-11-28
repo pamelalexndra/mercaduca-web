@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import useCategories from "../hooks/useCategories";
 import { useEmprendimiento } from "../hooks/useEmprendimiento";
 import ConfirmationDialog from "./ConfirmationDialog";
+import SuccessDialog from "./SuccessDialog";
 
 export default function EntrepreneurshipForm({
   visible,
@@ -10,6 +11,7 @@ export default function EntrepreneurshipForm({
   onSubmit,
   loading = false,
   errorMessage = "",
+  onDeleteSuccess,
 }) {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -20,9 +22,12 @@ export default function EntrepreneurshipForm({
   });
 
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   const { categories } = useCategories();
-  const { removeEntrepreneurship, loadingDelete, errorDelete } = useEmprendimiento();
+  const { removeEntrepreneurship, loadingDelete, errorDelete } =
+    useEmprendimiento();
 
   useEffect(() => {
     if (initialData) {
@@ -40,7 +45,10 @@ export default function EntrepreneurshipForm({
   }, [initialData]);
 
   useEffect(() => {
-    if (!visible) setShowConfirm(false);
+    if (!visible) {
+      setShowConfirm(false);
+      setShowSuccess(false);
+    }
   }, [visible]);
 
   const handleChange = (e) => {
@@ -48,9 +56,13 @@ export default function EntrepreneurshipForm({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    onSubmit?.(formData);
+    const success = await onSubmit?.(formData);
+    if (success) {
+      setSuccessMessage("Emprendimiento guardado correctamente");
+      setShowSuccess(true);
+    }
   };
 
   const handleDeleteClick = () => {
@@ -60,16 +72,16 @@ export default function EntrepreneurshipForm({
   const handleConfirmDelete = async () => {
     setShowConfirm(false);
 
-    const idToDelete = initialData.id_emprendimiento || initialData.Id_Emprendimiento;
+    const idToDelete =
+      initialData.id_emprendimiento || initialData.Id_Emprendimiento;
 
     if (!idToDelete) return;
 
     const success = await removeEntrepreneurship(idToDelete);
 
     if (success) {
-      alert("Emprendimiento eliminado correctamente");
-      onClose();
-      window.location.reload();
+      setSuccessMessage("Emprendimiento eliminado correctamente");
+      setShowSuccess(true);
     }
   };
 
@@ -83,12 +95,25 @@ export default function EntrepreneurshipForm({
     }
   };
 
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+
+    if (successMessage.includes("eliminado")) {
+      // Recargar la página después de eliminar emprendimiento
+      window.location.reload();
+    } else {
+      onClose?.();
+    }
+  };
+
   if (!visible) return null;
 
   const inputClass =
     "w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white transition-all placeholder:text-gray-400";
 
-  const isEditing = !!(initialData?.id_emprendimiento || initialData?.Id_Emprendimiento);
+  const isEditing = !!(
+    initialData?.id_emprendimiento || initialData?.Id_Emprendimiento
+  );
 
   const displayError = errorMessage || errorDelete;
 
@@ -212,7 +237,9 @@ export default function EntrepreneurshipForm({
                     disabled={loading || loadingDelete}
                     className="flex-1 px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 text-sm font-medium transition disabled:opacity-50"
                   >
-                    {loadingDelete ? "Eliminando..." : "Eliminar emprendimiento"}
+                    {loadingDelete
+                      ? "Eliminando..."
+                      : "Eliminar emprendimiento"}
                   </button>
                 )}
 
@@ -228,11 +255,18 @@ export default function EntrepreneurshipForm({
           </div>
         </div>
       </div>
+
       <ConfirmationDialog
         show={showConfirm}
         message="¿Estás seguro de eliminar este emprendimiento? Se eliminarán todos sus productos e información asociados."
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
+      />
+
+      <SuccessDialog
+        show={showSuccess}
+        message={successMessage}
+        onConfirm={handleSuccessClose}
       />
     </>
   );

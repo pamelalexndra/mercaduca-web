@@ -3,6 +3,7 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import ConfirmationDialog from "./ConfirmationDialog";
+import SuccessDialog from "./SuccessDialog";
 
 export default function EditProfile({
   visible,
@@ -11,6 +12,7 @@ export default function EditProfile({
   onSave,
   errorMessage = "",
   loading = false,
+  onDeleteSuccess,
 }) {
   const [formData, setFormData] = useState({
     nombres: "",
@@ -24,8 +26,10 @@ export default function EditProfile({
   const [localError, setLocalError] = useState("");
 
   const [showConfirm, setShowConfirm] = useState(false);
-  
-  const { removeProfile, loadingDelete, errorDelete } = useProfile(); 
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
+  const { removeProfile, loadingDelete, errorDelete } = useProfile();
 
   const inputClass =
     "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
@@ -52,6 +56,7 @@ export default function EditProfile({
     if (visible) {
       setLocalError("");
       setShowConfirm(false);
+      setShowSuccess(false);
     }
   }, [visible]);
 
@@ -68,7 +73,7 @@ export default function EditProfile({
   };
 
   const handleConfirmDelete = async () => {
-    setShowConfirm(false); // Cerramos el diálogo
+    setShowConfirm(false);
 
     const userId = emprendimientoData?.id_usuario;
     if (!userId) {
@@ -79,11 +84,10 @@ export default function EditProfile({
     const success = await removeProfile(userId);
 
     if (success) {
-      alert("Perfil eliminado correctamente.");
-      onClose();
-      localStorage.removeItem("token");
-      localStorage.removeItem("user"); 
-      window.location.href = "/login";
+      setSuccessMessage(
+        "Perfil eliminado correctamente. Serás redirigido a la página de inicio."
+      );
+      setShowSuccess(true);
     }
   };
 
@@ -104,13 +108,28 @@ export default function EditProfile({
 
     setLocalError("");
     const success = await onSave?.(formData);
-    if (success !== false) {
-      onClose?.();
+    if (success) {
+      setSuccessMessage("Perfil actualizado correctamente");
+      setShowSuccess(true);
     }
   };
 
   const handleBackgroundClick = (e) => {
     if (e.target === e.currentTarget) {
+      onClose?.();
+    }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+
+    if (successMessage.includes("Perfil eliminado")) {
+      // Limpiar localStorage y redirigir a inicio
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("isAuthenticated");
+      window.location.href = "/";
+    } else {
       onClose?.();
     }
   };
@@ -147,38 +166,101 @@ export default function EditProfile({
             <form onSubmit={handleSubmit} className="space-y-4">
               {/* CAMPOS DEL FORMULARIO */}
               <div className="space-y-1">
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Nombres *</label>
-                <input type="text" name="nombres" value={formData.nombres} onChange={handleChange} required className={inputClass} />
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Nombres *
+                </label>
+                <input
+                  type="text"
+                  name="nombres"
+                  value={formData.nombres}
+                  onChange={handleChange}
+                  required
+                  className={inputClass}
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Apellidos *</label>
-                <input type="text" name="apellidos" value={formData.apellidos} onChange={handleChange} required className={inputClass} />
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Apellidos *
+                </label>
+                <input
+                  type="text"
+                  name="apellidos"
+                  value={formData.apellidos}
+                  onChange={handleChange}
+                  required
+                  className={inputClass}
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Correo Electrónico *</label>
-                <input type="email" name="correo" value={formData.correo} onChange={handleChange} required className={inputClass} />
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Correo Electrónico *
+                </label>
+                <input
+                  type="email"
+                  name="correo"
+                  value={formData.correo}
+                  onChange={handleChange}
+                  required
+                  className={inputClass}
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Teléfono</label>
-                <input type="tel" name="telefono" value={formData.telefono} onChange={handleChange} maxLength="8" className={inputClass} />
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Teléfono
+                </label>
+                <input
+                  type="tel"
+                  name="telefono"
+                  value={formData.telefono}
+                  onChange={handleChange}
+                  maxLength="8"
+                  className={inputClass}
+                />
               </div>
 
               <div className="space-y-1">
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">Usuario de acceso</label>
-                <input type="text" name="username" value={formData.username} onChange={handleChange} className={inputClass} placeholder="Nombre de usuario" />
+                <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                  Usuario de acceso
+                </label>
+                <input
+                  type="text"
+                  name="username"
+                  value={formData.username}
+                  onChange={handleChange}
+                  className={inputClass}
+                  placeholder="Nombre de usuario"
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="block text-sm font-semibold text-zinc-700 mb-2">Nueva contraseña</label>
-                  <input type="password" name="nuevaContraseña" value={formData.nuevaContraseña} onChange={handleChange} className={inputClass} placeholder="Actualizar contraseña" />
+                  <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                    Nueva contraseña
+                  </label>
+                  <input
+                    type="password"
+                    name="nuevaContraseña"
+                    value={formData.nuevaContraseña}
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="Actualizar contraseña"
+                  />
                 </div>
                 <div className="space-y-1">
-                  <label className="block text-sm font-semibold text-zinc-700 mb-2">Confirmar contraseña</label>
-                  <input type="password" name="confirmarContraseña" value={formData.confirmarContraseña} onChange={handleChange} className={inputClass} placeholder="Repite la nueva contraseña" />
+                  <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                    Confirmar contraseña
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmarContraseña"
+                    value={formData.confirmarContraseña}
+                    onChange={handleChange}
+                    className={inputClass}
+                    placeholder="Repite la nueva contraseña"
+                  />
                 </div>
               </div>
 
@@ -205,12 +287,18 @@ export default function EditProfile({
           </div>
         </div>
       </div>
-      {/* --- 4. RENDERIZAMOS EL DIÁLOGO --- */}
+
       <ConfirmationDialog
         show={showConfirm}
         message="¿Estás seguro de que deseas eliminar tu perfil? Esta acción eliminará tus emprendimientos y productos permanentemente."
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
+      />
+
+      <SuccessDialog
+        show={showSuccess}
+        message={successMessage}
+        onConfirm={handleSuccessClose}
       />
     </>
   );

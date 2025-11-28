@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { X, Trash2 } from "lucide-react";
 import ConfirmationDialog from "./ConfirmationDialog";
+import SuccessDialog from "./SuccessDialog";
 
 export default function ProductForm({
   visible,
@@ -17,6 +18,9 @@ export default function ProductForm({
   const [existencias, setExistencias] = useState("0");
   const modalRef = useRef();
   const [showConfirm, setShowConfirm] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
   const inputClass =
     "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all placeholder:text-gray-400";
 
@@ -56,26 +60,38 @@ export default function ProductForm({
     }
   }, [visible, producto]);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = {
+    const success = await onSubmit({
       nombre,
       descripcion,
       imagen_url: imagenUrl,
       precio_dolares: precioDolares,
       existencias,
-    };
-    onSubmit(data);
+    });
+
+    if (success) {
+      setSuccessMessage(
+        producto
+          ? "Producto actualizado correctamente"
+          : "Producto creado correctamente"
+      );
+      setShowSuccess(true);
+    }
   };
 
   const handleDeleteClick = () => {
     setShowConfirm(true);
   };
 
-  const handleConfirmDelete = () => {
+  const handleConfirmDelete = async () => {
     setShowConfirm(false);
     if (onDelete) {
-      onDelete(producto);
+      const success = await onDelete(producto);
+      if (success) {
+        setSuccessMessage("Producto eliminado correctamente");
+        setShowSuccess(true);
+      }
     }
   };
 
@@ -87,6 +103,11 @@ export default function ProductForm({
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
     }
+  };
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    onClose();
   };
 
   if (!visible) return null;
@@ -110,7 +131,10 @@ export default function ProductForm({
             <X size={20} />
           </button>
 
-          <form onSubmit={handleSubmit} className="p-6 space-y-5 font-montserrat">
+          <form
+            onSubmit={handleSubmit}
+            className="p-6 space-y-5 font-montserrat"
+          >
             {errorMessage && (
               <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
                 {errorMessage}
@@ -209,11 +233,18 @@ export default function ProductForm({
           </form>
         </div>
       </div>
+
       <ConfirmationDialog
         show={showConfirm}
         message={`¿Estás seguro de que deseas eliminar "${nombre}"? Esta acción no se puede deshacer.`}
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
+      />
+
+      <SuccessDialog
+        show={showSuccess}
+        message={successMessage}
+        onConfirm={handleSuccessClose}
       />
     </>
   );
