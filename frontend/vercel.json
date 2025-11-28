@@ -1,29 +1,8 @@
 {
-  "name": "frontend-config-vercel",
-  "version": "1.0.0",
-  "files": {
-    "vercel.json": {
-      "framework": "vite",
-      "buildCommand": "npm run build",
-      "outputDirectory": "dist",
-      "installCommand": "npm install",
-      "devCommand": "npm run dev",
-      "env": {
-        "VITE_API_URL": "@vite_api_url"
-      },
-      "build": {
-        "env": {
-          "VITE_API_URL": "@vite_api_url"
-        }
-      }
-    },
-    
-    ".env.production": "# Variables para producción\nVITE_API_URL=https://tu-backend.railway.app\nVITE_APP_NAME=MiApp\nVITE_APP_VERSION=1.0.0",
-    
-    ".env.local.example": "# Variables locales (no subir a git)\nVITE_API_URL=http://localhost:3000\nVITE_APP_NAME=MiApp Dev\nVITE_APP_VERSION=1.0.0-dev",
-
-    "src/config/api.js": "// Configuración de API\nconst API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000';\n\nexport const apiConfig = {\n  baseURL: API_URL,\n  timeout: 10000,\n  headers: {\n    'Content-Type': 'application/json',\n  }\n};\n\nexport default API_URL;",
-
-    "src/utils/api.js": "// Utility para llamadas API\nimport API_URL from '../config/api';\n\nclass ApiClient {\n  constructor(baseURL = API_URL) {\n    this.baseURL = baseURL;\n  }\n\n  async request(endpoint, options = {}) {\n    const url = `${this.baseURL}${endpoint}`;\n    \n    const config = {\n      headers: {\n        'Content-Type': 'application/json',\n      },\n      ...options,\n    };\n\n    try {\n      const response = await fetch(url, config);\n      \n      if (!response.ok) {\n        throw new Error(`HTTP error! status: ${response.status}`);\n      }\n      \n      return await response.json();\n    } catch (error) {\n      console.error('API request failed:', error);\n      throw error;\n    }\n  }\n\n  get(endpoint) {\n    return this.request(endpoint);\n  }\n\n  post(endpoint, data) {\n    return this.request(endpoint, {\n      method: 'POST',\n      body: JSON.stringify(data),\n    });\n  }\n\n  put(endpoint, data) {\n    return this.request(endpoint, {\n      method: 'PUT',\n      body: JSON.stringify(data),\n    });\n  }\n\n  delete(endpoint) {\n    return this.request(endpoint, {\n      method: 'DELETE',\n    });\n  }\n}\n\nexport default new ApiClient();"
-  }
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
 }
