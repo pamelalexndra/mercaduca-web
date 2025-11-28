@@ -59,15 +59,7 @@ CREATE TABLE Usuarios (
 	Registro_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	Registro_contraseña TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT fk_Usuarios_Emprendedor FOREIGN KEY (id_emprendedor) 
-		REFERENCES Emprendedor (id_emprendedor)
-);
-
--- Crear tabla actividades
-CREATE TABLE Actividades (
-	id_actividad SERIAL PRIMARY KEY NOT NULL,
-	Nombre VARCHAR(500), 
-	Descripcion TEXT, 
-	Imagen_url TEXT
+		REFERENCES Emprendedor (id_emprendedor) ON DELETE CASCADE
 );
 
 -- Insertar categorías
@@ -185,5 +177,4 @@ VALUES ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Jochips'),
 ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Hidratantes', '', 'https://i.ibb.co/B5TWK34y/Hidratante.png', 12.00, 10),
 ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Collares', '', 'https://i.ibb.co/d02XVvYt/Collar.png', 16.00, 10),
 ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Aritos', '', 'https://i.ibb.co/jvF5Hj5n/Aritos.png', 10.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Pulseras', '', 'https://i.ibb.co/mFFjLTZJ/Pulsera.png', 12.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Tannie Go´s'),  19, 'Hidratantes', '', 'https://i.ibb.co/B5TWK34y/Hidratante.png', 12.00, 10);
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Pulseras', '', 'https://i.ibb.co/mFFjLTZJ/Pulsera.png', 12.00, 10);
