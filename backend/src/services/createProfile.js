@@ -8,8 +8,8 @@ export const createProfile = async (userData) => {
   try {
     await client.query("BEGIN");
 
-        // 1. Hashear contraseña
-        const hashedPassword = await generateHash(userData.password);
+    // 1. Hashear contraseña
+    const hashedPassword = await generateHash(userData.password);
 
     // 2. Crear emprendedor primero
     const emprendedorResult = await client.query(
