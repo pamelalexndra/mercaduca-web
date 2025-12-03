@@ -2,7 +2,6 @@ import pool from "../../database/connection.js";
 
 export const getProfiles = async (req, res) => {
   try {
-    // Obtenemos el parámetro de orden (por defecto, mas recientes primero)
     const { orden } = req.query;
 
     const sortOrder = orden && orden.toUpperCase() === "ASC" ? "ASC" : "DESC";

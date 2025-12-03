@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ProductCard from "./Card";
+import SuccessDialog from "./SuccessDialog";
 import { API_BASE_URL } from "../utils/api";
 
 export default function PublicProfile() {
@@ -14,23 +15,27 @@ export default function PublicProfile() {
     mercado_presencial: false,
   });
   const [isLoading, setIsLoading] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
   useEffect(() => {
     setIsLoading(true);
 
-    // Traer emprendimiento desde el backend
     fetch(`${API_BASE_URL}/api/entrepreneurship/${id}`)
       .then((res) => res.json())
       .then((data) => setEmprendimiento(data))
       .catch((err) => console.error("Error cargando emprendimiento:", err))
       .finally(() => setIsLoading(false));
 
-    // Traer productos del emprendimiento
     fetch(`${API_BASE_URL}/api/products?emprendimiento_id=${id}`)
       .then((res) => res.json())
       .then((data) => setProductos(data.productos))
       .catch((err) => console.error("Error cargando productos:", err));
   }, [id]);
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+  };
 
   if (isLoading) {
     return (
@@ -43,9 +48,7 @@ export default function PublicProfile() {
   return (
     <div className="min-h-screen bg-white font-montserrat">
       <div className="max-w-4xl mx-auto px-4 py-8">
-        {/* Desktop Layout */}
         <div className="hidden md:flex md:items-start md:gap-20 mb-11">
-          {/* Foto de perfil */}
           <div className="flex-shrink-0">
             <img
               src={
@@ -56,16 +59,13 @@ export default function PublicProfile() {
             />
           </div>
 
-          {/* Info del perfil */}
           <div className="flex-1">
-            {/* Username */}
             <div className="mb-5">
               <h1 className="text-2xl font-normal text-gray-900 mb-4">
                 {emprendimiento.nombre}
               </h1>
             </div>
 
-            {/* Estadísticas */}
             <div className="flex gap-10 mb-5">
               <div className="flex gap-1">
                 <span className="font-semibold text-gray-900">
@@ -75,7 +75,6 @@ export default function PublicProfile() {
               </div>
             </div>
 
-            {/* información */}
             <div className="text-sm space-y-2">
               {emprendimiento.descripcion && (
                 <p className="text-gray-900 whitespace-pre-wrap">
@@ -104,10 +103,8 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Mobile Layout */}
         <div className="md:hidden">
           <div className="flex items-center gap-4 mb-4 px-4">
-            {/* Foto de perfil */}
             <img
               src={
                 emprendimiento.imagen_url || "https://via.placeholder.com/80"
@@ -126,7 +123,6 @@ export default function PublicProfile() {
             </div>
           </div>
 
-          {/* Bio */}
           <div className="px-4 mb-4 text-sm space-y-2">
             <p className="font-semibold text-gray-900">
               {emprendimiento.nombre}
@@ -186,14 +182,12 @@ export default function PublicProfile() {
           </div>
         </div>
 
-        {/* Separador */}
         <div className="border-t border-gray-300 mt-11"></div>
 
         <div className="flex justify-center">
           <p className="text-sm font-semibold mt-8 pb-4">Productos</p>
         </div>
 
-        {/* Grid de productos */}
         {productos.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20">
             <p className="text-gray-500 text-sm">
@@ -213,6 +207,12 @@ export default function PublicProfile() {
           </div>
         )}
       </div>
+
+      <SuccessDialog
+        show={showSuccess}
+        message={successMessage}
+        onConfirm={handleSuccessClose}
+      />
     </div>
   );
 }

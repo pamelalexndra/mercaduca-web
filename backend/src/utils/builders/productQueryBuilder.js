@@ -15,7 +15,6 @@ export const buildProductQuery = (filtros) => {
     search,
   } = filtros;
 
-  // 1. Consulta Base
   let sqlParts = [
     `SELECT
         p.id_producto AS id,
@@ -36,10 +35,8 @@ export const buildProductQuery = (filtros) => {
   let params = [];
   let filtrosAplicados = {};
 
-  // Helper interno para obtener el índice actual ($1, $2, etc.)
   const getNextIndex = () => `$${params.length + 1}`;
 
-  // 2. Filtro por Búsqueda de Texto
   if (search && search.trim() !== "") {
     const searchTerm = `%${search.trim().toLowerCase()}%`;
     const idx = getNextIndex();
@@ -54,7 +51,6 @@ export const buildProductQuery = (filtros) => {
     filtrosAplicados.search = search.trim();
   }
 
-  // 3. Filtro por Categorías (IDs múltiples)
   if (ids) {
     const categoriasIds = ids
       .split(",")
@@ -72,14 +68,12 @@ export const buildProductQuery = (filtros) => {
     }
   }
 
-  // 4. Filtro por Emprendimiento
   if (emprendimiento_id && !isNaN(emprendimiento_id)) {
     sqlParts.push(` AND p.id_emprendimiento = ${getNextIndex()}`);
     params.push(parseInt(emprendimiento_id));
     filtrosAplicados.emprendimiento_id = parseInt(emprendimiento_id);
   }
 
-  // 5. Filtros por Precio
   if (!isNaN(parseFloat(precio_min))) {
     sqlParts.push(` AND p.Precio_dolares >= ${getNextIndex()}`);
     params.push(parseFloat(precio_min));
@@ -92,7 +86,6 @@ export const buildProductQuery = (filtros) => {
     filtrosAplicados.precio_max = parseFloat(precio_max);
   }
 
-  // 6. Ordenamiento
   const ordenamientos = {
     precio_asc: "p.Precio_dolares ASC",
     precio_desc: "p.Precio_dolares DESC",
@@ -106,7 +99,6 @@ export const buildProductQuery = (filtros) => {
   sqlParts.push(` ORDER BY ${clausulaOrden}`);
   filtrosAplicados.ordenamiento = ordenar;
 
-  // 7. Límite
   if (limit && !isNaN(parseInt(limit))) {
     sqlParts.push(` LIMIT ${getNextIndex()}`);
     params.push(parseInt(limit));
@@ -127,7 +119,6 @@ export const buildProductQuery = (filtros) => {
  * @returns {Object} { query, params, count } - Query string, array de parámetros y cantidad de campos
  */
 export const buildProductQueryUpdate = (id, updates) => {
-  // Mapeo de nombre en JSON (req.body) -> nombre en Base de Datos
   const dbMap = {
     nombre: "Nombre",
     descripcion: "Descripcion",

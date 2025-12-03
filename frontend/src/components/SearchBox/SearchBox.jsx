@@ -12,10 +12,9 @@ export default function SearchBox({
   initialSelectedCategories = [],
   initialSearchTerm = "",
 }) {
-  const { categories, loading, error } = useCategories(true); // 'true' para categorias con productos
+  const { categories, loading, error } = useCategories(true);
   const [filterOpen, setFilterOpen] = useState(false);
 
-  // Estado interno local
   const [selectedCategories, setSelectedCategories] = useState(
     initialSelectedCategories || []
   );
@@ -24,10 +23,8 @@ export default function SearchBox({
   useEffect(() => {
     setSelectedCategories(initialSelectedCategories || []);
     setSearchTerm(initialSearchTerm || "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Handlers
   const handleToggleCategory = useCallback(
     (category) => {
       const id = category.id_categoria;

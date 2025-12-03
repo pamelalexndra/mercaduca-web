@@ -153,6 +153,9 @@ export default function Profile({ user, onProfileLoaded }) {
     return stored ? JSON.parse(stored) : null;
   });
 
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
+
   const currentUserRef = useRef(currentUser);
   const lastLoadedUserIdRef = useRef(null);
   const lastLoadedTokenRef = useRef(null);
@@ -162,8 +165,6 @@ export default function Profile({ user, onProfileLoaded }) {
   const [error, setError] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
-  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
   const [shouldRefresh, setShouldRefresh] = useState(false);
   const updateStoredUserProfile = useCallback((profileUpdater) => {
     setCurrentUser((prev) => {
@@ -339,9 +340,9 @@ export default function Profile({ user, onProfileLoaded }) {
 
         const baseUser = baseUserData ||
           fallbackUser || {
-          id: profileData.id_usuario,
-          username: profileData.username || profileData.Usuario,
-        };
+            id: profileData.id_usuario,
+            username: profileData.username || profileData.Usuario,
+          };
 
         const updatedProfile = {
           ...profileData,
@@ -457,6 +458,24 @@ export default function Profile({ user, onProfileLoaded }) {
     }
   }, [shouldRefresh, currentUser, loadProfile]);
 
+  const handleSuccessClose = () => {
+    setShowSuccessDialog(false);
+
+    if (successMessage.includes("Perfil eliminado")) {
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
+      localStorage.removeItem("emprendimientoCache");
+      window.location.href = "/";
+    } else if (successMessage.includes("Emprendimiento eliminado")) {
+      window.location.reload();
+    }
+  };
+
+  const handleSuccessFromChild = (message) => {
+    setSuccessMessage(message);
+    setShowSuccessDialog(true);
+  };
+
   if (loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
@@ -497,84 +516,14 @@ export default function Profile({ user, onProfileLoaded }) {
     ? "Editar emprendimiento"
     : "Agregar emprendimiento";
   const hasEmprendimiento = Boolean(emprendimiento?.id_emprendimiento);
-  const handleEntrepreneurshipDeleteSuccess = async () => {
-    // 1) LIMPIEZA EN localStorage
-    const storedUserRaw = localStorage.getItem("user");
-    if (storedUserRaw) {
-      try {
-        const userObj = JSON.parse(storedUserRaw);
 
-        if (userObj && userObj.profile) {
-          // eliminar el objeto emprendimiento y nulificar ID
-          delete userObj.profile.emprendimiento;
-          delete userObj.profile.Emprendimiento;
-          userObj.profile.id_emprendimiento = null;
-
-          // sobrescribimos el user en localStorage
-          localStorage.setItem("user", JSON.stringify(userObj));
-
-          // actualizamos estado local
-          setCurrentUser(userObj);
-
-          // Si el padre necesita saberlo, notificamos (para que actualice su prop `user`)
-          if (typeof onProfileLoaded === "function") {
-            try {
-              onProfileLoaded(userObj);
-            } catch (e) {
-              // no fatal si el padre no maneja el callback
-              console.warn("onProfileLoaded lanzó:", e);
-            }
-          }
-        }
-      } catch (e) {
-        console.error("Error parseando user de localStorage:", e);
-      }
-    }
-
-    // Limpiar cache y estados visuales
-    localStorage.removeItem(EMPRENDIMIENTO_CACHE_KEY);
-    setEmprendimiento({});
-    setProductos([]);
-    setProductoEdit(null);
-
-    // Permitir que el useEffect vuelva a recargar (no "engañarlo" con DELETED)
-    lastLoadedUserIdRef.current = null;
-    lastLoadedTokenRef.current = null;
-    // pedimos recarga controlada
-    setShouldRefresh(true);
-
-    // Cerrar modales y mostrar éxito
-    setShowEntrepreneurshipModal(false);
+  const handleEntrepreneurshipDeleteSuccess = () => {
     setSuccessMessage("Emprendimiento eliminado correctamente");
     setShowSuccessDialog(true);
+    setShouldRefresh(true);
+    setShowEntrepreneurshipModal(false);
   };
 
-  const handleSuccessClose = () => {
-    setShowSuccessDialog(false);
-
-    if (successMessage.includes("Perfil eliminado")) {
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem(EMPRENDIMIENTO_CACHE_KEY);
-      window.location.href = "/";
-      return;
-    }
-
-    if (successMessage.includes("Emprendimiento eliminado")) {
-      // Evitamos recargar la página entera. En su lugar:
-      // - Forzamos que el componente recargue el perfil si es necesario
-      const userId = getUserId(currentUser);
-      if (userId) {
-        // activar la recarga por efecto
-        setShouldRefresh(true);
-      } else {
-        // si no hay user, recarga completa como fallback
-        window.location.reload();
-      }
-    }
-  };
-
-  // Función para manejar eliminación exitosa de perfil
   const handleProfileDeleteSuccess = () => {
     setSuccessMessage(
       "Perfil eliminado correctamente. Serás redirigido a la página de inicio."
@@ -688,6 +637,13 @@ export default function Profile({ user, onProfileLoaded }) {
         await fetchProductos(emprendimiento.id_emprendimiento);
       }
 
+      setSuccessMessage(
+        productoEdit
+          ? "Producto actualizado correctamente"
+          : "Producto creado correctamente"
+      );
+      setShowSuccessDialog(true);
+
       closeProductForm();
       return true;
     } catch (err) {
@@ -774,6 +730,13 @@ export default function Profile({ user, onProfileLoaded }) {
       if (normalized.id_emprendimiento) {
         await fetchProductos(normalized.id_emprendimiento);
       }
+
+      setSuccessMessage(
+        emprendimiento?.id_emprendimiento
+          ? "Emprendimiento actualizado correctamente"
+          : "Emprendimiento creado correctamente"
+      );
+      setShowSuccessDialog(true);
 
       return true;
     } catch (err) {
@@ -918,7 +881,6 @@ export default function Profile({ user, onProfileLoaded }) {
   return (
     <>
       <div className="min-h-screen bg-white font-montserrat">
-        {/* Header */}
         <div className="max-w-4xl mx-auto px-4 py-8">
           {error && (
             <div className="mb-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -926,7 +888,6 @@ export default function Profile({ user, onProfileLoaded }) {
             </div>
           )}
 
-          {/* Desktop */}
           <div className="hidden md:flex md:items-center md:gap-20 mb-11">
             <div className="flex-shrink-0">
               <img
@@ -992,7 +953,6 @@ export default function Profile({ user, onProfileLoaded }) {
             </div>
           </div>
 
-          {/* Mobile */}
           <div className="md:hidden">
             <div className="flex items-center gap-4 mb-4 px-4">
               <img
@@ -1082,16 +1042,16 @@ export default function Profile({ user, onProfileLoaded }) {
             </div>
           </div>
 
-          {/* Divider */}
           <div className="relative mt-11 mb-2 flex items-center">
             <div className="flex-1 border-t border-gray-300" />
             <button
               onClick={handleAgregar}
               disabled={!hasEmprendimiento}
-              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform hover:-translate-y-0.5 ${hasEmprendimiento
-                ? "bg-[#557051] hover:bg-[#445a3f]"
-                : "bg-gray-300 cursor-not-allowed"
-                }`}
+              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform hover:-translate-y-0.5 ${
+                hasEmprendimiento
+                  ? "bg-[#557051] hover:bg-[#445a3f]"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
               aria-label="Agregar producto"
             >
               +
@@ -1102,7 +1062,6 @@ export default function Profile({ user, onProfileLoaded }) {
             <p className="text-sm font-semibold mt-8 pb-4">Productos</p>
           </div>
 
-          {/* Productos */}
           {loadingProductos ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
               <p className="text-sm font-semibold">Cargando tus productos...</p>
@@ -1118,10 +1077,11 @@ export default function Profile({ user, onProfileLoaded }) {
               <button
                 onClick={handleAgregar}
                 disabled={!hasEmprendimiento}
-                className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento
-                  ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
-                  : "bg-gray-300 cursor-not-allowed shadow-none"
-                  }`}
+                className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${
+                  hasEmprendimiento
+                    ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
+                    : "bg-gray-300 cursor-not-allowed shadow-none"
+                }`}
               >
                 Comparte tu primer producto
               </button>
@@ -1158,6 +1118,11 @@ export default function Profile({ user, onProfileLoaded }) {
         errorMessage={error}
         loading={savingProfile}
         onDeleteSuccess={handleProfileDeleteSuccess}
+        onSuccess={(message) => {
+          setSuccessMessage(message);
+          setShowSuccessDialog(true);
+          setShowEditProfileModal(false);
+        }}
       />
 
       <EntrepreneurshipForm

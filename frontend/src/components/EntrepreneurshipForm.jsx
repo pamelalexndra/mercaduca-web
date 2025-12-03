@@ -60,7 +60,11 @@ export default function EntrepreneurshipForm({
     e.preventDefault();
     const success = await onSubmit?.(formData);
     if (success) {
-      setSuccessMessage("Emprendimiento guardado correctamente");
+      setSuccessMessage(
+        initialData?.id_emprendimiento
+          ? "Emprendimiento actualizado correctamente"
+          : "Emprendimiento creado correctamente"
+      );
       setShowSuccess(true);
     }
   };
@@ -82,6 +86,7 @@ export default function EntrepreneurshipForm({
     if (success) {
       setSuccessMessage("Emprendimiento eliminado correctamente");
       setShowSuccess(true);
+      onDeleteSuccess?.();
     }
   };
 
@@ -97,13 +102,7 @@ export default function EntrepreneurshipForm({
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
-
-    if (successMessage.includes("eliminado")) {
-      // Recargar la página después de eliminar emprendimiento
-      window.location.reload();
-    } else {
-      onClose?.();
-    }
+    onClose?.();
   };
 
   if (!visible) return null;
@@ -228,7 +227,6 @@ export default function EntrepreneurshipForm({
                 />
               </div>
 
-              {/* SECCIÓN DE BOTONES */}
               <div className="flex justify-end gap-3 pt-2">
                 {isEditing && (
                   <button

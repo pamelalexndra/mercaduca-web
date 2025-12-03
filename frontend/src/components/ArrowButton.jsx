@@ -10,7 +10,7 @@ export default function ArrowButton({ onClick, dir }) {
         flex items-center justify-center
         rounded-full border border-[#507051]
         bg-white text-[#557051]
-        w-10 h-10            /* 🔹 tamaño ligeramente mayor */
+        w-10 h-10            /*  tamaño ligeramente mayor */
         hover:bg-[#557051] hover:text-white
         transition-colors duration-200
       "

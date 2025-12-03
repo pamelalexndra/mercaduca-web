@@ -15,13 +15,11 @@ export default function Forbidden() {
           <AlertCircle className="w-12 h-12 text-blue-500 mx-auto" />
         </div>
 
-        {/* Código de error y título arriba de la imagen */}
         <h1 className="text-4xl font-bold text-gray-800 mb-2">403 Forbidden</h1>
         <h2 className="text-xl font-semibold text-blue-600 mb-8">
           Acceso Denegado
         </h2>
 
-        {/* Imagen */}
         <div className="mb-8">
           <img
             src={forbiddenImage}
@@ -34,7 +32,6 @@ export default function Forbidden() {
           />
         </div>
 
-        {/* Información adicional debajo de la imagen */}
         <div className="space-y-4 mb-8">
           <p className="text-gray-600">
             No tienes permisos para acceder a este recurso.
@@ -44,7 +41,6 @@ export default function Forbidden() {
           </p>
         </div>
 
-        {/* Botones */}
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button
             onClick={handleGoBack}

@@ -20,7 +20,6 @@ export default function Card({ e, p }) {
         hover:shadow-md transition
       "
       >
-        {/* Imagen */}
         <div className="w-full aspect-[4/3] overflow-hidden">
           <img
             src={image}
@@ -29,7 +28,6 @@ export default function Card({ e, p }) {
           />
         </div>
 
-        {/* Contenido */}
         <div className="p-3 pt-5 font-montserrat text-[12px]">
           <h3
             className={`${

@@ -8,13 +8,13 @@ export function useProfile() {
   const removeProfile = async (userId) => {
     setLoadingDelete(true);
     setErrorDelete(null);
-    
+
     try {
       const token = localStorage.getItem("token");
       if (!token) {
         throw new Error("No hay sesión activa");
       }
-      
+
       await deleteUserProfile(userId, token);
       return true;
     } catch (err) {

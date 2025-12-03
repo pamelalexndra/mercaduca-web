@@ -3,7 +3,6 @@ import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import ConfirmationDialog from "./ConfirmationDialog";
-import SuccessDialog from "./SuccessDialog";
 
 export default function EditProfile({
   visible,
@@ -13,6 +12,7 @@ export default function EditProfile({
   errorMessage = "",
   loading = false,
   onDeleteSuccess,
+  onSuccess,
 }) {
   const [formData, setFormData] = useState({
     nombres: "",
@@ -24,10 +24,7 @@ export default function EditProfile({
     confirmarContraseña: "",
   });
   const [localError, setLocalError] = useState("");
-
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   const { removeProfile, loadingDelete, errorDelete } = useProfile();
 
@@ -56,7 +53,6 @@ export default function EditProfile({
     if (visible) {
       setLocalError("");
       setShowConfirm(false);
-      setShowSuccess(false);
     }
   }, [visible]);
 
@@ -84,10 +80,7 @@ export default function EditProfile({
     const success = await removeProfile(userId);
 
     if (success) {
-      setSuccessMessage(
-        "Perfil eliminado correctamente. Serás redirigido a la página de inicio."
-      );
-      setShowSuccess(true);
+      onDeleteSuccess?.();
     }
   };
 
@@ -109,27 +102,12 @@ export default function EditProfile({
     setLocalError("");
     const success = await onSave?.(formData);
     if (success) {
-      setSuccessMessage("Perfil actualizado correctamente");
-      setShowSuccess(true);
+      onSuccess?.("Perfil actualizado correctamente");
     }
   };
 
   const handleBackgroundClick = (e) => {
     if (e.target === e.currentTarget) {
-      onClose?.();
-    }
-  };
-
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-
-    if (successMessage.includes("Perfil eliminado")) {
-      // Limpiar localStorage y redirigir a inicio
-      localStorage.removeItem("token");
-      localStorage.removeItem("user");
-      localStorage.removeItem("isAuthenticated");
-      window.location.href = "/";
-    } else {
       onClose?.();
     }
   };
@@ -164,7 +142,6 @@ export default function EditProfile({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* CAMPOS DEL FORMULARIO */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Nombres *
@@ -264,7 +241,6 @@ export default function EditProfile({
                 </div>
               </div>
 
-              {/* BOTONES */}
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
@@ -293,12 +269,6 @@ export default function EditProfile({
         message="¿Estás seguro de que deseas eliminar tu perfil? Esta acción eliminará tus emprendimientos y productos permanentemente."
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
-      />
-
-      <SuccessDialog
-        show={showSuccess}
-        message={successMessage}
-        onConfirm={handleSuccessClose}
       />
     </>
   );

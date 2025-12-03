@@ -42,15 +42,13 @@ export default function Catalog({ onGoHome }) {
 
       setIsInitialLoad(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [searchParams, isInitialLoad]);
 
-  // Resetear contador cuando cambian los filtros
   useEffect(() => {
     setVisibleProductsCount(20);
   }, [selectedCategories, searchTerm]);
 
-  // Manejar filtrado por categorías
   const handleCategoryFilter = (categoryIds) => {
     setSelectedCategories(categoryIds);
 
@@ -68,7 +66,6 @@ export default function Catalog({ onGoHome }) {
     fetchProducts(categoryIds, searchTerm);
   };
 
-  // Manejar búsqueda
   const handleSearch = (search) => {
     setSearchTerm(search);
 
@@ -85,7 +82,6 @@ export default function Catalog({ onGoHome }) {
     fetchProducts(selectedCategories, search);
   };
 
-  // Función para cargar más productos
   const handleLoadMore = () => {
     setVisibleProductsCount((prevCount) => prevCount + 20);
   };
@@ -97,7 +93,6 @@ export default function Catalog({ onGoHome }) {
     }
   };
 
-  // Obtener solo los productos visibles
   const visibleProducts = filteredProducts.slice(0, visibleProductsCount);
 
   if (loading) {
@@ -159,7 +154,6 @@ export default function Catalog({ onGoHome }) {
         )}
 
         <div className="mt-10 flex flex-col items-center gap-4">
-          {/* Mostrar botón "Ver más" solo si hay más productos por mostrar */}
           {visibleProducts.length < filteredProducts.length && (
             <button
               onClick={handleLoadMore}

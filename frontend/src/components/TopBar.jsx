@@ -61,7 +61,6 @@ export default function TopBar({ user, onLogout }) {
     <>
       <header className="sticky top-0 z-[100] bg-[#FAFAF9]/80 backdrop-blur-sm">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 py-3 flex items-center justify-between">
-          {/* MOBILE LEFT SIDE */}
           <div className="flex w-full items-center justify-between sm:hidden">
             <Link to="/" className="flex items-center">
               <img
@@ -79,7 +78,6 @@ export default function TopBar({ user, onLogout }) {
             </button>
           </div>
 
-          {/* DESKTOP MENU */}
           <div className="hidden sm:flex items-center gap-6 w-full">
             <Link to="/" className="font-semibold text-xl tracking-tight">
               <img
@@ -153,7 +151,6 @@ export default function TopBar({ user, onLogout }) {
         </div>
       </header>
 
-      {/* MOBILE OVERLAY MENU */}
       {menuOpen && (
         <div
           className="fixed inset-0 z-[90] flex sm:hidden"
@@ -196,7 +193,6 @@ export default function TopBar({ user, onLogout }) {
 
               {isAuthenticated && (
                 <div className="w-full mt-8">
-                  {/* Separamos los elementos del perfil para mobile */}
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden">
                       <img

@@ -29,7 +29,10 @@ const CredentialsSection = ({
           required
           className={inputClass}
           placeholder="Ingresa tu usuario"
+          maxLength="30"
+          pattern="[a-zA-Z0-9]+"
         />
+        
         {usernameAvailable === true && (
           <div className="text-green-600 text-sm font-semibold mt-2">
             ✓ Usuario disponible
@@ -53,7 +56,8 @@ const CredentialsSection = ({
           onChange={onChange}
           required
           className={inputClass}
-          placeholder="Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos"
+          placeholder="Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos (@$!%*?&)"
+          maxLength="128"
         />
         <PasswordStrengthMeter
           password={formData.password}
@@ -73,6 +77,7 @@ const CredentialsSection = ({
           required
           className={inputClass}
           placeholder="Confirma tu contraseña"
+          maxLength="128"
         />
         {formData.confirmPassword &&
           formData.password !== formData.confirmPassword && (
