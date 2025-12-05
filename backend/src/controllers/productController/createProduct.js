@@ -7,7 +7,6 @@ export const createProduct = async (req, res) => {
       descripcion,
       imagen_url,
       precio_dolares,
-      existencias,
       id_categoria,
       id_emprendimiento, // id_emprendimiento viene del body en lugar de params, mas seguro
     } = req.body;
@@ -43,7 +42,6 @@ export const createProduct = async (req, res) => {
         Descripcion, 
         Imagen_URL, 
         Precio_dolares, 
-        Existencias,
         Disponible
       ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
@@ -55,8 +53,6 @@ export const createProduct = async (req, res) => {
         descripcion?.trim() || "",
         imagen_url?.trim() || "",
         parseFloat(precio_dolares),
-        parseInt(existencias) || 0,
-        (parseInt(existencias) || 0) > 0, // Disponible si tiene existencias
       ]
     );
 

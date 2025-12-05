@@ -8,7 +8,6 @@ export const updateProduct = async (req, res) => {
       descripcion,
       imagen_url,
       precio_dolares,
-      existencias,
       disponible,
       id_categoria,
     } = req.body;
@@ -36,7 +35,6 @@ export const updateProduct = async (req, res) => {
                 Descripcion = $2,
                 Imagen_URL = $3,
                 Precio_dolares = $4,
-                Existencias = $5,
                 Disponible = $6,
                 id_categoria = $7
             WHERE id_producto = $8

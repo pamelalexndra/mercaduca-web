@@ -16,7 +16,6 @@ export const getProductById = async (req, res) => {
         p.Descripcion AS descripcion,
         p.Imagen_URL AS imagen,
         p.Precio_dolares AS precio,
-        p.Existencias AS stock,
         p.Disponible AS disponible,
         p.Fecha_registro,
         p.id_categoria,

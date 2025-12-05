@@ -43,7 +43,6 @@ CREATE TABLE Producto(
   Descripcion TEXT,
   Imagen_URL TEXT, 
   Precio_dolares DECIMAL(18,2),
-  Existencias INT,
   Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Producto_Emprendimiento FOREIGN KEY (id_emprendimiento) 
