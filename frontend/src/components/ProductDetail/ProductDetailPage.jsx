@@ -108,7 +108,6 @@ export default function ProductDetailPage() {
         descripcion: raw.descripcion || raw.Descripcion,
         imagen: raw.imagen || raw.imagen_url || raw.Imagen_URL,
         precio: raw.precio || raw.precio_dolares || raw.Precio_dolares,
-        stock: raw.stock || raw.existencias || raw.Existencias,
       };
 
       setProduct(productoActualizado);
@@ -237,13 +236,6 @@ export default function ProductDetailPage() {
                     {product.descripcion}
                   </p>
                 </div>
-              )}
-
-              {product.stock !== undefined && (
-                <p className="text-sm text-gray-500 mb-4">
-                  Stock disponible:{" "}
-                  <span className="font-semibold">{product.stock}</span>
-                </p>
               )}
 
               <div className="space-y-3 mt-6">

@@ -37,7 +37,6 @@ CREATE TABLE Producto(
   Descripcion TEXT,
   Imagen_URL TEXT, 
   Precio_dolares DECIMAL(18,2),
-  Existencias INT,
   Disponible BOOLEAN DEFAULT TRUE,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Producto_Emprendimiento FOREIGN KEY (id_emprendimiento) 
@@ -50,11 +49,30 @@ CREATE TABLE Usuarios (
 	id_usuario SERIAL PRIMARY KEY NOT NULL,
 	id_emprendedor INT, 
 	Usuario VARCHAR(100) UNIQUE NOT NULL, 
-	Contraseña TEXT, 
+	Contraseña TEXT,
+	Rol VARCHAR(100) NOT NULL DEFAULT 'Vendedor',
 	Registro_usuario TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	Registro_contraseña TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 	CONSTRAINT fk_Usuarios_Emprendedor FOREIGN KEY (id_emprendedor) 
 		REFERENCES Emprendedor (id_emprendedor) ON DELETE CASCADE
+);
+
+CREATE TABLE Actividades (
+	id_actividad SERIAL PRIMARY KEY NOT NULL,
+	Nombre VARCHAR(500), 
+	Descripcion TEXT, 
+	Imagen_url TEXT
+);
+
+CREATE TABLE Solicitudes (
+  id_solicitud SERIAL PRIMARY KEY NOT NULL,
+  nombres VARCHAR(500),
+  apellidos VARCHAR(500),
+  correo TEXT UNIQUE,
+  telefono VARCHAR(20) UNIQUE,
+  usuario VARCHAR(100) UNIQUE,
+  contraseña TEXT,
+  descripcion_solicitud TEXT
 );
 
 INSERT INTO Categorias (Categoria) VALUES 
@@ -112,63 +130,76 @@ VALUES (1, 'Jochips','Deliciosas galletas artesanales horneadas con ingredientes
 (16, 'Lizbeth Shopkins', 'Globos, Huevos y más... Todo lo que se necesita para una fiesta.', 'https://i.ibb.co/Jw8fhzNV/lisbeth.jpg', 'https://www.instagram.com/lizbethshopkins/'), 
 (2, 'Elfos Verdes', 'Compras y ventas minoristas, se venden productos que posiblemente no necesitas, pero seguro te van a gustar,', 'https://i.ibb.co/wZwwWHsR/elfos.jpg', 'https://www.instagram.com/elfosverdes/');
 
-INSERT INTO Producto (id_emprendimiento, id_categoria, Nombre, Descripcion, Imagen_URL, Precio_dolares, Existencias)
-VALUES ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Jochips'),  1, 'Galletas edición clásicas', '', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlNNhU3GusCR5R8Fs8QPLWkkGDghEsLxSrNA&s', 0.75, 15),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Jochips'),  1, 'Galletas edición premium', '', 'https://i.ibb.co/3mzHFpKs/Galletas-premium.png', 1.00, 20),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Pulseras', '', 'https://i.ibb.co/XrPJrxSb/Pulsera.png', 5.00, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Aretes', '', 'https://i.ibb.co/99m73gs2/Aretes.png', 1.50, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Cadenas', '', 'https://i0.wp.com/joyeriacasadeoro.com/tienda/wp-content/uploads/2024/04/deava-1.jpg?fit=768%2C1016&ssl=1', 5.00, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Anillos', '', 'https://i.ibb.co/WNxXXFk2/Anillo.png', 3.50, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Collares', '', 'https://i.ibb.co/S7x3pxn8/Collar.png', 3.00, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Brazaletes ', '', 'https://cdn-media.glamira.com/media/product/newgeneration/view/1/sku/hermina/alloycolour/yellow.jpg', 4.00, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  12, 'Peluches grandes', '', 'https://i.ibb.co/ycYcmcDC/Peluche-grande.png', 23.00, 4),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  2, 'Llaveros', '', 'https://www.melodrama.com.ar/8002-large_default/llaveros-personajes.jpg', 2.00, 20),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  12, 'Peluches medianos', '', 'https://i.ibb.co/27STfPNy/Peluche-mediano.png', 10.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  11, 'Ganchos para cabello', '', 'https://thecomicstore.com.sv/storage/products/quFPKKD7RNRp1ypO1loTunykyX6K4RRVzYiayLYv.jpg', 1.50, 12),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  5, 'Espejos de mano', '', 'https://solocejas.com.co/wp-content/uploads/2022/06/espejos.jpg', 2.00, 15),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  12, 'Peluches pequeños', '', 'https://i.ibb.co/LXLVg3gh/Peluche-peque-o.png', 7.00, 8),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  8, 'Lociones pequeñas', '', 'https://m.media-amazon.com/images/I/71A-HJvY0hL._UF1000,1000_QL80_.jpg', 3.00, 6),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  11, 'Monederos', '', 'https://manhattanxativa.es/wp-content/uploads/2024/05/MONEDERO-STITCH-e1715684150443.jpg', 2.50, 6),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café bourbon', '', 'https://i.ibb.co/DDbjwXxF/Bourbon.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café cuscatleco', '', 'https://i.ibb.co/99JDZmrL/cuscatleco.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café icatu', '', 'https://i.ibb.co/4Zrdwp5h/Icatu.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café blend', '', 'https://i.ibb.co/R5FkTFB/Blend.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café pacas', '', 'https://i.ibb.co/mV9NL6TB/Pacas.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café geisha', '', 'https://i.ibb.co/wF7v1XBc/Geisha.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café pacamara', '', 'https://i.ibb.co/8nkPcxwf/Pacamara.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Horchata de café', '', 'https://i.ibb.co/G4J51FkF/horchata.png', 7.00, 25),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Brownies', '', 'https://www.aceitesdeolivadeespana.com/wp-content/uploads/2019/03/brownies-de-chocolate-1000x768.png', 2.50, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Pasteles', '', 'https://i.pinimg.com/736x/6e/88/33/6e8833a3bf3bc7b1efab315b15a64aaa.jpg', 12.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Alfajores', '', 'https://elmundoeats.es/wp-content/uploads/2021/07/FP2-Argentine-alfajores-on-a-rack-500x500.jpg', 3.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Muffins', '', 'https://i.ibb.co/HfT09ZpM/Muffins.png', 4.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Tartaletas', '', 'https://i.pinimg.com/474x/9b/86/b8/9b86b8d071b4d4f3d9b333f34f8e7cd2.jpg', 5.50, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Anillos', '', 'https://i.ibb.co/TBLTG66y/Anillos.png', 4.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Collares', '', 'https://i.ibb.co/M5PYfp9H/Collar.png', 7.50, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Aritos', '', 'https://i.ibb.co/whJNg0L1/Aritos.png', 3.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Pulseras', '', 'https://i.ibb.co/pBfK2Jts/Pulsera.png', 5.50, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras duo', '', 'https://moonstone-gt.com/cdn/shop/products/Screenshot_20230323_103632_SHEIN.jpg?v=1679589480', 5.00, 3),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras tejidas', '', 'https://i.ibb.co/dJtWQsB9/Tejidas.png', 5.00, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras de piedras naturales', '', 'https://i.ibb.co/q3x9wnyF/Piedras-naturales.png', 8.00, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras de mostacilla', '', 'https://i.ibb.co/XZ4KB71c/Mostacilla.png', 3.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras de cristales', '', 'https://i.ibb.co/Q7RPCRsV/Cristales.png', 10.00, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Nilitos'),  11, 'Anillos', '', 'https://i.ibb.co/JRCnbgPT/Anillos.png', 1.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Nilitos'),  11, 'Collares', '', 'https://i.ibb.co/N2bHJgbK/Collar.png', 3.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Nilitos'),  11, 'Pulseras', '', 'https://i.ibb.co/QvShCFMg/Pulsera.png', 6.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  17, 'Calcetines temáticos', '', 'https://i.ibb.co/k64JDtsh/Calcetines-tematicos.jpg', 4.00, 1),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  17, 'Calcetas temáticas', '', 'https://i.etsystatic.com/34775201/r/il/ef9419/6248138677/il_fullxfull.6248138677_8tnp.jpg', 2.25, 5),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  17, 'Camisas teñidas en añil', '', 'https://exporta.sv/wp-content/uploads/2025/05/CAMISETA-ANIL-5.jpeg', 22.50, 3),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  16, 'Imanes salvadoreños', '', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRohihOPv8Lq6vYYfp3CP1y0yRAKgkBVGFHgLSYJlhuBeQwgMh80dRKc8BC6tKPHXR7-Iw&usqp=CAU', 2.00, 4),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  16, 'Imanes temáticos', '', 'https://i.ibb.co/pjJW8SbC/Iman-tematico.jpg', 1.50, 17),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figuras de Genshin Impact', '', 'https://i.ibb.co/1J0BwmsY/Genshin.png', 25.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figura de One Piece', '', 'https://i.ibb.co/Jj2LL9tq/Onepiece.png', 50.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figuras de My Hero Academia', '', 'https://i.ibb.co/rGpn2VzG/myheroacademia.png', 30.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figura de Link', '', 'https://i.ibb.co/ch6rrNfJ/Link.png', 45.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figuras de DanDaDan', '', 'https://i.ibb.co/DDH7r1JV/DanDaDan.png', 50.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Mascarillas', '', 'https://i.ibb.co/j976qM3f/Mascarilla.png', 5.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Bloqueadores', '', 'https://i.ibb.co/Pzj5pf4k/Bloqueador.png', 8.50, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  5, 'Labiales', '', 'https://siman.vtexassets.com/arquivos/ids/5181151-800-800?v=638434621264570000&width=800&height=800&aspect=true', 4.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Limpiadores', '', 'https://i.ibb.co/XZJrztGV/Limpiador.png', 7.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Hidratantes', '', 'https://i.ibb.co/B5TWK34y/Hidratante.png', 12.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Collares', '', 'https://i.ibb.co/d02XVvYt/Collar.png', 16.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Aritos', '', 'https://i.ibb.co/jvF5Hj5n/Aritos.png', 10.00, 10),
-((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Pulseras', '', 'https://i.ibb.co/mFFjLTZJ/Pulsera.png', 12.00, 10);
+INSERT INTO Producto (id_emprendimiento, id_categoria, Nombre, Descripcion, Imagen_URL, Precio_dolares)
+VALUES ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Jochips'),  1, 'Galletas edición clásicas', '', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRlNNhU3GusCR5R8Fs8QPLWkkGDghEsLxSrNA&s', 0.75),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Jochips'),  1, 'Galletas edición premium', '', 'https://i.ibb.co/3mzHFpKs/Galletas-premium.png', 1.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Pulseras', '', 'https://i.ibb.co/XrPJrxSb/Pulsera.png', 5.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Aretes', '', 'https://i.ibb.co/99m73gs2/Aretes.png', 1.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Cadenas', '', 'https://i0.wp.com/joyeriacasadeoro.com/tienda/wp-content/uploads/2024/04/deava-1.jpg?fit=768%2C1016&ssl=1', 5.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Anillos', '', 'https://i.ibb.co/WNxXXFk2/Anillo.png', 3.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Collares', '', 'https://i.ibb.co/S7x3pxn8/Collar.png', 3.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Evy Fantasy'),  11, 'Brazaletes ', '', 'https://cdn-media.glamira.com/media/product/newgeneration/view/1/sku/hermina/alloycolour/yellow.jpg', 4.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  12, 'Peluches grandes', '', 'https://i.ibb.co/ycYcmcDC/Peluche-grande.png', 23.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  2, 'Llaveros', '', 'https://www.melodrama.com.ar/8002-large_default/llaveros-personajes.jpg', 2.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  12, 'Peluches medianos', '', 'https://i.ibb.co/27STfPNy/Peluche-mediano.png', 10.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  11, 'Ganchos para cabello', '', 'https://thecomicstore.com.sv/storage/products/quFPKKD7RNRp1ypO1loTunykyX6K4RRVzYiayLYv.jpg', 1.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  5, 'Espejos de mano', '', 'https://solocejas.com.co/wp-content/uploads/2022/06/espejos.jpg', 2.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  12, 'Peluches pequeños', '', 'https://i.ibb.co/LXLVg3gh/Peluche-peque-o.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  8, 'Lociones pequeñas', '', 'https://m.media-amazon.com/images/I/71A-HJvY0hL._UF1000,1000_QL80_.jpg', 3.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Meowfa'),  11, 'Monederos', '', 'https://manhattanxativa.es/wp-content/uploads/2024/05/MONEDERO-STITCH-e1715684150443.jpg', 2.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café bourbon', '', 'https://i.ibb.co/DDbjwXxF/Bourbon.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café cuscatleco', '', 'https://i.ibb.co/99JDZmrL/cuscatleco.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café icatu', '', 'https://i.ibb.co/4Zrdwp5h/Icatu.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café blend', '', 'https://i.ibb.co/R5FkTFB/Blend.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café pacas', '', 'https://i.ibb.co/mV9NL6TB/Pacas.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café geisha', '', 'https://i.ibb.co/wF7v1XBc/Geisha.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Café pacamara', '', 'https://i.ibb.co/8nkPcxwf/Pacamara.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Es De Café'),  1, 'Horchata de café', '', 'https://i.ibb.co/G4J51FkF/horchata.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Brownies', '', 'https://www.aceitesdeolivadeespana.com/wp-content/uploads/2019/03/brownies-de-chocolate-1000x768.png', 2.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Pasteles', '', 'https://i.pinimg.com/736x/6e/88/33/6e8833a3bf3bc7b1efab315b15a64aaa.jpg', 12.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Alfajores', '', 'https://elmundoeats.es/wp-content/uploads/2021/07/FP2-Argentine-alfajores-on-a-rack-500x500.jpg', 3.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Muffins', '', 'https://i.ibb.co/HfT09ZpM/Muffins.png', 4.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Mascabado'),  1, 'Tartaletas', '', 'https://i.pinimg.com/474x/9b/86/b8/9b86b8d071b4d4f3d9b333f34f8e7cd2.jpg', 5.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Anillos', '', 'https://i.ibb.co/TBLTG66y/Anillos.png', 4.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Collares', '', 'https://i.ibb.co/M5PYfp9H/Collar.png', 7.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Aritos', '', 'https://i.ibb.co/whJNg0L1/Aritos.png', 3.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Two Lux'),  11, 'Pulseras', '', 'https://i.ibb.co/pBfK2Jts/Pulsera.png', 5.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras duo', '', 'https://moonstone-gt.com/cdn/shop/products/Screenshot_20230323_103632_SHEIN.jpg?v=1679589480', 5.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras tejidas', '', 'https://i.ibb.co/dJtWQsB9/Tejidas.png', 5.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras de piedras naturales', '', 'https://i.ibb.co/q3x9wnyF/Piedras-naturales.png', 8.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras de mostacilla', '', 'https://i.ibb.co/XZ4KB71c/Mostacilla.png', 3.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Bleuciel'),  11, 'Pulseras de cristales', '', 'https://i.ibb.co/Q7RPCRsV/Cristales.png', 10.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Nilitos'),  11, 'Anillos', '', 'https://i.ibb.co/JRCnbgPT/Anillos.png', 1.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Nilitos'),  11, 'Collares', '', 'https://i.ibb.co/N2bHJgbK/Collar.png', 3.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Nilitos'),  11, 'Pulseras', '', 'https://i.ibb.co/QvShCFMg/Pulsera.png', 6.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  17, 'Calcetines temáticos', '', 'https://i.ibb.co/k64JDtsh/Calcetines-tematicos.jpg', 4.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  17, 'Calcetas temáticas', '', 'https://i.etsystatic.com/34775201/r/il/ef9419/6248138677/il_fullxfull.6248138677_8tnp.jpg', 2.25),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  17, 'Camisas teñidas en añil', '', 'https://exporta.sv/wp-content/uploads/2025/05/CAMISETA-ANIL-5.jpeg', 22.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  16, 'Imanes salvadoreños', '', 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRohihOPv8Lq6vYYfp3CP1y0yRAKgkBVGFHgLSYJlhuBeQwgMh80dRKc8BC6tKPHXR7-Iw&usqp=CAU', 2.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Guty'),  16, 'Imanes temáticos', '', 'https://i.ibb.co/pjJW8SbC/Iman-tematico.jpg', 1.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figuras de Genshin Impact', '', 'https://i.ibb.co/1J0BwmsY/Genshin.png', 25.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figura de One Piece', '', 'https://i.ibb.co/Jj2LL9tq/Onepiece.png', 50.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figuras de My Hero Academia', '', 'https://i.ibb.co/rGpn2VzG/myheroacademia.png', 30.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figura de Link', '', 'https://i.ibb.co/ch6rrNfJ/Link.png', 45.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Kithsune'),  2, 'Figuras de DanDaDan', '', 'https://i.ibb.co/DDH7r1JV/DanDaDan.png', 50.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Mascarillas', '', 'https://i.ibb.co/j976qM3f/Mascarilla.png', 5.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Bloqueadores', '', 'https://i.ibb.co/Pzj5pf4k/Bloqueador.png', 8.50),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  5, 'Labiales', '', 'https://siman.vtexassets.com/arquivos/ids/5181151-800-800?v=638434621264570000&width=800&height=800&aspect=true', 4.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Limpiadores', '', 'https://i.ibb.co/XZJrztGV/Limpiador.png', 7.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Oh My Glow!'),  19, 'Hidratantes', '', 'https://i.ibb.co/B5TWK34y/Hidratante.png', 12.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Collares', '', 'https://i.ibb.co/d02XVvYt/Collar.png', 16.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Aritos', '', 'https://i.ibb.co/jvF5Hj5n/Aritos.png', 10.00),
+((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Pulseras', '', 'https://i.ibb.co/mFFjLTZJ/Pulsera.png', 12.00);
+
+CREATE OR REPLACE FUNCTION notificar_nueva_solicitud()
+RETURNS TRIGGER AS $$
+BEGIN
+  PERFORM pg_notify('nueva_solicitud', row_to_json(NEW)::text);
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trigger_nueva_solicitud
+AFTER INSERT ON solicitudes
+FOR EACH ROW
+EXECUTE FUNCTION notificar_nueva_solicitud();

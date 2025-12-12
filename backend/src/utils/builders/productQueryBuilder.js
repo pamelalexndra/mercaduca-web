@@ -23,7 +23,6 @@ export const buildProductQuery = (filtros) => {
         c.Categoria AS categoria,
         p.Descripcion AS descripcion,
         p.Imagen_URL AS imagen,
-        p.Existencias AS stock,
         e.Nombre AS nombre_emprendimiento,
         e.id_emprendimiento AS emprendimiento_id
       FROM Producto AS p
@@ -124,7 +123,6 @@ export const buildProductQueryUpdate = (id, updates) => {
     descripcion: "Descripcion",
     imagen_url: "Imagen_URL",
     precio_dolares: "Precio_dolares",
-    existencias: "Existencias",
     disponible: "Disponible",
     id_categoria: "id_categoria",
   };
@@ -142,7 +140,7 @@ export const buildProductQueryUpdate = (id, updates) => {
       // Lógica de conversión de tipos
       if (key === "precio_dolares") {
         params.push(parseFloat(value));
-      } else if (key === "existencias" || key === "id_categoria") {
+      } else if (key === "id_categoria") {
         params.push(parseInt(value));
       } else if (key === "disponible") {
         params.push(Boolean(value));

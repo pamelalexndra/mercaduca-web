@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../utils/api";
 import CredentialsSection from "./Register/CredentialsSection";
 import PersonalInfoSection from "./Register/PersonalInfoSection";
+import RequestDialog from "./RequestDialog";
 
 const evaluatePasswordStrength = (password) => {
   const feedback = [];
@@ -46,7 +47,8 @@ const areAllFieldsFilled = (formData) =>
   formData.nombres.trim() !== "" &&
   formData.apellidos.trim() !== "" &&
   formData.correo.trim() !== "" &&
-  formData.telefono.trim() !== "";
+  formData.telefono.trim() !== "" &&
+  formData.motivo.trim() !== "";
 
 const doPasswordsMatch = (password, confirmPassword) =>
   password === confirmPassword && password !== "";
@@ -84,6 +86,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     apellidos: "",
     correo: "",
     telefono: "",
+    motivo: "",
   });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -92,13 +95,23 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
     score: 0,
     feedback: [],
   });
+  const [showRequestDialog, setShowRequestDialog] = useState(false);
+  const [solicitudData, setSolicitudData] = useState(null);
   const navigate = useNavigate();
   const inputClass =
     "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] border border-gray-200 transition-all placeholder:text-gray-400";
 
   const AUTH_BASE_URL = `${API_BASE_URL}/api/auth`;
 
-  const handleRegisterSuccess = () => {
+  const handleRegisterSuccess = (solicitudInfo) => {
+    setSolicitudData({
+      id: solicitudInfo.solicitud_id,
+      usuario: solicitudInfo.data.usuario,
+      correo: solicitudInfo.data.correo,
+    });
+
+    setShowRequestDialog(true);
+
     setFormData({
       username: "",
       password: "",
@@ -107,13 +120,20 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
       apellidos: "",
       correo: "",
       telefono: "",
+      motivo: "",
     });
+
+    setUsernameAvailable(null);
+    setPasswordStrength({ score: 0, feedback: [] });
 
     if (onRegisterSuccess) {
       onRegisterSuccess();
     }
+  };
 
-    navigate("/perfil");
+  const handleRequestDialogConfirm = () => {
+    setShowRequestDialog(false);
+    navigate("/");
   };
 
   const registerUser = async (userData) => {
@@ -251,21 +271,16 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
         apellidos: formData.apellidos,
         correo: formData.correo,
         telefono: formData.telefono,
+        descripcion_solicitud: formData.motivo,
       };
 
       const response = await registerUser(userDataForBackend);
 
       if (response.data.success) {
-        const { user, token } = response.data;
-
-        localStorage.setItem("token", token);
-        localStorage.setItem("user", JSON.stringify(user));
-        localStorage.setItem("isAuthenticated", "true");
-
-        handleRegisterSuccess();
+        handleRegisterSuccess(response.data);
       }
     } catch (error) {
-      setError(error.message || "Error al registrar usuario");
+      setError(error.message || "Error al enviar solicitud de registro");
     } finally {
       setLoading(false);
     }
@@ -282,7 +297,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   return (
     <div className="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200 w-full max-w-4xl mx-auto font-montserrat">
       <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-        Registro
+        Solicitud de Registro
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -291,6 +306,29 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
           onChange={handleChange}
           inputClass={inputClass}
         />
+
+        <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
+          <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
+            Motivo del Registro
+          </h3>
+          <div>
+            <label className="block text-sm font-semibold text-gray-800 mb-2">
+              ¿Por qué deseas registrarte en MercadUCA?
+            </label>
+            <textarea
+              name="motivo"
+              value={formData.motivo}
+              onChange={handleChange}
+              required
+              className={`${inputClass} min-h-[120px] resize-y`}
+              placeholder="Cuéntanos por qué deseas unirte a nuestra plataforma, qué productos o servicios ofreces, y cualquier información adicional que consideres importante..."
+              maxLength="1000"
+            />
+            <div className="text-xs text-gray-500 mt-2">
+              {formData.motivo.length}/1000 caracteres
+            </div>
+          </div>
+        </div>
 
         <CredentialsSection
           formData={formData}
@@ -326,7 +364,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
             ) || loading
           }
         >
-          {loading ? "Registrando..." : "Registrarse"}
+          {loading ? "Enviando solicitud..." : "Enviar Solicitud"}
         </button>
       </form>
 
@@ -339,6 +377,12 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
           Inicia sesión aquí
         </span>
       </p>
+
+      <RequestDialog
+        show={showRequestDialog}
+        onConfirm={handleRequestDialogConfirm}
+        solicitudData={solicitudData}
+      />
     </div>
   );
 };

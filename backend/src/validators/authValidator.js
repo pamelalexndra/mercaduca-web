@@ -51,6 +51,17 @@ export const validateSignUp = (data) => {
       .messages({
         "string.pattern.base": "Ingresa un teléfono válido",
       }),
+
+    descripcion_solicitud: Joi.string()
+      .min(10) 
+      .max(1000)
+      .required()
+      .messages({
+        "string.min": "La descripción debe tener al menos 10 caracteres",
+        "string.max": "La descripción no puede exceder 1000 caracteres",
+        "any.required": "Por favor explica por qué deseas registrarte",
+        "string.empty": "La descripción no puede estar vacía",
+      }),
   });
 
   return schema.validate(data, { abortEarly: false });

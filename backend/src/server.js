@@ -2,6 +2,11 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import pool from "./database/connection.js";
+import {
+  startListener,
+  stopListener,
+  getListenerStatus,
+} from "./services/notificationListener.js";
 
 dotenv.config();
 
@@ -11,6 +16,8 @@ import productsRoutes from "./routes/productsRoutes.js";
 import entrepreneurshipRoutes from "./routes/entrepreneurshipRoutes.js";
 import authenticationRoutes from "./routes/authenticationRoutes.js";
 import userRoutes from "./routes/profileRoutes.js";
+import activitiesRoutes from "./routes/activitiesRoutes.js";
+import requestRoutes from "./routes/requestRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -28,13 +35,13 @@ app.get("/api/health", (req, res) => {
   });
 });
 
-
 app.use("/api/categories", categoriesRoutes);
 app.use("/api/products", productsRoutes);
 app.use("/api/entrepreneurship", entrepreneurshipRoutes);
 app.use("/api/auth", authenticationRoutes);
 app.use("/api/user", userRoutes);
-
+app.use("/api/activities", activitiesRoutes);
+app.use("/api/request", requestRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {
@@ -65,9 +72,34 @@ app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });
 
-// Manejar cierre de PostgreSQL
+/*/ Manejar cierre de PostgreSQL
 process.on("SIGINT", async () => {
   console.log("Closing PostgreSQL pool...");
   await pool.end();
   process.exit(0);
-});
+});*/
+
+// Manejar inicio del listener
+const initListener = async () => {
+  try {
+    await startListener();
+    console.log("Listener de notificaciones iniciado");
+  } catch (error) {
+    console.error("Error iniciando listener:", error);
+  }
+};
+
+// Manejar cierre del listener y pool
+const gracefulShutdown = async () => {
+  console.log("Cerrando recursos...");
+  await stopListener();
+  await pool.end();
+  process.exit(0);
+};
+
+// Iniciar listener al arrancar
+initListener();
+
+// Configurar manejo de señales
+process.on("SIGTERM", gracefulShutdown);
+process.on("SIGINT", gracefulShutdown);
