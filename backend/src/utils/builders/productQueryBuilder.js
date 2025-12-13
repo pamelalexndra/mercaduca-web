@@ -9,7 +9,7 @@ export const buildProductQuery = (filtros) => {
     ids,
     precio_min,
     precio_max,
-    ordenar = "fecha_desc",
+    ordenar,
     emprendimiento_id,
     limit,
     search,
@@ -91,8 +91,8 @@ export const buildProductQuery = (filtros) => {
     precio_desc: "p.Precio_dolares DESC",
     fecha_desc: "p.Fecha_registro DESC",
     fecha_asc: "p.Fecha_registro ASC",
-    nombre_asc: "e.Nombre ASC",
-    nombre_desc: "e.Nombre DESC",
+    nombre_asc: "p.Nombre ASC",
+    nombre_desc: "p.Nombre DESC",
   };
 
   const clausulaOrden = ordenamientos[ordenar] || ordenamientos.fecha_desc;

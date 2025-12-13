@@ -10,6 +10,7 @@ export default function SearchInput({
   enableDebounce = true,
   onToggleFilterOpen,
   isFilterOpen,
+  showFilterButton = true,
 }) {
   const timerRef = useRef(null);
 
@@ -75,15 +76,17 @@ export default function SearchInput({
         </button>
       )}
 
-      <button
-        type="button"
-        onClick={onToggleFilterOpen}
-        className={`p-2 rounded-full transition-colors ${isFilterOpen ? "bg-[#557051] text-white" : "text-[#557051] hover:bg-zinc-100"}`}
-        aria-expanded={isFilterOpen}
-        aria-label="Abrir filtros"
-      >
-        <SlidersHorizontal size={18} />
-      </button>
+      {showFilterButton && (
+        <button
+          type="button"
+          onClick={onToggleFilterOpen}
+          className={`p-2 rounded-full transition-colors ${isFilterOpen ? "bg-[#557051] text-white" : "text-[#557051] hover:bg-zinc-100"}`}
+          aria-expanded={isFilterOpen}
+          aria-label="Abrir filtros"
+        >
+          <SlidersHorizontal size={18} />
+        </button>
+      )}
     </div>
   );
 }
