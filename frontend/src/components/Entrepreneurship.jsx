@@ -118,7 +118,7 @@ export default function Emprendedores({ onGoHome }) {
 
   return (
     <>
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+      <section className="mx-auto max-w-[1600px] px-4 sm:px-6 py-8">
         <h2 className="text-3xl font-bold text-center font-loubag mb-8 text-zinc-800">
           Emprendimientos
         </h2>
@@ -143,7 +143,8 @@ export default function Emprendedores({ onGoHome }) {
           </div>
 
           {/* Sidebar Filters (Desktop) */}
-          <aside className="hidden md:block w-64 flex-shrink-0 sticky top-4">
+          {/* Sidebar Filters (Desktop) */}
+          <aside className="hidden md:block w-72 flex-shrink-0 sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 custom-scrollbar">
             <FilterPanel
               categories={categories}
               selectedCategories={selectedCategories}
