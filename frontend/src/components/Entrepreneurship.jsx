@@ -19,7 +19,7 @@ export default function Emprendedores({ onGoHome }) {
   const [sortOption, setSortOption] = useState("");
 
   // UI State
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
@@ -118,52 +118,53 @@ export default function Emprendedores({ onGoHome }) {
 
   return (
     <>
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 py-8">
+      <section className="mx-auto max-w-6xl px-6 py-8">
         <h2 className="text-3xl font-bold text-center font-loubag mb-8 text-zinc-800">
           Emprendimientos
         </h2>
 
-        <div className="flex flex-col md:flex-row gap-8 items-start">
+        <div className="flex flex-col items-start">
           {/* Mobile Filter Button */}
-          <div className="md:hidden w-full flex gap-4">
-            <div className="flex-1">
+          <div className="md:hidden relative w-full flex items-center justify-center mb-6">
+            <div className="w-full max-w-sm">
               <SearchBox
                 onSearch={handleSearch}
                 initialSearchTerm={searchTerm}
                 showFilterButton={false}
+                className="w-full"
               />
             </div>
             <button
-              onClick={() => setShowMobileFilters(true)}
-              className="p-2 border border-zinc-200 rounded-lg bg-white text-zinc-700 hover:bg-zinc-50 shadow-sm"
+              onClick={() => setShowFilters(true)}
+              className="absolute right-0 p-2 border border-zinc-200 rounded-lg bg-white text-zinc-700 hover:bg-zinc-50 shadow-sm"
             >
               <Filter size={24} />
             </button>
           </div>
 
-          {/* Sidebar Filters (Desktop) */}
-          <aside className="hidden md:block w-64 flex-shrink-0 sticky top-4">
-            <FilterPanel
-              categories={categories}
-              selectedCategories={selectedCategories}
-              onCategoryChange={handleCategoryChange}
-              sortOption={sortOption}
-              onSortChange={handleSortChange}
-              showPriceFilter={false}
-              onClear={() => updateFilters([], "", "")}
-            />
-          </aside>
+
 
           {/* Main Content */}
           <div className="flex-1 w-full">
-            {/* Desktop Search Box */}
-            <div className="hidden md:block mb-6">
-              <SearchBox
-                onSearch={handleSearch}
-                initialSearchTerm={searchTerm}
-                showFilterButton={false}
-                placeholder="Buscar emprendimientos..."
-              />
+            {/* Desktop Header: Search + Filter Button */}
+            {/* Desktop Header: Search + Filter Button */}
+            <div className="hidden md:flex relative items-center justify-center mb-6 h-12">
+              <button
+                onClick={() => setShowFilters(true)}
+                className="absolute left-0 flex items-center gap-2 px-4 py-2 border border-zinc-300 rounded-lg bg-white text-zinc-700 hover:bg-zinc-50 font-medium transition-colors shadow-sm"
+              >
+                <Filter size={20} />
+                Filtros
+              </button>
+
+              <div className="w-full max-w-md">
+                <SearchBox
+                  onSearch={handleSearch}
+                  initialSearchTerm={searchTerm}
+                  showFilterButton={false}
+                  placeholder="Buscar emprendimientos..."
+                />
+              </div>
             </div>
 
             {/* Results Summary */}
@@ -205,10 +206,10 @@ export default function Emprendedores({ onGoHome }) {
         </div>
       </section>
 
-      {/* Mobile Filters Modal */}
-      {showMobileFilters && (
-        <div className="fixed inset-0 z-50 flex bg-black/50 md:hidden animate-in fade-in duration-200">
-          <div className="w-[80%] max-w-sm h-full bg-white shadow-xl p-4 overflow-y-auto animate-in slide-in-from-left duration-300">
+      {/* Filters Drawer (Unified) */}
+      {showFilters && (
+        <div className="fixed inset-0 z-[110] flex bg-black/50">
+          <div className="relative w-[80%] max-w-sm bg-white shadow-xl p-4 overflow-y-auto animate-slideInLeft mt-[56px] sm:mt-[64px] h-[calc(100%-56px)] sm:h-[calc(100%-64px)] rounded-tr-2xl rounded-br-2xl">
             <FilterPanel
               categories={categories}
               selectedCategories={selectedCategories}
@@ -217,18 +218,18 @@ export default function Emprendedores({ onGoHome }) {
               onSortChange={handleSortChange}
               showPriceFilter={false}
               onClear={() => updateFilters([], "", "")}
-              onClose={() => setShowMobileFilters(false)}
+              onClose={() => setShowFilters(false)}
             />
             <div className="mt-6 pt-4 border-t border-zinc-100">
               <button
-                onClick={() => setShowMobileFilters(false)}
+                onClick={() => setShowFilters(false)}
                 className="w-full py-3 bg-[#557051] text-white rounded-xl font-medium hover:bg-[#445b41]"
               >
                 Ver resultados ({entrepreneurships.length})
               </button>
             </div>
           </div>
-          <div className="flex-1" onClick={() => setShowMobileFilters(false)} />
+          <div className="flex-1" onClick={() => setShowFilters(false)} />
         </div>
       )}
 
