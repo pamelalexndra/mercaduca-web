@@ -11,7 +11,7 @@ export default function FilterPanel({
     onSortChange,
     showPriceFilter = true,
     className = "",
-    onClose, // For mobile drawer usage
+    onClose,
     onClear,
 }) {
     const [openSections, setOpenSections] = useState({
@@ -34,7 +34,6 @@ export default function FilterPanel({
 
     const handlePriceChange = (e) => {
         const { name, value } = e.target;
-        // Allow empty string or numbers
         if (value === "" || /^\d*\.?\d*$/.test(value)) {
             onPriceChange({ ...priceRange, [name]: value });
         }
@@ -93,7 +92,6 @@ export default function FilterPanel({
                 </div>
             </div>
 
-            {/* Categories */}
             <div className="border-b border-zinc-100 py-4">
                 <button
                     onClick={() => toggleSection("categories")}
@@ -130,7 +128,6 @@ export default function FilterPanel({
                 )}
             </div>
 
-            {/* Price Range */}
             {
                 showPriceFilter && (
                     <div className="border-b border-zinc-100 py-4">
@@ -170,7 +167,6 @@ export default function FilterPanel({
                 )
             }
 
-            {/* Sort */}
             <div className="py-4">
                 <button
                     onClick={() => toggleSection("sort")}

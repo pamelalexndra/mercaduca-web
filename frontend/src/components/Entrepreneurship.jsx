@@ -13,18 +13,14 @@ export default function Emprendedores({ onGoHome }) {
   const { entrepreneurships, loading, error, fetchEntrepreneurships } = useEntrepreneurships();
   const { categories } = useCategories(true);
 
-  // Filter & Search State
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("");
-
-  // UI State
   const [showFilters, setShowFilters] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Initialize from URL
   useEffect(() => {
     if (!isInitialLoad) return;
 
@@ -43,7 +39,6 @@ export default function Emprendedores({ onGoHome }) {
     setSelectedCategories(categoryArray);
     setSortOption(urlSort);
 
-    // Initial fetch
     fetchEntrepreneurships(categoryArray, urlSearch, { sort: urlSort });
 
     setIsInitialLoad(false);
@@ -51,17 +46,14 @@ export default function Emprendedores({ onGoHome }) {
 
 
   const updateFilters = (newCategories, newSearch, newSort) => {
-    // 1. Update State
     if (newCategories !== undefined) setSelectedCategories(newCategories);
     if (newSearch !== undefined) setSearchTerm(newSearch);
     if (newSort !== undefined) setSortOption(newSort);
 
-    // Prepare values
     const cats = newCategories !== undefined ? newCategories : selectedCategories;
     const search = newSearch !== undefined ? newSearch : searchTerm;
     const sort = newSort !== undefined ? newSort : sortOption;
 
-    // 2. Update URL
     const newSearchParams = new URLSearchParams(searchParams);
 
     if (cats.length > 0) newSearchParams.set("categories", cats.join(","));
@@ -75,7 +67,6 @@ export default function Emprendedores({ onGoHome }) {
 
     setSearchParams(newSearchParams);
 
-    // 3. Fetch
     fetchEntrepreneurships(cats, search, { sort: sort });
   };
 
@@ -124,7 +115,6 @@ export default function Emprendedores({ onGoHome }) {
         </h2>
 
         <div className="flex flex-col items-start">
-          {/* Mobile Filter Button */}
           <div className="md:hidden relative w-full flex items-center justify-center mb-6">
             <div className="w-full max-w-sm">
               <SearchBox
@@ -144,10 +134,7 @@ export default function Emprendedores({ onGoHome }) {
 
 
 
-          {/* Main Content */}
           <div className="flex-1 w-full">
-            {/* Desktop Header: Search + Filter Button */}
-            {/* Desktop Header: Search + Filter Button */}
             <div className="hidden md:flex relative items-center justify-center mb-6 h-12">
               <button
                 onClick={() => setShowFilters(true)}
@@ -167,7 +154,6 @@ export default function Emprendedores({ onGoHome }) {
               </div>
             </div>
 
-            {/* Results Summary */}
             {(selectedCategories.length > 0 || searchTerm) && (
               <div className="mb-4 text-sm text-zinc-500">
                 Encontrados {entrepreneurships.length} emprendimientos
@@ -206,7 +192,6 @@ export default function Emprendedores({ onGoHome }) {
         </div>
       </section>
 
-      {/* Filters Drawer (Unified) */}
       {showFilters && (
         <div className="fixed inset-0 z-[110] flex bg-black/50">
           <div className="relative w-[80%] max-w-sm bg-white shadow-xl p-4 overflow-y-auto animate-slideInLeft mt-[56px] sm:mt-[64px] h-[calc(100%-56px)] sm:h-[calc(100%-64px)] rounded-tr-2xl rounded-br-2xl">

@@ -12,18 +12,15 @@ export default function Catalog({ onGoHome }) {
   const { filteredProducts, loading, error, fetchProducts } = useProducts();
   const { categories } = useCategories(true);
 
-  // Filter & Search State
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [priceRange, setPriceRange] = useState({ min: "", max: "" });
   const [sortOption, setSortOption] = useState("");
 
-  // UI State
   const [showFilters, setShowFilters] = useState(false);
   const [visibleProductsCount, setVisibleProductsCount] = useState(20);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Initialize from URL
   useEffect(() => {
     if (!isInitialLoad) return;
 
@@ -45,7 +42,6 @@ export default function Catalog({ onGoHome }) {
     setPriceRange({ min: urlMin, max: urlMax });
     setSortOption(urlSort);
 
-    // Initial fetch
     fetchProducts(categoryArray, urlSearch, {
       min: urlMin,
       max: urlMax,
@@ -55,29 +51,21 @@ export default function Catalog({ onGoHome }) {
     setIsInitialLoad(false);
   }, [searchParams, isInitialLoad, fetchProducts]);
 
-  // Effect to handle refetches when filters change (after initial load)
-  // We'll duplicate the logic in handlers to update URL, but we can also use useEffect to react to URL changes if we want true deep linking responsiveness.
-  // For simplicity and to avoid loops, I will follow the pattern of updating URL -> Component State logic or vice versa.
-  // The existing pattern was: Handler -> State Update -> URL Update -> Fetch. I'll stick to that.
-
   useEffect(() => {
     setVisibleProductsCount(20);
   }, [selectedCategories, searchTerm, priceRange, sortOption]);
 
   const updateFilters = (newCategories, newSearch, newPrice, newSort) => {
-    // 1. Update State
     if (newCategories !== undefined) setSelectedCategories(newCategories);
     if (newSearch !== undefined) setSearchTerm(newSearch);
     if (newPrice !== undefined) setPriceRange(newPrice);
     if (newSort !== undefined) setSortOption(newSort);
 
-    // Prepare values for URL and Fetch
     const cats = newCategories !== undefined ? newCategories : selectedCategories;
     const search = newSearch !== undefined ? newSearch : searchTerm;
     const price = newPrice !== undefined ? newPrice : priceRange;
     const sort = newSort !== undefined ? newSort : sortOption;
 
-    // 2. Update URL
     const newSearchParams = new URLSearchParams(searchParams);
 
     if (cats.length > 0) newSearchParams.set("categories", cats.join(","));
@@ -97,7 +85,6 @@ export default function Catalog({ onGoHome }) {
 
     setSearchParams(newSearchParams);
 
-    // 3. Fetch
     fetchProducts(cats, search, {
       min: price.min,
       max: price.max,
@@ -149,9 +136,6 @@ export default function Catalog({ onGoHome }) {
         <h2 className="text-3xl font-bold text-center font-loubag mb-8 text-zinc-800">Catálogo</h2>
 
         <div className="flex flex-col items-start">
-          {/* Mobile Filter Button (Legacy mobile view kept if needed, or unified) */}
-          {/* We are unifying. The top SearchBox section below will handle desktop.
-              For mobile, we still need the stack. */}
           <div className="md:hidden relative w-full flex items-center justify-center mb-6">
             <div className="w-full max-w-sm">
               <SearchBox
@@ -171,10 +155,8 @@ export default function Catalog({ onGoHome }) {
 
 
 
-          {/* Main Content */}
+          
           <div className="flex-1 w-full">
-            {/* Desktop Header: Search + Filter Button */}
-            {/* Desktop Header: Search + Filter Button */}
             <div className="hidden md:flex relative items-center justify-center mb-6 h-12">
               <button
                 onClick={() => setShowFilters(true)}
@@ -194,7 +176,6 @@ export default function Catalog({ onGoHome }) {
               </div>
             </div>
 
-            {/* Applied Filters Summary */}
             {(selectedCategories.length > 0 || searchTerm || priceRange.min || priceRange.max || sortOption) && (
               <div className="mb-4 text-sm text-zinc-500">
                 Encontrados {filteredProducts.length} productos
@@ -242,7 +223,6 @@ export default function Catalog({ onGoHome }) {
         </div>
       </section>
 
-      {/* Filters Drawer (Unified) */}
       {showFilters && (
         <div className="fixed inset-0 z-[110] flex bg-black/50">
           <div className="relative w-[80%] max-w-sm bg-white shadow-xl p-4 overflow-y-auto animate-slideInLeft mt-[56px] sm:mt-[64px] h-[calc(100%-56px)] sm:h-[calc(100%-64px)] rounded-tr-2xl rounded-br-2xl">
