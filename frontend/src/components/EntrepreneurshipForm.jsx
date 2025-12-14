@@ -21,6 +21,7 @@ export default function EntrepreneurshipForm({
     id_categoria: "",
   });
 
+  const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
@@ -42,26 +43,71 @@ export default function EntrepreneurshipForm({
           "",
       });
     }
+    setError("");
   }, [initialData]);
 
   useEffect(() => {
     if (!visible) {
       setShowConfirm(false);
       setShowSuccess(false);
+      setError("");
     }
   }, [visible]);
+
+  useEffect(() => {
+    if (errorMessage) {
+      setError(errorMessage);
+    }
+  }, [errorMessage]);
+
+  useEffect(() => {
+    if (errorDelete) {
+      setError(errorDelete);
+    }
+  }, [errorDelete]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    if (error && name === "nombre" && value.trim()) {
+      setError("");
+    }
+  };
+
+  const validateForm = () => {
+    if (!formData.nombre.trim()) {
+      setError("El nombre del emprendimiento es requerido");
+      return false;
+    }
+
+    if (!formData.id_categoria) {
+      setError("Debes seleccionar una categoría");
+      return false;
+    }
+
+    setError("");
+    return true;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await onSubmit?.(formData);
-    if (success) {
-      setSuccessMessage("Emprendimiento guardado correctamente");
-      setShowSuccess(true);
+
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const success = await onSubmit?.(formData);
+      if (success) {
+        setSuccessMessage(
+          initialData?.id_emprendimiento
+            ? "Emprendimiento actualizado correctamente"
+            : "Emprendimiento creado correctamente"
+        );
+        setShowSuccess(true);
+      }
+    } catch (err) {
+      setError(err.message || "Error al procesar la solicitud");
     }
   };
 
@@ -82,6 +128,7 @@ export default function EntrepreneurshipForm({
     if (success) {
       setSuccessMessage("Emprendimiento eliminado correctamente");
       setShowSuccess(true);
+      onDeleteSuccess?.();
     }
   };
 
@@ -97,13 +144,11 @@ export default function EntrepreneurshipForm({
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
+    onClose?.();
+  };
 
-    if (successMessage.includes("eliminado")) {
-      // Recargar la página después de eliminar emprendimiento
-      window.location.reload();
-    } else {
-      onClose?.();
-    }
+  const isFormValid = () => {
+    return formData.nombre.trim() && formData.id_categoria;
   };
 
   if (!visible) return null;
@@ -114,8 +159,6 @@ export default function EntrepreneurshipForm({
   const isEditing = !!(
     initialData?.id_emprendimiento || initialData?.Id_Emprendimiento
   );
-
-  const displayError = errorMessage || errorDelete;
 
   return (
     <>
@@ -141,9 +184,9 @@ export default function EntrepreneurshipForm({
               compartir tus productos.
             </p>
 
-            {displayError && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-                {displayError}
+            {error && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                {error}
               </div>
             )}
 
@@ -179,7 +222,7 @@ export default function EntrepreneurshipForm({
 
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-gray-800">
-                  Categoría
+                  Categoría *
                 </label>
                 <select
                   name="id_categoria"
@@ -228,7 +271,6 @@ export default function EntrepreneurshipForm({
                 />
               </div>
 
-              {/* SECCIÓN DE BOTONES */}
               <div className="flex justify-end gap-3 pt-2">
                 {isEditing && (
                   <button
@@ -245,8 +287,8 @@ export default function EntrepreneurshipForm({
 
                 <button
                   type="submit"
-                  disabled={loading || loadingDelete}
-                  className="flex-1 px-4 py-3 rounded-xl bg-[#557051] text-white hover:bg-[#445a3f] text-sm font-medium transition disabled:opacity-60"
+                  disabled={loading || loadingDelete || !isFormValid()}
+                  className="flex-1 px-4 py-3 rounded-xl bg-[#557051] text-white hover:bg-[#445a3f] text-sm font-medium transition disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   {loading ? "Guardando..." : "Guardar cambios"}
                 </button>

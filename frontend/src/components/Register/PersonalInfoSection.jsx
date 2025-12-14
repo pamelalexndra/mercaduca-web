@@ -17,6 +17,7 @@ const PersonalInfoSection = ({ formData, onChange, inputClass }) => (
           required
           className={inputClass}
           placeholder="Ingresa tus nombres"
+          maxLength="50"
         />
       </div>
 
@@ -32,6 +33,7 @@ const PersonalInfoSection = ({ formData, onChange, inputClass }) => (
           required
           className={inputClass}
           placeholder="Ingresa tus apellidos"
+          maxLength="50"
         />
       </div>
     </div>
@@ -49,6 +51,7 @@ const PersonalInfoSection = ({ formData, onChange, inputClass }) => (
           required
           className={inputClass}
           placeholder="ejemplo@correo.com"
+          maxLength="100"
         />
       </div>
 
@@ -65,7 +68,6 @@ const PersonalInfoSection = ({ formData, onChange, inputClass }) => (
           className={inputClass}
           placeholder="12345678"
           maxLength="8"
-          pattern="[0-9]{8}"
         />
       </div>
     </div>

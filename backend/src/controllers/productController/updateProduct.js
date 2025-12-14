@@ -8,7 +8,6 @@ export const updateProduct = async (req, res) => {
       descripcion,
       imagen_url,
       precio_dolares,
-      existencias,
       disponible,
       id_categoria,
     } = req.body;
@@ -17,7 +16,6 @@ export const updateProduct = async (req, res) => {
       return res.status(400).json({ error: "ID de producto inválido" });
     }
 
-    // Verificar que el producto existe
     const productoCheck = await pool.query(
       "SELECT id_producto FROM Producto WHERE id_producto = $1",
       [parseInt(id)]
@@ -27,7 +25,6 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ error: "Producto no encontrado" });
     }
 
-    // Actualizar producto
     const result = await pool.query(
       `
             UPDATE Producto 
@@ -36,10 +33,9 @@ export const updateProduct = async (req, res) => {
                 Descripcion = $2,
                 Imagen_URL = $3,
                 Precio_dolares = $4,
-                Existencias = $5,
-                Disponible = $6,
-                id_categoria = $7
-            WHERE id_producto = $8
+                Disponible = $5,
+                id_categoria = $6
+            WHERE id_producto = $7
             RETURNING *
             `,
       [
@@ -47,7 +43,6 @@ export const updateProduct = async (req, res) => {
         descripcion?.trim() || "",
         imagen_url?.trim() || "",
         parseFloat(precio_dolares),
-        parseInt(existencias) || 0,
         disponible !== undefined ? disponible : true,
         id_categoria ? parseInt(id_categoria) : null,
         parseInt(id),

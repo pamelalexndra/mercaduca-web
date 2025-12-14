@@ -1,5 +1,4 @@
 // src/controllers/authenticationController/signUp.js
-import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import rateLimit from "express-rate-limit";
 import { createProfile } from "../../services/createProfile.js";
@@ -17,6 +16,9 @@ export const signUp = async (req, res) => {
       apellidos: sanitizeInput(req.body.apellidos),
       correo: sanitizeInput(req.body.correo?.toLowerCase()),
       telefono: sanitizeInput(req.body.telefono),
+      descripcion_solicitud: sanitizeInput(
+        req.body.descripcion_solicitud || ""
+      ),
     };
 
     const { error, value } = validateSignUp(sanitizedData);
@@ -31,27 +33,40 @@ export const signUp = async (req, res) => {
       });
     }
 
-    // Crear usuario
-    const user = await createProfile(sanitizedData);
-
-    // Generar token inmediatamente para que el usuario quede logueado al registrarse
-    const token = jwt.sign(
-      { id: user.id_usuario, username: user.usuario },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
+    const solicitud = await createProfile(sanitizedData);
 
     res.status(201).json({
       success: true,
-      message: "Usuario registrado exitosamente",
-      token, // Enviamos el token
-      user: { id: user.id_usuario, username: user.usuario }, // NO enviamos password
+      message: "Solicitud de registro enviada exitosamente.",
+      solicitud_id: solicitud.id_solicitud,
+      data: {
+        usuario: solicitud.usuario,
+        nombres: solicitud.nombres,
+        apellidos: solicitud.apellidos,
+        correo: solicitud.correo,
+      },
     });
   } catch (error) {
     if (error.code === "23505") {
-      return res
-        .status(400)
-        .json({ success: false, message: "El usuario ya existe" });
+      const constraint = error.constraint;
+      if (constraint.includes("correo")) {
+        return res.status(400).json({
+          success: false,
+          message: "El correo electrónico ya está registrado",
+        });
+      }
+      if (constraint.includes("usuario")) {
+        return res.status(400).json({
+          success: false,
+          message: "El nombre de usuario ya está en uso",
+        });
+      }
+      if (constraint.includes("telefono")) {
+        return res.status(400).json({
+          success: false,
+          message: "El número de teléfono ya está registrado",
+        });
+      }
     }
     console.error("Error en registro:", error);
     res.status(500).json({ success: false, message: "Error del servidor" });
@@ -59,8 +74,8 @@ export const signUp = async (req, res) => {
 };
 
 export const signUpLimiter = rateLimit({
-  windowMs: 24 * 60 * 60 * 1000, // 24 horas
-  max: 2, // 2 intentos por Ip
+  windowMs: 24 * 60 * 60 * 1000,
+  max: 20,
   message: {
     success: false,
     message: "Demasiados intentos de registro, intenta en 15 minutos",

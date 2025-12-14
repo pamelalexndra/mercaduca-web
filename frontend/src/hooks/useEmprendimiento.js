@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { deleteEntrepreneurshipService } from "../services/entrepreneurship.service"; 
-import { API_BASE_URL } from "../utils/api"; 
+import { deleteEntrepreneurshipService } from "../services/entrepreneurship.service";
+import { API_BASE_URL } from "../utils/api";
 
 export function useEmprendimiento(id) {
   const [emprendimiento, setEmprendimiento] = useState(null);
@@ -12,8 +12,8 @@ export function useEmprendimiento(id) {
 
   useEffect(() => {
     if (!id) {
-        setLoading(false); 
-        return;
+      setLoading(false);
+      return;
     }
 
     setLoading(true);
@@ -37,25 +37,25 @@ export function useEmprendimiento(id) {
     setDeleting(true);
     setDeleteError(null);
     try {
-        const token = localStorage.getItem("token");
-        if (!token) throw new Error("No hay sesión activa");
-        
-        await deleteEntrepreneurshipService(idToDelete, token);
-        return true;
+      const token = localStorage.getItem("token");
+      if (!token) throw new Error("No hay sesión activa");
+
+      await deleteEntrepreneurshipService(idToDelete, token);
+      return true;
     } catch (err) {
-        setDeleteError(err.message);
-        return false;
+      setDeleteError(err.message);
+      return false;
     } finally {
-        setDeleting(false);
+      setDeleting(false);
     }
   };
 
-  return { 
-      emprendimiento, 
-      loading, 
-      error,
-      removeEntrepreneurship,
-      deleting,
-      deleteError 
+  return {
+    emprendimiento,
+    loading,
+    error,
+    removeEntrepreneurship,
+    deleting,
+    deleteError,
   };
 }

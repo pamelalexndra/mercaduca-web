@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X, Trash2 } from "lucide-react";
 import ConfirmationDialog from "./ConfirmationDialog";
 import SuccessDialog from "./SuccessDialog";
+import useCategories from "../hooks/useCategories";
 
 export default function ProductForm({
   visible,
@@ -15,11 +16,15 @@ export default function ProductForm({
   const [descripcion, setDescripcion] = useState("");
   const [imagenUrl, setImagenUrl] = useState("");
   const [precioDolares, setPrecioDolares] = useState("");
-  const [existencias, setExistencias] = useState("0");
+  const [idCategoria, setIdCategoria] = useState("");
+  const [error, setError] = useState("");
+
   const modalRef = useRef();
   const [showConfirm, setShowConfirm] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
+
+  const { categories } = useCategories();
 
   const inputClass =
     "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all placeholder:text-gray-400";
@@ -38,16 +43,15 @@ export default function ProductForm({
           ? normalizedPrecio.toString()
           : ""
       );
-      const stockValue =
-        producto.existencias || producto.Existencias || producto.stock || "0";
-      setExistencias(stockValue.toString());
+      setIdCategoria(producto.id_categoria || "");
     } else {
       setNombre("");
       setDescripcion("");
       setImagenUrl("");
       setPrecioDolares("");
-      setExistencias("0");
+      setIdCategoria("");
     }
+    setError("");
   }, [producto]);
 
   useEffect(() => {
@@ -56,27 +60,69 @@ export default function ProductForm({
       setDescripcion("");
       setImagenUrl("");
       setPrecioDolares("");
-      setExistencias("0");
+      setIdCategoria("");
+      setError("");
     }
   }, [visible, producto]);
 
+  useEffect(() => {
+    if (errorMessage) {
+      setError(errorMessage);
+    }
+  }, [errorMessage]);
+
+  const validateForm = () => {
+    if (!nombre.trim()) {
+      setError("El nombre del producto es requerido");
+      return false;
+    }
+
+    if (!precioDolares.trim()) {
+      setError("El precio es requerido");
+      return false;
+    }
+
+    const precioNum = parseFloat(precioDolares);
+    if (isNaN(precioNum) || precioNum <= 0) {
+      setError("El precio debe ser un número mayor a 0");
+      return false;
+    }
+
+    if (!idCategoria) {
+      setError("Debes seleccionar una categoría");
+      return false;
+    }
+
+    setError("");
+    return true;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const success = await onSubmit({
-      nombre,
-      descripcion,
-      imagen_url: imagenUrl,
-      precio_dolares: precioDolares,
-      existencias,
-    });
 
-    if (success) {
-      setSuccessMessage(
-        producto
-          ? "Producto actualizado correctamente"
-          : "Producto creado correctamente"
-      );
-      setShowSuccess(true);
+    if (!validateForm()) {
+      return;
+    }
+
+    try {
+      const success = await onSubmit({
+        nombre,
+        descripcion,
+        imagen_url: imagenUrl,
+        precio_dolares: precioDolares,
+        id_categoria: idCategoria,
+      });
+
+      if (success) {
+        setSuccessMessage(
+          producto
+            ? "Producto actualizado correctamente"
+            : "Producto creado correctamente"
+        );
+        setShowSuccess(true);
+      }
+    } catch (err) {
+      setError(err.message || "Error al procesar la solicitud");
     }
   };
 
@@ -110,6 +156,23 @@ export default function ProductForm({
     onClose();
   };
 
+  const handlePriceChange = (e) => {
+    const value = e.target.value;
+    if (value === "" || /^\d*\.?\d*$/.test(value)) {
+      setPrecioDolares(value);
+    }
+  };
+
+  const isFormValid = () => {
+    return (
+      nombre.trim() &&
+      precioDolares.trim() &&
+      !isNaN(parseFloat(precioDolares)) &&
+      parseFloat(precioDolares) > 0 &&
+      idCategoria
+    );
+  };
+
   if (!visible) return null;
 
   return (
@@ -135,15 +198,24 @@ export default function ProductForm({
             onSubmit={handleSubmit}
             className="p-6 space-y-5 font-montserrat"
           >
-            {errorMessage && (
-              <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                {errorMessage}
+            <h2 className="text-2xl font-semibold text-gray-900 mb-1 text-center">
+              {producto ? "Editar producto" : "Crear producto"}
+            </h2>
+            <p className="text-sm text-gray-600 mb-6 text-center">
+              {producto
+                ? "Modifica la información de tu producto"
+                : "Completa la información para publicar tu producto"}
+            </p>
+
+            {(error || errorMessage) && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                {error || errorMessage}
               </div>
             )}
 
             <div className="space-y-1">
               <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                Nombre
+                Nombre *
               </label>
               <input
                 type="text"
@@ -151,7 +223,30 @@ export default function ProductForm({
                 onChange={(e) => setNombre(e.target.value)}
                 placeholder="Ej. Jabón artesanal de lavanda"
                 className={inputClass}
+                required
               />
+            </div>
+
+            <div className="space-y-1">
+              <label className="block text-sm font-semibold text-zinc-700 mb-2">
+                Categoría *
+              </label>
+              <select
+                value={idCategoria}
+                onChange={(e) => setIdCategoria(e.target.value)}
+                required
+                className={inputClass}
+              >
+                <option value="">Selecciona una categoría</option>
+                {categories.map((categoria) => (
+                  <option
+                    key={categoria.id_categoria}
+                    value={categoria.id_categoria}
+                  >
+                    {categoria.categoria}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="space-y-1">
@@ -168,7 +263,7 @@ export default function ProductForm({
 
             <div className="space-y-1">
               <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                Imagen_URL
+                Imagen URL
               </label>
               <input
                 type="text"
@@ -181,7 +276,7 @@ export default function ProductForm({
 
             <div className="space-y-1">
               <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                Precio_dolares
+                Precio ($) *
               </label>
               <div className="relative">
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-500 text-sm">
@@ -191,30 +286,19 @@ export default function ProductForm({
                   type="text"
                   inputMode="decimal"
                   value={precioDolares}
-                  onChange={(e) => setPrecioDolares(e.target.value)}
+                  onChange={handlePriceChange}
                   placeholder="0.00"
                   className={`${inputClass} pl-9`}
+                  required
                 />
               </div>
-            </div>
-
-            <div className="space-y-1">
-              <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                Existencias
-              </label>
-              <input
-                type="number"
-                min="0"
-                value={existencias}
-                onChange={(e) => setExistencias(e.target.value)}
-                className={inputClass}
-              />
             </div>
 
             <div className={`space-y-3 ${producto ? "pt-2" : ""}`}>
               <button
                 type="submit"
-                className="w-full bg-gradient-to-r from-[#557051] to-[#6B8E5E] text-white rounded-xl py-3.5 text-sm font-semibold hover:from-[#496345] hover:to-[#5A7750] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0"
+                disabled={!isFormValid()}
+                className="w-full bg-gradient-to-r from-[#557051] to-[#6B8E5E] text-white rounded-xl py-3.5 text-sm font-semibold hover:from-[#496345] hover:to-[#5A7750] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
                 {producto ? "Guardar cambios" : "Publicar Producto"}
               </button>

@@ -8,7 +8,6 @@ export const deleteProfile = async (req, res) => {
 
     const userId = req.params.userId;
 
-    // Obtener el id_emprendedor asociado al usuario
     const userResult = await client.query(
       `SELECT id_emprendedor FROM Usuarios WHERE id_usuario = $1`,
       [userId]
@@ -22,7 +21,6 @@ export const deleteProfile = async (req, res) => {
     const idEmprendedor = userResult.rows[0].id_emprendedor;
 
     if (idEmprendedor) {
-      // Obtener los emprendimientos del emprendedor
       const emprendimientosResult = await client.query(
         `SELECT id_emprendimiento FROM Emprendedor WHERE id_emprendedor = $1`,
         [idEmprendedor]
@@ -33,26 +31,22 @@ export const deleteProfile = async (req, res) => {
       );
 
       if (emprendimientosIds.length > 0) {
-        //Eliminar productos de los emprendimientos
         await client.query(
           `DELETE FROM Producto WHERE id_emprendimiento = ANY($1)`,
           [emprendimientosIds]
         );
 
-        // Eliminar emprendimientos
         await client.query(
           `DELETE FROM Emprendimiento WHERE id_emprendimiento = ANY($1)`,
           [emprendimientosIds]
         );
       }
 
-      // Eliminar emprendedor
       await client.query(`DELETE FROM Emprendedor WHERE id_emprendedor = $1`, [
         idEmprendedor,
       ]);
     }
 
-    // Eliminar el usuario
     const usuarioEliminado = await client.query(
       `DELETE FROM Usuarios WHERE id_usuario = $1 RETURNING id_usuario, Usuario`,
       [userId]

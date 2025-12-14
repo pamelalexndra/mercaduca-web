@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from "react";
 import Card from "./Card";
+import SuccessDialog from "./SuccessDialog";
 import { API_BASE_URL } from "../utils/api";
 
 export default function Emprendedores({ onGoHome }) {
   const [emprendimientos, setEmprendimientos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [successMessage, setSuccessMessage] = useState("");
 
-  // Obtener emprendimientos
   const fetchEmprendimientos = async () => {
     try {
       setError(null);
@@ -28,6 +30,17 @@ export default function Emprendedores({ onGoHome }) {
   useEffect(() => {
     fetchEmprendimientos();
   }, []);
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+  };
+
+  const handleGoHome = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (onGoHome) {
+      onGoHome();
+    }
+  };
 
   if (loading) {
     return (
@@ -50,13 +63,6 @@ export default function Emprendedores({ onGoHome }) {
       </div>
     );
   }
-
-  const handleGoHome = () => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    if (onGoHome) {
-      onGoHome();
-    }
-  };
 
   return (
     <>
@@ -89,6 +95,12 @@ export default function Emprendedores({ onGoHome }) {
           </button>
         </div>
       </section>
+
+      <SuccessDialog
+        show={showSuccess}
+        message={successMessage}
+        onConfirm={handleSuccessClose}
+      />
     </>
   );
 }

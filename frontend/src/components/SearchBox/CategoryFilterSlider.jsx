@@ -11,10 +11,8 @@ export default function CategoryDropdown({
 }) {
   const scrollContainerRef = React.useRef(null);
 
-  // Helper para verificar selección
   const isSelected = (id) => selectedCategoryIds.includes(id);
 
-  // Manejar scroll horizontal con rueda del ratón
   React.useEffect(() => {
     const container = scrollContainerRef.current;
     if (!container || !isOpen) return;
@@ -22,11 +20,9 @@ export default function CategoryDropdown({
     const handleWheel = (e) => {
       e.preventDefault();
       e.stopPropagation();
-      // Multiplicador para hacer el scroll más rápido
       container.scrollLeft += e.deltaY * 2;
     };
 
-    // Pequeño delay para asegurar que el DOM está listo
     const timer = setTimeout(() => {
       container.addEventListener('wheel', handleWheel, { passive: false });
     }, 100);

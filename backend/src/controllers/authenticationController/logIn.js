@@ -17,7 +17,6 @@ export const logIn = async (req, res) => {
         .json({ success: false, message: "Credenciales requeridas" });
     }
 
-    // 1. Buscar usuario
     const user = await findByUsername(username);
 
     if (!user) {
@@ -26,7 +25,6 @@ export const logIn = async (req, res) => {
         .json({ success: false, message: "Credenciales incorrectas" });
     }
 
-    // Verificamos si el emprendedor fue desactivado (borrado lógico)
     if (user.activo === false) {
       return res.status(403).json({
         success: false,
@@ -34,7 +32,6 @@ export const logIn = async (req, res) => {
       });
     }
 
-    // 2. Verificar contraseña
     const isValidPassword = await verifyPassword(password, user.contraseña);
     if (!isValidPassword) {
       return res
@@ -42,14 +39,12 @@ export const logIn = async (req, res) => {
         .json({ success: false, message: "Credenciales incorrectas" });
     }
 
-    // 3. Generar Token
     const token = jwt.sign(
       { id: user.id_usuario, username: user.usuario },
       process.env.JWT_SECRET,
       { expiresIn: "1h" }
     );
 
-    // 4. Responder
     res.json({
       success: true,
       message: "Inicio de sesión exitoso",
@@ -57,7 +52,6 @@ export const logIn = async (req, res) => {
       user: {
         id: user.id_usuario,
         username: user.usuario,
-        password: password,
       },
     });
   } catch (error) {
@@ -68,7 +62,7 @@ export const logIn = async (req, res) => {
 
 export const loginLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 5,
+  max: 30,
   message: {
     success: false,
     message: "Demasiados intentos de inicio de seión",

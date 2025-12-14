@@ -24,13 +24,10 @@ export default function Map({
     let url = "";
 
     if (isIOS) {
-      // Apple Maps
       url = `http://maps.apple.com/?daddr=${lat},${lng}&dirflg=d`;
     } else if (isAndroid) {
-      // Google Maps (Android)
       url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     } else {
-      // Computadora
       url = `https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`;
     }
 
