@@ -125,17 +125,18 @@ export default function Emprendedores({ onGoHome }) {
 
         <div className="flex flex-col md:flex-row gap-8 items-start">
           {/* Mobile Filter Button */}
-          <div className="md:hidden w-full flex gap-4">
-            <div className="flex-1">
+          <div className="md:hidden relative w-full flex items-center justify-center mb-6">
+            <div className="w-full max-w-sm">
               <SearchBox
                 onSearch={handleSearch}
                 initialSearchTerm={searchTerm}
                 showFilterButton={false}
+                className="w-full"
               />
             </div>
             <button
               onClick={() => setShowMobileFilters(true)}
-              className="p-2 border border-zinc-200 rounded-lg bg-white text-zinc-700 hover:bg-zinc-50 shadow-sm"
+              className="absolute right-0 p-2 border border-zinc-200 rounded-lg bg-white text-zinc-700 hover:bg-zinc-50 shadow-sm"
             >
               <Filter size={24} />
             </button>
@@ -207,8 +208,8 @@ export default function Emprendedores({ onGoHome }) {
 
       {/* Mobile Filters Modal */}
       {showMobileFilters && (
-        <div className="fixed inset-0 z-50 flex bg-black/50 md:hidden animate-in fade-in duration-200">
-          <div className="w-[80%] max-w-sm h-full bg-white shadow-xl p-4 overflow-y-auto animate-in slide-in-from-left duration-300">
+        <div className="fixed inset-0 z-[110] flex bg-black/50 md:hidden">
+          <div className="relative w-[80%] max-w-sm bg-white shadow-xl p-4 overflow-y-auto animate-slideInLeft mt-[56px] sm:mt-[64px] h-[calc(100%-56px)] sm:h-[calc(100%-64px)] rounded-tr-2xl rounded-br-2xl">
             <FilterPanel
               categories={categories}
               selectedCategories={selectedCategories}
