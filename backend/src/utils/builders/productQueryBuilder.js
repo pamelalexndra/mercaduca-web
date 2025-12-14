@@ -27,8 +27,7 @@ export const buildProductQuery = (filtros) => {
         e.id_emprendimiento AS emprendimiento_id
       FROM Producto AS p
       JOIN Categorias AS c ON p.id_categoria = c.id_categoria
-      JOIN Emprendimiento AS e ON p.id_emprendimiento = e.id_emprendimiento
-      WHERE p.Disponible = true`,
+      JOIN Emprendimiento AS e ON p.id_emprendimiento = e.id_emprendimiento`,
   ];
 
   let params = [];
@@ -123,7 +122,6 @@ export const buildProductQueryUpdate = (id, updates) => {
     descripcion: "Descripcion",
     imagen_url: "Imagen_URL",
     precio_dolares: "Precio_dolares",
-    disponible: "Disponible",
     id_categoria: "id_categoria",
   };
 
@@ -142,8 +140,6 @@ export const buildProductQueryUpdate = (id, updates) => {
         params.push(parseFloat(value));
       } else if (key === "id_categoria") {
         params.push(parseInt(value));
-      } else if (key === "disponible") {
-        params.push(Boolean(value));
       } else {
         params.push(value?.toString().trim() || "");
       }

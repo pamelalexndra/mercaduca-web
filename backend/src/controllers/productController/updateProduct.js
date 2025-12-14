@@ -8,7 +8,6 @@ export const updateProduct = async (req, res) => {
       descripcion,
       imagen_url,
       precio_dolares,
-      disponible,
       id_categoria,
     } = req.body;
 
@@ -33,7 +32,6 @@ export const updateProduct = async (req, res) => {
                 Descripcion = $2,
                 Imagen_URL = $3,
                 Precio_dolares = $4,
-                Disponible = $5,
                 id_categoria = $6
             WHERE id_producto = $7
             RETURNING *
@@ -43,7 +41,6 @@ export const updateProduct = async (req, res) => {
         descripcion?.trim() || "",
         imagen_url?.trim() || "",
         parseFloat(precio_dolares),
-        disponible !== undefined ? disponible : true,
         id_categoria ? parseInt(id_categoria) : null,
         parseInt(id),
       ]

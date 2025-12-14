@@ -39,7 +39,6 @@ export const createProduct = async (req, res) => {
         Descripcion, 
         Imagen_URL, 
         Precio_dolares,
-        Disponible
       ) VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING *
     `,
