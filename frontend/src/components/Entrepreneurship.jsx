@@ -13,18 +13,15 @@ export default function Emprendedores({ onGoHome }) {
   const { entrepreneurships, loading, error, fetchEntrepreneurships } = useEntrepreneurships();
   const { categories } = useCategories(true);
 
-  // Filter & Search State
   const [selectedCategories, setSelectedCategories] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [sortOption, setSortOption] = useState("");
 
-  // UI State
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  // Initialize from URL
   useEffect(() => {
     if (!isInitialLoad) return;
 
@@ -43,7 +40,6 @@ export default function Emprendedores({ onGoHome }) {
     setSelectedCategories(categoryArray);
     setSortOption(urlSort);
 
-    // Initial fetch
     fetchEntrepreneurships(categoryArray, urlSearch, { sort: urlSort });
 
     setIsInitialLoad(false);
@@ -51,17 +47,13 @@ export default function Emprendedores({ onGoHome }) {
 
 
   const updateFilters = (newCategories, newSearch, newSort) => {
-    // 1. Update State
     if (newCategories !== undefined) setSelectedCategories(newCategories);
     if (newSearch !== undefined) setSearchTerm(newSearch);
     if (newSort !== undefined) setSortOption(newSort);
 
-    // Prepare values
     const cats = newCategories !== undefined ? newCategories : selectedCategories;
     const search = newSearch !== undefined ? newSearch : searchTerm;
     const sort = newSort !== undefined ? newSort : sortOption;
-
-    // 2. Update URL
     const newSearchParams = new URLSearchParams(searchParams);
 
     if (cats.length > 0) newSearchParams.set("categories", cats.join(","));
@@ -75,7 +67,6 @@ export default function Emprendedores({ onGoHome }) {
 
     setSearchParams(newSearchParams);
 
-    // 3. Fetch
     fetchEntrepreneurships(cats, search, { sort: sort });
   };
 
@@ -123,8 +114,18 @@ export default function Emprendedores({ onGoHome }) {
           Emprendimientos
         </h2>
 
+        <div className="hidden md:flex justify-center mb-8">
+          <div className="w-full max-w-md">
+            <SearchBox
+              onSearch={handleSearch}
+              initialSearchTerm={searchTerm}
+              showFilterButton={false}
+              placeholder="Buscar emprendimientos..."
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col md:flex-row gap-8 items-start">
-          {/* Mobile Filter Button */}
           <div className="md:hidden relative w-full flex items-center justify-center mb-6">
             <div className="w-full max-w-sm">
               <SearchBox
@@ -142,8 +143,6 @@ export default function Emprendedores({ onGoHome }) {
             </button>
           </div>
 
-          {/* Sidebar Filters (Desktop) */}
-          {/* Sidebar Filters (Desktop) */}
           <aside className="hidden md:block w-72 flex-shrink-0 sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-2 custom-scrollbar">
             <FilterPanel
               categories={categories}
@@ -156,19 +155,7 @@ export default function Emprendedores({ onGoHome }) {
             />
           </aside>
 
-          {/* Main Content */}
           <div className="flex-1 w-full">
-            {/* Desktop Search Box */}
-            <div className="hidden md:block mb-6">
-              <SearchBox
-                onSearch={handleSearch}
-                initialSearchTerm={searchTerm}
-                showFilterButton={false}
-                placeholder="Buscar emprendimientos..."
-              />
-            </div>
-
-            {/* Results Summary */}
             {(selectedCategories.length > 0 || searchTerm) && (
               <div className="mb-4 text-sm text-zinc-500">
                 Encontrados {entrepreneurships.length} emprendimientos
@@ -207,7 +194,6 @@ export default function Emprendedores({ onGoHome }) {
         </div>
       </section>
 
-      {/* Mobile Filters Modal */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-[110] flex bg-black/50 md:hidden">
           <div className="relative w-[80%] max-w-sm bg-white shadow-xl p-4 overflow-y-auto animate-slideInLeft mt-[56px] sm:mt-[64px] h-[calc(100%-56px)] sm:h-[calc(100%-64px)] rounded-tr-2xl rounded-br-2xl">
