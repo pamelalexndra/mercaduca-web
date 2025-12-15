@@ -61,6 +61,22 @@ const Login = ({ onLoginSuccess }) => {
   };
 
   const handleLoginSuccess = async (user, token) => {
+
+    // Identificar rol de usuario
+    const userRole = user.Rol;
+    if (userRole === "Administrador") {
+      localStorage.setItem("token", token);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("isAuthenticated", "true");
+
+      if (onLoginSuccess) {
+        onLoginSuccess(user);
+      }
+
+      navigate("/admin/dashboard");
+      return;
+    }
+
     const initialUserId = getUserId(user);
     let enrichedUser = { ...user, id: initialUserId, token };
 
