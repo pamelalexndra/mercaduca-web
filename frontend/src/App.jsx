@@ -5,6 +5,7 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
+import EntrepreneurshipApplications from "./components/Admin/EntrepreneurshipApplications";
 import TopBar from "./components/TopBar";
 import Landing from "./components/Landing";
 import Catalog from "./components/Catalog";
@@ -20,6 +21,7 @@ import Forbidden from "./components/ErrorPages/Forbidden";
 import InternalServerError from "./components/ErrorPages/InternalServerError";
 import BadRequest from "./components/ErrorPages/BadRequest";
 import Register from "./components/Register";
+import AdminRoute from "./utils/AdminRoute";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -90,6 +92,14 @@ export default function App() {
           path="/internal-server-error"
           element={<InternalServerError />}
         />
+        <Route
+  path="/Admin/entrepreneurship-applications"
+  element={
+    <AdminRoute user={currentUser}>
+      <EntrepreneurshipApplications />
+    </AdminRoute>
+  }
+/>
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
