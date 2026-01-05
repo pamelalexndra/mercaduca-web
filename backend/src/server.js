@@ -62,7 +62,9 @@ app.use("*", (req, res) => {
       "/api/products",
       "/api/entrepreneurship",
       "/api/auth",
-      "/api/user",
+      "/api/user",,
+      "/api/activities",
+      "/api/request",
     ],
   });
 });

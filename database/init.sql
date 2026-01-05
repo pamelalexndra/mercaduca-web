@@ -63,7 +63,8 @@ CREATE TABLE Actividades (
 	id_actividad SERIAL PRIMARY KEY NOT NULL,
 	Nombre VARCHAR(500), 
 	Descripcion TEXT, 
-	Imagen_url TEXT
+	Imagen_url TEXT,
+  fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE Solicitudes (

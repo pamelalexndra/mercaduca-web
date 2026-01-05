@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Carousel from "../components/Carousel";
 import Map from "../components/Map";
 
@@ -8,6 +8,8 @@ import mercaducaPerfilTarde from "../images/IMG_8675.png";
 import mercaducaInterior from "../images/PXL_20250408_205803453.png";
 import mercaducaInteriorCentral from "../images/Interior.JPG";
 
+import { activityService } from "../services/activity.service.js";
+
 import actividad1 from "../images/HalloweenStickers.png";
 import actividad2 from "../images/EspecialHalloween.png";
 import actividad3 from "../images/StickersCompras.png";
@@ -15,6 +17,24 @@ import actividad4 from "../images/GalletasHalloween.png";
 import actividad5 from "../images/MercaditoFechas.png";
 
 export default function AboutUs() {
+  const [actividadesParaCarrusel, setActividadesParaCarrusel] = useState([]);
+
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        const data = await activityService.getAll();
+        const formatted = data.map(act => ({
+          image: act.Imagen_url,
+          text: `${act.nombre}: ${act.descripcion}`
+        }));
+        setActividadesParaCarrusel(formatted);
+      } catch (err) {
+        console.error("Error cargando actividades", err);
+      }
+    };
+    loadActivities();
+  }, []);
+
   return (
     <section className="border-t border-zinc-200 bg-white">
       <div className="mx-auto max-w-6xl px-6 py-7 text-center text-sm text-zinc-600"></div>
@@ -45,31 +65,15 @@ export default function AboutUs() {
           Algunas de nuestras actividades...
         </h2>
 
-        <Carousel
-          variant="activities"
-          items={[
-            {
-              image: actividad1,
-              text: "Mercaduca alarga su horario este miercoles 29 de Octubre con un NIGHT SHIFT: 5:30 p.m. a 8:00 p.m.",
-            },
-            {
-              image: actividad2,
-              text: "Este lunes 20 y martes 21 de octubre te esperamos en nuestro Especial de Halloween en conjunto con los Emprendedores del Programa Cuscatlán Crece Contigo y Emprendedores UCA.",
-            },
-            {
-              image: actividad3,
-              text: "Por tus compras te llevas un sticker exclusivo de personajes icónicos cada semana ✨💰 ¡Y si encuentras uno con sello dorado ganas una giftcard de $5!",
-            },
-            {
-              image: actividad4,
-              text: "🧁🎃 ¡Halloween se vive (y se decora) en el Mercadito UCA! Mascabado te invita a un Crea-Lab de decoración de galletas. 👻🍪",
-            },
-            {
-              image: actividad5,
-              text: "¡El Mercadito UCA regresa! Este 6 y 7 de octubre ven a descubrir productos únicos, creativos y deliciosos. 🎨👕🍦",
-            },
-          ]}
-        />
+        {actividadesParaCarrusel.length > 0 ? (
+          <Carousel
+            variant="activities"
+            items={actividadesParaCarrusel}
+          />
+        ) : (
+          <div className="py-10 text-zinc-400">Cargando actividades...</div>
+        )}
+
       </section>
       <section className="py-10 bg-white text-center px-6 lg:px-20">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-loubag font-bold mb-6">

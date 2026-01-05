@@ -22,6 +22,7 @@ import InternalServerError from "./components/ErrorPages/InternalServerError";
 import BadRequest from "./components/ErrorPages/BadRequest";
 import Register from "./components/Register";
 import AdminRoute from "./utils/AdminRoute";
+import ActivityManagement from "./components/Admin/ActivityManagement";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -93,13 +94,14 @@ export default function App() {
           element={<InternalServerError />}
         />
         <Route
-  path="/Admin/entrepreneurship-applications"
-  element={
-    <AdminRoute user={currentUser}>
-      <EntrepreneurshipApplications />
-    </AdminRoute>
-  }
-/>
+          path="/Admin/entrepreneurship-applications"
+          element={<EntrepreneurshipApplications />}
+        />
+        <Route
+          path="/Admin/activity-management"
+          element={<ActivityManagement />}
+        />
+
         <Route path="*" element={<NotFound />} />
       </Routes>
       <Footer />
