@@ -6,38 +6,8 @@ import {
 } from "../../services/entrepreneurship.service";
 
 export default function EntrepreneurshipApplications() {
-  const [solicitudes, setSolicitudes] = useState([
-    {
-      id: 1,
-      nombre: "Oscar Díaz",
-      usuario: "OscarDiazj",
-      telefono: "7623-4785",
-      producto: "Pulseras artesanales",
-      categoria: "Accesorios",
-      razon:
-        "Deseo vender para financiar mis estudios y ofrecer productos hechos a mano dentro de la universidad.",
-    },
-    {
-      id: 2,
-      nombre: "María López",
-      usuario: "mlopez_uca",
-      telefono: "7012-3344",
-      producto: "Postres caseros",
-      categoria: "Alimentos",
-      razon:
-        "Busco una plataforma segura para vender mis postres y crecer como emprendimiento.",
-    },
-    {
-      id: 3,
-      nombre: "Ana Martínez",
-      usuario: "ana_mtz",
-      telefono: "7890-1122",
-      producto: "Agendas personalizadas",
-      categoria: "Papelería",
-      razon:
-        "Quiero vender productos personalizados y darme a conocer dentro de la comunidad universitaria.",
-    },
-  ]);
+
+  const [solicitudes, setSolicitudes] = useState([]);
 
   const [actual, setActual] = useState(null);
   const [mostrarModal, setMostrarModal] = useState(false);
@@ -54,9 +24,20 @@ export default function EntrepreneurshipApplications() {
       try {
         setCargando(true);
         const data = await getEntrepreneurshipApplications(token);
-        setSolicitudes(data);
+
+        setSolicitudes(
+          data.data.map((s) => ({
+            id: s.id_solicitud,
+            nombre: `${s.nombres} ${s.apellidos}`,
+            usuario: s.usuario,
+            telefono: s.telefono,
+            producto: "Emprendimiento en revisión",
+            categoria: "Pendiente",
+            razon: s.descripcion_solicitud,
+          }))
+        );
       } catch (error) {
-        console.warn("No se pudo cargar desde API, usando mock");
+        console.error("Error cargando solicitudes:", error);
       } finally {
         setCargando(false);
       }
@@ -125,10 +106,10 @@ export default function EntrepreneurshipApplications() {
             Centro de Orientación Profesional
           </h1>
           <p className="font-montserrat text-gray-500 mt-1">
-            Gestión de solicitudes para vendedores en{" "}
-            <strong>MercadUCA</strong>
+            Gestión de solicitudes para vendedores en <strong>MercadUCA</strong>
           </p>
         </header>
+
         <section className="mb-14">
           <h2 className="font-loubag text-xl text-[#557051] mb-4">
             Solicitudes pendientes
@@ -137,6 +118,12 @@ export default function EntrepreneurshipApplications() {
           {cargando && (
             <p className="font-montserrat text-sm text-gray-500 mb-4">
               Cargando solicitudes...
+            </p>
+          )}
+
+          {!cargando && solicitudes.length === 0 && (
+            <p className="font-montserrat text-sm text-gray-500">
+              No hay solicitudes pendientes.
             </p>
           )}
 
@@ -171,43 +158,8 @@ export default function EntrepreneurshipApplications() {
             ))}
           </div>
         </section>
-        <section>
-          <h2 className="font-loubag text-xl text-[#557051] mb-4">
-            Solicitudes procesadas
-          </h2>
-
-          <div className="space-y-4">
-            {resultados.map((r, i) => (
-              <div
-                key={i}
-                className="bg-[#f4f4f2] border-l-4 p-4 rounded-xl"
-                style={{
-                  borderColor:
-                    r.estado === "Aprobado" ? "#557051" : "#C94A4A",
-                }}
-              >
-                <p
-                  className="font-montserrat font-bold"
-                  style={{
-                    color:
-                      r.estado === "Aprobado" ? "#557051" : "#C94A4A",
-                  }}
-                >
-                  {r.estado}
-                </p>
-
-                <p className="font-montserrat text-sm">{r.nombre}</p>
-                <p className="font-montserrat text-sm mt-1">
-                  {r.comentario}
-                </p>
-                <p className="font-montserrat text-xs text-gray-500 mt-1">
-                  {r.fecha}
-                </p>
-              </div>
-            ))}
-          </div>
-        </section>
       </form>
+
       {mostrarModal && actual && (
         <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
           <div className="bg-white rounded-3xl p-8 w-full max-w-2xl relative">
@@ -230,9 +182,7 @@ export default function EntrepreneurshipApplications() {
 
             <div className="grid md:grid-cols-2 gap-4 mb-4">
               <div className="bg-[#f4f4f2] p-4 rounded-xl">
-                <p className="font-montserrat text-xs text-gray-500">
-                  Usuario
-                </p>
+                <p className="font-montserrat text-xs text-gray-500">Usuario</p>
                 <p className="font-montserrat font-medium">
                   {actual.usuario}
                 </p>
@@ -251,18 +201,7 @@ export default function EntrepreneurshipApplications() {
               <p className="font-montserrat text-xs text-gray-500">
                 Razón para vender
               </p>
-              <p className="font-montserrat text-sm mt-1">
-                {actual.razon}
-              </p>
-            </div>
-
-            <div className="mb-5">
-              <p className="font-montserrat text-sm font-medium mb-2">
-                Enlace a red social
-              </p>
-              <div className="bg-[#f4f4f2] rounded-xl p-4 text-sm text-info break-all font-montserrat">
-                https://www.instagram.com/usuario_del_emprendimiento
-              </div>
+              <p className="font-montserrat text-sm mt-1">{actual.razon}</p>
             </div>
 
             <div className="mb-6">
@@ -272,7 +211,7 @@ export default function EntrepreneurshipApplications() {
               <textarea
                 value={comentarioCOP}
                 onChange={(e) => setComentarioCOP(e.target.value)}
-                className="w-full bg-[#f4f4f2] border border-gray-300 rounded-xl p-3 text-sm font-montserrat focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-[#f4f4f2] border border-gray-300 rounded-xl p-3 text-sm font-montserrat"
                 placeholder="Escriba el motivo de su decisión..."
               />
             </div>
@@ -303,12 +242,10 @@ export default function EntrepreneurshipApplications() {
             <h3 className="font-poppins text-lg font-bold text-[#557051] mb-3">
               Acción no permitida
             </h3>
-
             <p className="font-montserrat text-sm text-gray-600 mb-6">
               Para aprobar o rechazar una solicitud es obligatorio ingresar un
               comentario.
             </p>
-
             <button
               onClick={() => setMostrarError(false)}
               className="px-6 py-2 bg-[#557051] text-white rounded-xl font-montserrat"
