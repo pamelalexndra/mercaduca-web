@@ -8,7 +8,7 @@ CREATE TABLE Emprendimiento (
 	id_categoria INT,
   Nombre VARCHAR(500) UNIQUE,
   Descripcion TEXT, 
-  Disponible BOOLEAN DEFAULT TRUE,
+  Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
   Imagen_URL TEXT,
 	Instagram TEXT,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -25,10 +25,8 @@ CREATE TABLE Emprendedor (
   Telefono VARCHAR(8) UNIQUE,
 	Activo BOOLEAN DEFAULT TRUE,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT fk_Emprendedor_Emprendimiento
-  FOREIGN KEY (id_emprendimiento)
-  REFERENCES Emprendimiento(id_emprendimiento)
-  ON DELETE SET NULL
+	CONSTRAINT fk_Emprendedor_Emprendimiento FOREIGN KEY (id_emprendimiento) 
+    REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE
 );
 
 CREATE TABLE Producto(
@@ -39,7 +37,7 @@ CREATE TABLE Producto(
   Descripcion TEXT,
   Imagen_URL TEXT, 
   Precio_dolares DECIMAL(18,2),
-  Disponible BOOLEAN DEFAULT TRUE,
+  Disponible BOOLEAN DEFAULT TRUE, -- TRUE = disponible, FALSE = no disponible
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Producto_Emprendimiento FOREIGN KEY (id_emprendimiento) 
     REFERENCES Emprendimiento(id_emprendimiento) ON DELETE CASCADE,
@@ -74,7 +72,8 @@ CREATE TABLE Solicitudes (
   telefono VARCHAR(20) UNIQUE,
   usuario VARCHAR(100) UNIQUE,
   contraseña TEXT,
-  descripcion_solicitud TEXT
+  descripcion_solicitud TEXT, 
+	Fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO Categorias (Categoria) VALUES 

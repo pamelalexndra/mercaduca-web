@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../utils/api";
 import CredentialsSection from "./Register/CredentialsSection";
 import PersonalInfoSection from "./Register/PersonalInfoSection";
-import RequestDialog from "./RequestDialog";
+import RequestDialog from "./AdminPanel/Requests/RequestDialog";
 
 const evaluatePasswordStrength = (password) => {
   const feedback = [];

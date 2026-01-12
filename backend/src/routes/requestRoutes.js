@@ -1,4 +1,4 @@
-// src/routes/adminRoutes.js
+// src/routes/requestRoutes.js
 import express from "express";
 import { acceptRequest } from "../controllers/requestController/acceptRequest.js";
 import { denyRequest } from "../controllers/requestController/denyRequest.js";

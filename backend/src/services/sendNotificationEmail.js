@@ -3,6 +3,10 @@ import dotenv from "dotenv";
 import {
   generateEmailHTML,
   generateEmailText,
+  generateAcceptanceEmailHTML,
+  generateAcceptanceEmailText,
+  generateRejectionEmailHTML,
+  generateRejectionEmailText,
 } from "./generateEmailContent.js";
 
 dotenv.config();
@@ -38,4 +42,60 @@ export const sendNotificationEmail = async (solicitud) => {
     messageId: info.messageId,
     destinatarios: destinatarios,
   };
+};
+
+export const sendAcceptanceEmail = async (solicitud) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: solicitud.correo,
+      subject: `¡Felicidades! Tu solicitud en MercadUCA ha sido aceptada`,
+      html: generateAcceptanceEmailHTML(solicitud),
+      text: generateAcceptanceEmailText(solicitud),
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log(`Correo de aceptación enviado a: ${solicitud.correo}`);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      destinatario: solicitud.correo,
+    };
+  } catch (error) {
+    console.error("Error enviando correo de aceptación:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+export const sendRejectionEmail = async (solicitud, razon = "") => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: solicitud.correo,
+      subject: `Resultado de tu solicitud en MercadUCA`,
+      html: generateRejectionEmailHTML(solicitud, razon),
+      text: generateRejectionEmailText(solicitud, razon),
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    console.log(`Correo de rechazo enviado a: ${solicitud.correo}`);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      destinatario: solicitud.correo,
+    };
+  } catch (error) {
+    console.error("Error enviando correo de rechazo:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 };

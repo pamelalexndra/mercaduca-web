@@ -8,6 +8,7 @@ const CredentialsSection = ({
   usernameAvailable,
   passwordStrength,
   onUsernameCheck,
+  isEditMode = false,
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -15,13 +16,18 @@ const CredentialsSection = ({
   return (
     <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
       <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-        Credenciales de Acceso
+        Credenciales de acceso
+        {isEditMode && (
+          <span className="ml-2 text-sm font-normal text-blue-600">
+            (Deja la contraseña vacía para no cambiar)
+          </span>
+        )}
       </h3>
 
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Usuario:
+            Usuario: {!isEditMode && "*"}
           </label>
           <input
             type="text"
@@ -31,28 +37,48 @@ const CredentialsSection = ({
               onChange(e);
               onUsernameCheck(e.target.value);
             }}
-            required
+            required={!isEditMode}
             className={inputClass}
             placeholder="Ingresa tu usuario"
             maxLength="30"
             pattern="[a-zA-Z0-9]+"
           />
 
-          {usernameAvailable === true && (
+          {!isEditMode && usernameAvailable === true && (
             <div className="text-green-600 text-sm font-semibold mt-2">
               ✓ Usuario disponible
             </div>
           )}
-          {usernameAvailable === false && (
+          {!isEditMode && usernameAvailable === false && (
             <div className="text-red-600 text-sm font-semibold mt-2">
               ✗ Usuario no disponible
+            </div>
+          )}
+          {isEditMode &&
+            usernameAvailable === true &&
+            formData.username !== "" && (
+              <div className="text-green-600 text-sm font-semibold mt-2">
+                ✓ Usuario disponible
+              </div>
+            )}
+          {isEditMode &&
+            usernameAvailable === false &&
+            formData.username !== "" && (
+              <div className="text-red-600 text-sm font-semibold mt-2">
+                ✗ Usuario no disponible
+              </div>
+            )}
+          {isEditMode && formData.username === "" && (
+            <div className="text-red-600 text-sm font-semibold mt-2">
+              ✗ El usuario no puede estar vacío
             </div>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Contraseña:
+            {isEditMode ? "Nueva Contraseña (opcional)" : "Contraseña:"}{" "}
+            {!isEditMode && "*"}
           </label>
           <div className="relative">
             <input
@@ -60,9 +86,13 @@ const CredentialsSection = ({
               name="password"
               value={formData.password}
               onChange={onChange}
-              required
+              required={!isEditMode}
               className={`${inputClass} pr-10`}
-              placeholder="Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos (@$!%*?&)"
+              placeholder={
+                isEditMode
+                  ? "Dejar vacío para no cambiar la contraseña"
+                  : "Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos (@$!%*?&)"
+              }
               maxLength="128"
             />
             <button
@@ -110,15 +140,25 @@ const CredentialsSection = ({
               )}
             </button>
           </div>
-          <PasswordStrengthMeter
-            password={formData.password}
-            passwordStrength={passwordStrength}
-          />
+          {formData.password && (
+            <PasswordStrengthMeter
+              password={formData.password}
+              passwordStrength={passwordStrength}
+            />
+          )}
+          {isEditMode && !formData.password && (
+            <div className="text-gray-500 text-sm font-semibold mt-2">
+              ℹ️ La contraseña actual se mantendrá
+            </div>
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Confirmar Contraseña:
+            {isEditMode
+              ? "Confirmar Nueva Contraseña"
+              : "Confirmar Contraseña:"}{" "}
+            {!isEditMode && "*"}
           </label>
           <div className="relative">
             <input
@@ -126,9 +166,13 @@ const CredentialsSection = ({
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={onChange}
-              required
+              required={!isEditMode}
               className={`${inputClass} pr-10`}
-              placeholder="Confirma tu contraseña"
+              placeholder={
+                isEditMode && !formData.password
+                  ? "No es necesario si no cambias la contraseña"
+                  : "Confirma tu contraseña"
+              }
               maxLength="128"
             />
             <button
@@ -190,6 +234,11 @@ const CredentialsSection = ({
                 ✓ Las contraseñas coinciden
               </div>
             )}
+          {isEditMode && !formData.password && !formData.confirmPassword && (
+            <div className="text-gray-500 text-sm font-semibold mt-2">
+              ✓ La contraseña actual se mantendrá
+            </div>
+          )}
         </div>
       </div>
     </div>

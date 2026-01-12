@@ -5,31 +5,75 @@ import { Menu, X } from "lucide-react";
 
 const PROFILE_PLACEHOLDER = logoVerde;
 
-export default function TopBar({ user, onLogout }) {
+export default function TopBar({ currentUser, onLogout, onUpdateUser }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [catalogWindow, setCatalogWindow] = useState(null);
   const [profileMenuOpen, setProfileMenuOpen] = useState(false);
   const desktopProfileMenuRef = useRef(null);
-  const mobileProfileMenuRef = useRef(null);
   const navigate = useNavigate();
 
-  const isAuthenticated = Boolean(user);
+  const isAuthenticated = Boolean(currentUser);
+
+  const userRole = currentUser?.role || currentUser?.Rol || currentUser?.rol;
+  const isAdmin = userRole === "Administrador" || userRole === "administrador";
+  const isSeller =
+    userRole === "Vendedor" || userRole === "vendedor" || !userRole;
 
   const emprendimientoData =
-    user?.profile?.emprendimiento || user?.profile?.enterper;
-  const profileImage =
-    emprendimientoData?.imagen_url ||
-    emprendimientoData?.imagen ||
-    PROFILE_PLACEHOLDER;
+    currentUser?.profile?.emprendimiento || currentUser?.profile?.enterper;
 
-  const profileLabel =
-    user?.profile?.nombres || emprendimientoData?.nombre || "Mi perfil";
+  const getProfileImage = () => {
+    if (isAdmin) {
+      return PROFILE_PLACEHOLDER;
+    }
+
+    return (
+      emprendimientoData?.imagen_url ||
+      emprendimientoData?.imagen ||
+      PROFILE_PLACEHOLDER
+    );
+  };
+
+  const getProfileLabel = () => {
+    if (isAdmin) {
+      return "Administrador";
+    }
+
+    return (
+      currentUser?.profile?.nombres || emprendimientoData?.nombre || "Mi perfil"
+    );
+  };
+
+  const getProfileRoute = () => {
+    if (isAdmin) {
+      return "/admin/dashboard";
+    }
+    return "/perfil";
+  };
+
+  const getProfileLinkText = () => {
+    if (isAdmin) {
+      return "Panel de administración";
+    }
+    return "Perfil";
+  };
 
   const handleLogoutClick = () => {
     if (onLogout) onLogout();
     setMenuOpen(false);
     setProfileMenuOpen(false);
     navigate("/");
+  };
+
+  const refreshUserFromStorage = () => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser && onUpdateUser) {
+      try {
+        onUpdateUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Error refreshing user:", error);
+      }
+    }
   };
 
   useEffect(() => {
@@ -108,25 +152,26 @@ export default function TopBar({ user, onLogout }) {
                 <div className="relative" ref={desktopProfileMenuRef}>
                   <button
                     onClick={() => setProfileMenuOpen((prev) => !prev)}
-                    className="rounded-full border-2 border-[#557051] hover:border-[#3f523d] focus:outline-none focus:ring-2 focus:ring-[#557051]/40 overflow-hidden w-12 h-12"
+                    className="flex items-center justify-center rounded-full border-2 border-[#557051] hover:border-[#3f523d] focus:outline-none focus:ring-2 focus:ring-[#557051]/40 overflow-hidden w-12 h-12"
                   >
                     <img
-                      src={profileImage}
-                      alt={profileLabel}
+                      src={getProfileImage()}
+                      alt={getProfileLabel()}
                       className="w-full h-full object-cover"
                     />
                   </button>
 
                   {profileMenuOpen && (
-                    <div className="absolute right-0 mt-2 w-44 rounded-lg bg-[#557051] shadow-lg ring-1 ring-black/5 overflow-hidden">
+                    <div className="absolute right-0 mt-2 w-48 rounded-lg bg-[#557051] shadow-lg ring-1 ring-black/5 overflow-hidden z-50">
                       <Link
-                        to="/perfil"
+                        to={getProfileRoute()}
                         onClick={() => {
                           setProfileMenuOpen(false);
+                          refreshUserFromStorage();
                         }}
                         className="block px-4 py-2 text-sm text-white hover:bg-[#445a3f]"
                       >
-                        Perfil
+                        {getProfileLinkText()}
                       </Link>
                       <button
                         onClick={handleLogoutClick}
@@ -196,21 +241,24 @@ export default function TopBar({ user, onLogout }) {
                   <div className="flex items-center gap-3 mb-4">
                     <div className="w-12 h-12 rounded-full border-2 border-white overflow-hidden">
                       <img
-                        src={profileImage}
-                        alt={profileLabel}
+                        src={getProfileImage()}
+                        alt={getProfileLabel()}
                         className="w-full h-full object-cover"
                       />
                     </div>
-                    <span className="text-white">{profileLabel}</span>
+                    <span className="text-white">{getProfileLabel()}</span>
                   </div>
 
                   <div className="flex flex-col gap-3 ml-2">
                     <Link
-                      to="/perfil"
-                      onClick={() => setMenuOpen(false)}
+                      to={getProfileRoute()}
+                      onClick={() => {
+                        setMenuOpen(false);
+                        refreshUserFromStorage();
+                      }}
                       className="text-white hover:text-gray-200"
                     >
-                      Perfil
+                      {getProfileLinkText()}
                     </Link>
                     <button
                       onClick={handleLogoutClick}

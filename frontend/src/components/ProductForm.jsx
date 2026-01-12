@@ -11,6 +11,7 @@ export default function ProductForm({
   producto,
   onDelete,
   errorMessage,
+  categories: propCategories,
 }) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
@@ -24,7 +25,11 @@ export default function ProductForm({
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
-  const { categories } = useCategories();
+  const { categories: hookCategories } = useCategories();
+  const categories =
+    propCategories && propCategories.length > 0
+      ? propCategories
+      : hookCategories;
 
   const inputClass =
     "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all placeholder:text-gray-400";
@@ -178,7 +183,7 @@ export default function ProductForm({
   return (
     <>
       <div
-        className="fixed inset-0 flex items-center justify-center bg-black/70 backdrop-blur-sm z-50 animate-fade-in pt-16 sm:pt-20"
+        className="fixed inset-0 flex items-start justify-center bg-black/70 backdrop-blur-sm z-[90] animate-fade-in pt-16 sm:pt-20"
         onClick={handleBackgroundClick}
       >
         <div
@@ -206,12 +211,6 @@ export default function ProductForm({
                 ? "Modifica la información de tu producto"
                 : "Completa la información para publicar tu producto"}
             </p>
-
-            {(error || errorMessage) && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-                {error || errorMessage}
-              </div>
-            )}
 
             <div className="space-y-1">
               <label className="block text-sm font-semibold text-zinc-700 mb-2">
@@ -293,6 +292,13 @@ export default function ProductForm({
                 />
               </div>
             </div>
+
+            {/* Error message moved here - between last field and buttons */}
+            {(error || errorMessage) && (
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                {error || errorMessage}
+              </div>
+            )}
 
             <div className={`space-y-3 ${producto ? "pt-2" : ""}`}>
               <button

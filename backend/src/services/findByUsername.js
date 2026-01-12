@@ -7,11 +7,11 @@ export const findByUsername = async (username) => {
       `
       SELECT 
         u.id_usuario, 
-        u.Usuario, 
-        u.Contraseña, 
-        u.Registro_usuario,
+        u.usuario, 
+        u.contraseña, 
+        u.registro_usuario,
         e.activo,
-        u.Rol
+        u.rol
       FROM Usuarios u
       JOIN Emprendedor e ON u.id_emprendedor = e.id_emprendedor
       WHERE u.Usuario = $1
@@ -21,7 +21,6 @@ export const findByUsername = async (username) => {
 
     return result.rows[0] || null;
   } catch (error) {
-    console.error("Error en findByUsername ->", error);
     throw error;
   }
 };

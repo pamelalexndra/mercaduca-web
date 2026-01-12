@@ -5,6 +5,7 @@ import {
   Route,
   useLocation,
 } from "react-router-dom";
+import { Navigate } from "react-router-dom";
 import TopBar from "./components/TopBar";
 import Landing from "./components/Landing";
 import Catalog from "./components/Catalog";
@@ -20,6 +21,8 @@ import Forbidden from "./components/ErrorPages/Forbidden";
 import InternalServerError from "./components/ErrorPages/InternalServerError";
 import BadRequest from "./components/ErrorPages/BadRequest";
 import Register from "./components/Register";
+import AdminProfile from "./components/AdminProfile";
+import ProtectedRoute from "./components/ProtectedRoute";
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -37,30 +40,74 @@ export default function App() {
     return storedUser ? JSON.parse(storedUser) : null;
   });
 
-  const handleLoginSuccess = useCallback((userData) => {
-    setCurrentUser(userData);
+  const updateCurrentUser = useCallback((userData) => {
+    if (userData) {
+      localStorage.setItem("user", JSON.stringify(userData));
+      setCurrentUser(userData);
+    } else {
+      localStorage.removeItem("user");
+      setCurrentUser(null);
+    }
   }, []);
+
+  const handleLoginSuccess = useCallback(
+    (userData) => {
+      updateCurrentUser(userData);
+    },
+    [updateCurrentUser]
+  );
 
   const handleLogout = useCallback(() => {
     localStorage.removeItem("user");
     localStorage.removeItem("isAuthenticated");
     localStorage.removeItem("token");
     localStorage.removeItem("emprendimientoCache");
-    setCurrentUser(null);
+    updateCurrentUser(null);
+  }, [updateCurrentUser]);
+
+  const handleProfileLoaded = useCallback(
+    (profileData) => {
+      if (profileData) {
+        updateCurrentUser(profileData);
+      }
+    },
+    [updateCurrentUser]
+  );
+
+  useEffect(() => {
+    const handleStorageChange = () => {
+      const storedUser = localStorage.getItem("user");
+      if (storedUser) {
+        try {
+          setCurrentUser(JSON.parse(storedUser));
+        } catch (error) {
+          console.error("Error parsing user from localStorage:", error);
+        }
+      } else {
+        setCurrentUser(null);
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    const interval = setInterval(handleStorageChange, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
   }, []);
 
-  const handleProfileLoaded = useCallback((profileData) => {
-    if (profileData) {
-      setCurrentUser(profileData);
-    }
-  }, []);
   return (
     <Router>
       <ScrollToTop />
-      <TopBar user={currentUser} onLogout={handleLogout} />
+      <TopBar
+        currentUser={currentUser}
+        onLogout={handleLogout}
+        onUpdateUser={updateCurrentUser}
+      />
 
       <Routes>
-        {" "}
         <Route path="/" element={<Landing />} />
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/emprendimientos" element={<Sellers />} />
@@ -74,13 +121,33 @@ export default function App() {
         <Route
           path="/perfil"
           element={
-            <Profile user={currentUser} onProfileLoaded={handleProfileLoaded} />
+            <ProtectedRoute>
+              <Profile
+                user={currentUser}
+                onProfileLoaded={handleProfileLoaded}
+                onUpdateUser={updateCurrentUser}
+              />
+            </ProtectedRoute>
           }
         />
         <Route
           path="/perfil/producto/nuevo"
           element={
-            <Profile user={currentUser} onProfileLoaded={handleProfileLoaded} />
+            <ProtectedRoute>
+              <Profile
+                user={currentUser}
+                onProfileLoaded={handleProfileLoaded}
+                onUpdateUser={updateCurrentUser}
+              />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/dashboard"
+          element={
+            <ProtectedRoute requiredRole="Administrador">
+              <AdminProfile onUpdateUser={updateCurrentUser} />
+            </ProtectedRoute>
           }
         />
         <Route path="/registrar" element={<Register />} />

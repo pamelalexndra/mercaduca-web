@@ -166,6 +166,18 @@ export default function Profile({ user, onProfileLoaded }) {
   const location = useLocation();
   const navigate = useNavigate();
   const [shouldRefresh, setShouldRefresh] = useState(false);
+
+  useEffect(() => {
+    // Verificar si el usuario es administrador
+    const userRole =
+      user?.Rol || user?.rol || currentUser?.Rol || currentUser?.rol;
+
+    if (userRole === "Administrador" || userRole === "administrador") {
+      console.log("Usuario es administrador, redirigiendo a /admin");
+      navigate("/admin/dashboard");
+    }
+  }, [user, currentUser, navigate]);
+
   const updateStoredUserProfile = useCallback((profileUpdater) => {
     setCurrentUser((prev) => {
       if (!prev) return prev;
@@ -582,10 +594,9 @@ export default function Profile({ user, onProfileLoaded }) {
       return false;
     }
 
-    const categoriaId =
-      productoEdit?.id_categoria || emprendimiento?.id_categoria || null;
+    const categoriaId = data.id_categoria || productoEdit?.id_categoria || null;
     if (!categoriaId) {
-      setError("Selecciona una categoría para tu emprendimiento.");
+      setError("Selecciona una categoría para tu producto.");
       return false;
     }
 

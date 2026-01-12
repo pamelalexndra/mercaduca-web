@@ -14,6 +14,7 @@ export default function ProductDetailPage() {
   const [emprendimiento, setEmprendimiento] = useState(null);
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState([]);
 
   const [showModal, setShowModal] = useState(false);
   const [updateError, setUpdateError] = useState("");
@@ -36,6 +37,28 @@ export default function ProductDetailPage() {
       console.error("Error leyendo usuario del localStorage", e);
     }
   }
+
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.data && Array.isArray(data.data)) {
+            setCategories(data.data);
+          } else if (Array.isArray(data)) {
+            setCategories(data);
+          } else {
+            setCategories([]);
+          }
+        }
+      } catch (error) {
+        setCategories([]);
+      }
+    };
+
+    fetchCategories();
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -77,7 +100,7 @@ export default function ProductDetailPage() {
     try {
       const payload = {
         ...formData,
-        id_categoria: product.id_categoria,
+        id_categoria: formData.id_categoria || product.id_categoria,
         disponible: true,
       };
 
@@ -101,13 +124,33 @@ export default function ProductDetailPage() {
 
       const raw = result.producto;
 
+      let categoriaNombre = product.categoria || "Sin categoría";
+      const categoriaId = parseInt(
+        formData.id_categoria || product.id_categoria
+      );
+
+      if (Array.isArray(categories)) {
+        const categoriaActualizada = categories.find(
+          (cat) => cat.id_categoria === categoriaId
+        );
+
+        if (categoriaActualizada) {
+          categoriaNombre =
+            categoriaActualizada.categoria ||
+            categoriaActualizada.nombre ||
+            "Sin nombre";
+        }
+      }
+
       const productoActualizado = {
         ...product,
-
         nombre: raw.nombre || raw.Nombre,
         descripcion: raw.descripcion || raw.Descripcion,
         imagen: raw.imagen || raw.imagen_url || raw.Imagen_URL,
         precio: raw.precio || raw.precio_dolares || raw.Precio_dolares,
+        id_categoria:
+          raw.id_categoria || formData.id_categoria || product.id_categoria,
+        categoria: categoriaNombre,
       };
 
       setProduct(productoActualizado);
@@ -115,8 +158,7 @@ export default function ProductDetailPage() {
       setSuccessMessage("Producto actualizado correctamente");
       setShowSuccess(true);
     } catch (err) {
-      console.error(err);
-      setUpdateError(err.message);
+      setUpdateError(err.message || "Error al actualizar el producto");
     }
   };
 
@@ -140,7 +182,6 @@ export default function ProductDetailPage() {
         alert("No se pudo eliminar el producto");
       }
     } catch (e) {
-      console.error(e);
       alert("Error de conexión al eliminar");
     }
   };
@@ -223,7 +264,7 @@ export default function ProductDetailPage() {
 
               <div className="mb-4">
                 <span className="inline-block bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">
-                  {product.categoria}
+                  {product.categoria || "Sin categoría"}
                 </span>
               </div>
 
@@ -304,6 +345,7 @@ export default function ProductDetailPage() {
         onDelete={handleDeleteProduct}
         producto={product}
         errorMessage={updateError}
+        categories={categories}
       />
 
       <SuccessDialog

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import useCategories from "../hooks/useCategories";
 import { useEmprendimiento } from "../hooks/useEmprendimiento";
 import ConfirmationDialog from "./ConfirmationDialog";
-import SuccessDialog from "./SuccessDialog";
 
 export default function EntrepreneurshipForm({
   visible,
@@ -23,8 +22,6 @@ export default function EntrepreneurshipForm({
 
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   const { categories } = useCategories();
   const { removeEntrepreneurship, loadingDelete, errorDelete } =
@@ -49,7 +46,6 @@ export default function EntrepreneurshipForm({
   useEffect(() => {
     if (!visible) {
       setShowConfirm(false);
-      setShowSuccess(false);
       setError("");
     }
   }, [visible]);
@@ -97,15 +93,7 @@ export default function EntrepreneurshipForm({
     }
 
     try {
-      const success = await onSubmit?.(formData);
-      if (success) {
-        setSuccessMessage(
-          initialData?.id_emprendimiento
-            ? "Emprendimiento actualizado correctamente"
-            : "Emprendimiento creado correctamente"
-        );
-        setShowSuccess(true);
-      }
+      await onSubmit?.(formData);
     } catch (err) {
       setError(err.message || "Error al procesar la solicitud");
     }
@@ -126,8 +114,6 @@ export default function EntrepreneurshipForm({
     const success = await removeEntrepreneurship(idToDelete);
 
     if (success) {
-      setSuccessMessage("Emprendimiento eliminado correctamente");
-      setShowSuccess(true);
       onDeleteSuccess?.();
     }
   };
@@ -140,11 +126,6 @@ export default function EntrepreneurshipForm({
     if (e.target === e.currentTarget) {
       onClose?.();
     }
-  };
-
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-    onClose?.();
   };
 
   const isFormValid = () => {
@@ -163,7 +144,7 @@ export default function EntrepreneurshipForm({
   return (
     <>
       <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm pt-12"
+        className="fixed inset-0 z-[90] flex items-start justify-center bg-black/70 backdrop-blur-sm pt-16"
         onClick={handleBackgroundClick}
       >
         <div className="bg-white rounded-2xl w-[95%] sm:w-[520px] max-h-[90vh] overflow-y-auto shadow-2xl border border-gray-200 relative animate-slide-up font-montserrat">
@@ -183,12 +164,6 @@ export default function EntrepreneurshipForm({
               Completa la información de tu emprendimiento para comenzar a
               compartir tus productos.
             </p>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
-                {error}
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-1">
@@ -271,6 +246,13 @@ export default function EntrepreneurshipForm({
                 />
               </div>
 
+              {/* Error message moved here - between last field and buttons */}
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+                  {error}
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-2">
                 {isEditing && (
                   <button
@@ -303,12 +285,6 @@ export default function EntrepreneurshipForm({
         message="¿Estás seguro de eliminar este emprendimiento? Se eliminarán todos sus productos e información asociados."
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
-      />
-
-      <SuccessDialog
-        show={showSuccess}
-        message={successMessage}
-        onConfirm={handleSuccessClose}
       />
     </>
   );
