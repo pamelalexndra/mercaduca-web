@@ -32,7 +32,6 @@ import Forbidden from "./components/ErrorPages/Forbidden";
 import InternalServerError from "./components/ErrorPages/InternalServerError";
 import BadRequest from "./components/ErrorPages/BadRequest";
 
-// Utilidad para volver al inicio al cambiar de página
 const ScrollToTop = () => {
   const { pathname } = useLocation();
   useEffect(() => {
@@ -42,7 +41,6 @@ const ScrollToTop = () => {
 };
 
 export default function App() {
-  // 1. Estado Inicial con Persistencia
   const [currentUser, setCurrentUser] = useState(() => {
     const storedUser = localStorage.getItem("user");
     try {
@@ -52,7 +50,6 @@ export default function App() {
     }
   });
 
-  // 2. Lógica de Actualización de Usuario (V1)
   const updateCurrentUser = useCallback((userData) => {
     if (userData) {
       localStorage.setItem("user", JSON.stringify(userData));
@@ -70,7 +67,6 @@ export default function App() {
     updateCurrentUser(null);
   }, [updateCurrentUser]);
 
-  // 3. Sincronización entre Pestañas y Limpieza (V1)
   useEffect(() => {
     const handleStorageChange = () => {
       const storedUser = localStorage.getItem("user");
@@ -86,7 +82,6 @@ export default function App() {
     };
 
     window.addEventListener("storage", handleStorageChange);
-    // Verificación de seguridad cada segundo
     const interval = setInterval(handleStorageChange, 1000);
 
     return () => {
@@ -136,7 +131,7 @@ export default function App() {
           } 
         />
 
-        {/* --- RUTAS PROTEGIDAS (ADMIN) - Estructura V2 --- */}
+        {/* --- RUTAS PROTEGIDAS (ADMIN) */}
         <Route 
           path="/Admin" 
           element={

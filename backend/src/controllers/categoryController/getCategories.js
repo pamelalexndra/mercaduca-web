@@ -2,7 +2,6 @@ import pool from "../../database/connection.js";
 
 export const getCategories = async (req, res) => {
   const { available } = req.query;
-
   const isAvailable = (available || "").toString().toLowerCase() === "true";
 
   try {
@@ -10,19 +9,25 @@ export const getCategories = async (req, res) => {
 
     if (isAvailable) {
       query = `
-        SELECT c.id_categoria, c.categoria
+        SELECT 
+          c.id_categoria, 
+          c.categoria, 
+          COUNT(p.id_producto)::INT as cantidad_productos
         FROM categorias c
-        WHERE EXISTS (
-          SELECT 1 FROM producto p
-          WHERE p.id_categoria = c.id_categoria
-        )
+        INNER JOIN Producto p ON c.id_categoria = p.id_categoria
+        GROUP BY c.id_categoria, c.categoria
         ORDER BY c.categoria;
       `;
     } else {
       query = `
-        SELECT id_categoria, categoria
-        FROM categorias
-        ORDER BY categoria;
+        SELECT 
+          c.id_categoria, 
+          c.categoria, 
+          COUNT(p.id_producto)::INT as cantidad_productos
+        FROM categorias c
+        LEFT JOIN Producto p ON c.id_categoria = p.id_categoria
+        GROUP BY c.id_categoria, c.categoria
+        ORDER BY c.categoria;
       `;
     }
 

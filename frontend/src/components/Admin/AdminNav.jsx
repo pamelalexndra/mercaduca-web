@@ -18,8 +18,7 @@ const menuItems = [
     label: "Categorías",
     path: "/admin/categories"
   },
-  { icon: <Users size={18} />, label: "Usuarios", path: "users" },
-  { icon: <Settings size={18} />, label: "Seguridad", path: "security" },
+  { icon: <Users size={18} />, label: "Administradores", path: "users" },
 ];
 
 export default function AdminNav() {
