@@ -6,15 +6,25 @@ dotenv.config();
 
 // 1. Middleware para verificar que existe un token válido (Autenticación)
 export const verifyToken = (req, res, next) => {
-  const authHeader = req.headers.authorization; // Bearer Token -> Json Web Token
-  if (!authHeader) return res.status(401).json({ error: "Unauthorized" }); // Hacer una salida controlada por error de autorización
+  const authHeader = req.headers.authorization;
+  
+  // Verificar que el header exista y tenga el formato correcto
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({
+      success: false,
+      message: "Acceso denegado. No se proporcionó un token válido"
+    });
+  }
 
   const token = authHeader.split(" ")[1];
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) return res.status(403).json({ message: "Invalid token" }); // hacer una salida controlada porque el token no es válido
 
+  jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    if (err) {
+      const message = err.name === "TokenExpiredError" ? "El token ha expirado" : "Token inválido";
+      return res.status(403).json({ success: false, message }); // hacer una salida controlada porque el token no es válido
+    }
     // continuar al flujo con normalidad
-    req.user = user;
+    req.user = decoded;
     next();
   });
 };
@@ -32,15 +42,26 @@ export const verifyAdmin = async (req, res, next) => {
   try {
     const userDb = await findById(req.user.id);
 
-    if (userDb && userDb.rol === "Administrador") {
+    if (!userDb) {
+      return res.status(404).json({
+        success: false,
+        message: "Usuario no encontardo en el sistema. Sesión inválida."
+      });
+    }
+
+    if (userDb.rol === "Administrador") {
       next();
     } else {
       return res.status(403).json({
         success: false,
-        message: "Acceso revocado o privilegios insuficientes"
+        message: "Acceso denegado: Se requieren permisos de administrador"
       });
     }
   } catch (error) {
-    return res.status(500).json({ success: false, message: "Error verificando permisos" });
+    console.error("Error en verifyAdmin:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error técnico al verificar permisos"
+    });
   }
 };

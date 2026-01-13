@@ -25,7 +25,7 @@ export default function AdminLayout() {
           <h1 className="font-loubag text-3xl text-[#557051] font-bold">
             Panel de Administración
           </h1>
-          <p className="text-gray-500 text-sm mt-1">Gestiona los módulos de la plataforma</p>
+          <p className="text-gray-500 text-sm mt-1">Gestiona el MercadUCA</p>
         </div>
 
         <AdminNav />

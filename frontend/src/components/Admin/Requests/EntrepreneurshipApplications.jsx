@@ -3,7 +3,7 @@ import {
   getEntrepreneurshipApplications,
   approveEntrepreneurshipApplication,
   rejectEntrepreneurshipApplication,
-} from "../../services/entrepreneurship.service";
+} from "../../../services/entrepreneurship.service";
 
 export default function EntrepreneurshipApplications() {
   const [solicitudes, setSolicitudes] = useState([

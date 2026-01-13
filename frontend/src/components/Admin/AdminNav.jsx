@@ -3,11 +3,23 @@ import { NavLink } from "react-router-dom";
 import { LayoutDashboard, ClipboardList, Tags, Users, Settings } from "lucide-react";
 
 const menuItems = [
-  { icon: <ClipboardList size={18}/>, label: "Solicitudes", path: "entrepreneurship-applications" },
-  { icon: <LayoutDashboard size={18}/>, label: "Actividades", path: "activity-management" },
-  { icon: <Tags size={18}/>, label: "Categorías", path: "categories" },
-  { icon: <Users size={18}/>, label: "Usuarios", path: "users" },
-  { icon: <Settings size={18}/>, label: "Seguridad", path: "security" },
+  {
+    icon: <ClipboardList size={18} />,
+    label: "Solicitudes",
+    path: "/admin/entrepreneurship-applications" // Agregamos /admin/
+  },
+  {
+    icon: <LayoutDashboard size={18} />,
+    label: "Actividades",
+    path: "/admin/activity-management"
+  },
+  {
+    icon: <Tags size={18} />,
+    label: "Categorías",
+    path: "/admin/categories"
+  },
+  { icon: <Users size={18} />, label: "Usuarios", path: "users" },
+  { icon: <Settings size={18} />, label: "Seguridad", path: "security" },
 ];
 
 export default function AdminNav() {
@@ -19,10 +31,9 @@ export default function AdminNav() {
             key={item.label}
             to={item.path}
             className={({ isActive }) =>
-              `flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all font-montserrat text-sm whitespace-nowrap ${
-                isActive
-                  ? "bg-[#557051] text-white shadow-sm"
-                  : "text-gray-500 hover:bg-[#f4f4f2] hover:text-[#557051]"
+              `flex items-center gap-2 px-5 py-2.5 rounded-xl transition-all font-montserrat text-sm whitespace-nowrap ${isActive
+                ? "bg-[#557051] text-white shadow-sm"
+                : "text-gray-500 hover:bg-[#f4f4f2] hover:text-[#557051]"
               }`
             }
           >

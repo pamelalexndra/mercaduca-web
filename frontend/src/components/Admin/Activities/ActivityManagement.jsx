@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Trash2, Calendar, PlusCircle, ImageIcon } from "lucide-react";
-import SuccessDialog from "../SuccessDialog";
-import ConfirmationDialog from "../ConfirmationDialog";
-import { activityService } from "../../services/activity.service";
+import SuccessDialog from "../../SuccessDialog";
+import ConfirmationDialog from "../../ConfirmationDialog";
+import { activityService } from "../../../services/activity.service";
 
 export default function ActivityManagement() {
   const [actividades, setActividades] = useState([]);
