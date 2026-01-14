@@ -61,22 +61,25 @@ const Login = ({ onLoginSuccess }) => {
   };
 
   const handleLoginSuccess = async (user, token) => {
-
     // Identificar rol de usuario
-    const userRole = user.Rol;
-    if (userRole === "Administrador") {
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("isAuthenticated", "true");
+    const userRole = user.role || user.Rol || user.rol;
 
-      if (onLoginSuccess) {
-        onLoginSuccess(user);
-      }
+    // Guardar token y usuario
+    localStorage.setItem("token", token);
+    localStorage.setItem("user", JSON.stringify(user));
+    localStorage.setItem("isAuthenticated", "true");
 
-      navigate("/admin/dashboard");
+    if (onLoginSuccess) {
+      onLoginSuccess(user);
+    }
+
+    // Redirigir según el rol
+    if (userRole === "Administrador" || userRole === "administrador") {
+      navigate("/Admin");
       return;
     }
 
+    // Para vendedores, continuar con la carga del perfil normal
     const initialUserId = getUserId(user);
     let enrichedUser = { ...user, id: initialUserId, token };
 
@@ -138,19 +141,23 @@ const Login = ({ onLoginSuccess }) => {
       if (emprendimiento && profileUserId) {
         saveCachedEmprendimiento(profileUserId, emprendimiento);
       }
+
+      // Actualizar usuario en localStorage
+      localStorage.setItem("user", JSON.stringify(enrichedUser));
+      if (onLoginSuccess) {
+        onLoginSuccess(enrichedUser);
+      }
     } catch (profileError) {
       console.error("Error al obtener el perfil del usuario:", profileError);
     }
 
-    localStorage.setItem("token", token);
-    localStorage.setItem("user", JSON.stringify(enrichedUser));
-    localStorage.setItem("isAuthenticated", "true");
-
-    if (onLoginSuccess) {
-      onLoginSuccess(enrichedUser);
-    }
-
+    // Redirigir a perfil para vendedores
     navigate("/perfil");
+
+    // Forzar recarga para actualizar TopBar inmediatamente
+    setTimeout(() => {
+      window.location.reload();
+    }, 100);
   };
 
   const handleSubmit = async (e) => {
