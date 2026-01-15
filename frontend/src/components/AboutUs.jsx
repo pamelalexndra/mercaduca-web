@@ -10,22 +10,18 @@ import mercaducaInteriorCentral from "../images/Interior.JPG";
 
 import { activityService } from "../services/activity.service.js";
 
-import actividad1 from "../images/HalloweenStickers.png";
-import actividad2 from "../images/EspecialHalloween.png";
-import actividad3 from "../images/StickersCompras.png";
-import actividad4 from "../images/GalletasHalloween.png";
-import actividad5 from "../images/MercaditoFechas.png";
-
 export default function AboutUs() {
   const [actividadesParaCarrusel, setActividadesParaCarrusel] = useState([]);
 
   useEffect(() => {
     const loadActivities = async () => {
       try {
-        const data = await activityService.getAll();
-        const formatted = data.map(act => ({
-          image: act.Imagen_url,
-          text: `${act.nombre}: ${act.descripcion}`
+        const response = await activityService.getAll();
+        const activities = response.data || response;
+
+        const formatted = activities.map((act) => ({
+          image: act.imagen_url || act.Imagen_url,
+          text: `${act.nombre}: ${act.descripcion}`,
         }));
         setActividadesParaCarrusel(formatted);
       } catch (err) {
@@ -66,14 +62,10 @@ export default function AboutUs() {
         </h2>
 
         {actividadesParaCarrusel.length > 0 ? (
-          <Carousel
-            variant="activities"
-            items={actividadesParaCarrusel}
-          />
+          <Carousel variant="activities" items={actividadesParaCarrusel} />
         ) : (
           <div className="py-10 text-zinc-400">Cargando actividades...</div>
         )}
-
       </section>
       <section className="py-10 bg-white text-center px-6 lg:px-20">
         <h2 className="text-3xl sm:text-4xl lg:text-5xl font-loubag font-bold mb-6">

@@ -4,7 +4,7 @@ const ConfirmationDialog = ({ show, message, onConfirm, onCancel }) => {
   if (!show) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[60] p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 flex items-center justify-center z-[100] p-4 bg-black/60 backdrop-blur-sm">
       <div className="bg-white rounded-xl shadow-2xl border border-gray-300 p-6 max-w-md w-full">
         <h3 className="text-xl font-bold text-gray-800 mb-4">
           Confirmar acción

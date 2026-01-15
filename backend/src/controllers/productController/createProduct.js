@@ -38,8 +38,8 @@ export const createProduct = async (req, res) => {
         Nombre, 
         Descripcion, 
         Imagen_URL, 
-        Precio_dolares,
-      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+        Precio_dolares
+      ) VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `,
       [
@@ -49,7 +49,6 @@ export const createProduct = async (req, res) => {
         descripcion?.trim() || "",
         imagen_url?.trim() || "",
         parseFloat(precio_dolares),
-        true,
       ]
     );
 

@@ -1,23 +1,19 @@
-const BASE_URL = import.meta.env.VITE_API_URL;
-
-if (!BASE_URL) {
-  console.warn("VITE_API_URL no está definida, revisar archivo .env")
-}
+import { API_BASE_URL } from "../utils/api.js";
 
 const getHeaders = () => ({
   "Content-Type": "application/json",
-  "Authorization": `Bearer ${localStorage.getItem("token")}`
+  Authorization: `Bearer ${localStorage.getItem("token")}`,
 });
 
 export const activityService = {
   getAll: async () => {
-    const res = await fetch(`${BASE_URL}/activities`);
+    const res = await fetch(`${API_BASE_URL}/api/activities`);
     if (!res.ok) throw new Error("Error al obtener actividades");
     return res.json();
   },
 
   create: async (data) => {
-    const res = await fetch(`${BASE_URL}/activities`, {
+    const res = await fetch(`${API_BASE_URL}/api/activities`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -26,11 +22,11 @@ export const activityService = {
   },
 
   delete: async (id) => {
-    const res = await fetch(`${BASE_URL}/activities/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/api/activities/${id}`, {
       method: "DELETE",
       headers: getHeaders(),
     });
     if (!res.ok) throw new Error("Error al eliminar la actividad");
     return res.json();
-  }
+  },
 };
