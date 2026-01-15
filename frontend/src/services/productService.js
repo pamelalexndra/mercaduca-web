@@ -1,19 +1,19 @@
 import { API_BASE_URL } from "../utils/api";
 
 export const getProductById = async (id) => {
-  const res = await fetch(`${API_BASE_URL}/api/products/${id}`);
+  const res = await fetch(`${API_BASE_URL}/products/${id}`);
   if (!res.ok) throw new Error("Error obteniendo producto");
   return await res.json();
 };
 
 export const getEntrepreneurshipById = async (id) => {
-  const res = await fetch(`${API_BASE_URL}/api/entrepreneurship/${id}`);
+  const res = await fetch(`${API_BASE_URL}/entrepreneurship/${id}`);
   if (!res.ok) throw new Error("Error obteniendo emprendimiento");
   return await res.json();
 };
 
 export const updateProductAPI = async (id, data, token) => {
-  const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/products/${id}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -27,7 +27,7 @@ export const updateProductAPI = async (id, data, token) => {
 };
 
 export const deleteProductAPI = async (id, token) => {
-  const res = await fetch(`${API_BASE_URL}/api/products/${id}`, {
+  const res = await fetch(`${API_BASE_URL}/products/${id}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });

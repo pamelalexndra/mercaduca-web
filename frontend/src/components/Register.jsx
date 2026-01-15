@@ -101,7 +101,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   const inputClass =
     "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] border border-gray-200 transition-all placeholder:text-gray-400";
 
-  const AUTH_BASE_URL = `${API_BASE_URL}/api/auth`;
+  const AUTH_BASE_URL = `${API_BASE_URL}/auth`;
 
   const handleRegisterSuccess = (solicitudInfo) => {
     setSolicitudData({

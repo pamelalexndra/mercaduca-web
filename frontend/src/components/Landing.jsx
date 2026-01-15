@@ -54,19 +54,19 @@ export default function Landing() {
       <Carousel
         title="Nuevos Productos"
         subtitle="Descubre los productos agregados recientemente al catálogo"
-        endpoint="/api/products?ordenar=fecha_desc&limit=15"
+        endpoint="/products?ordenar=fecha_desc&limit=15"
       />
 
       <Carousel
         title="Nuevos Emprendimientos"
         subtitle="Descubre los favoritos de la comunidad"
-        endpoint="/api/entrepreneurship?ordenar=fecha_desc&limit=10"
+        endpoint="/entrepreneurship?ordenar=fecha_desc&limit=10"
       />
 
       <Carousel
         title="Mejores ofertas"
         subtitle="Descubre los productos con los mejores precios"
-        endpoint="/api/products?ordenar=precio_asc&limit=15"
+        endpoint="/products?ordenar=precio_asc&limit=15"
       />
     </>
   );

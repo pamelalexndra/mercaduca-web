@@ -2,7 +2,7 @@
 import { useCallback, useState } from "react";
 import { API_BASE_URL } from "../utils/api";
 
-export default function useProducts(baseUrl = `${API_BASE_URL}/api/products`) {
+export default function useProducts(baseUrl = `${API_BASE_URL}/products`) {
   const [allProducts, setAllProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);

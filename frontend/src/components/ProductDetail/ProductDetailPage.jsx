@@ -42,7 +42,7 @@ export default function ProductDetailPage() {
       try {
         setLoading(true);
 
-        const productRes = await fetch(`${API_BASE_URL}/api/products/${id}`);
+        const productRes = await fetch(`${API_BASE_URL}/products/${id}`);
         if (!productRes.ok) throw new Error("No se pudo obtener el producto");
         const productData = await productRes.json();
         const producto = productData.producto;
@@ -50,7 +50,7 @@ export default function ProductDetailPage() {
 
         if (producto.id_emprendimiento) {
           const emprendimientoRes = await fetch(
-            `${API_BASE_URL}/api/entrepreneurship/${producto.id_emprendimiento}`
+            `${API_BASE_URL}/entrepreneurship/${producto.id_emprendimiento}`
           );
           if (emprendimientoRes.ok) {
             const emprendimientoData = await emprendimientoRes.json();
@@ -82,7 +82,7 @@ export default function ProductDetailPage() {
       };
 
       const response = await fetch(
-        `${API_BASE_URL}/api/products/${product.id}`,
+        `${API_BASE_URL}/products/${product.id}`,
         {
           method: "PUT",
           headers: {
@@ -123,7 +123,7 @@ export default function ProductDetailPage() {
   const handleDeleteProduct = async () => {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/products/${product.id}`,
+        `${API_BASE_URL}/products/${product.id}`,
         {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
@@ -292,7 +292,7 @@ export default function ProductDetailPage() {
           <Carousel
             title={`Más productos de ${product.nombre_emprendimiento}`}
             subtitle={`Descubre otros artículos de ${product.nombre_emprendimiento}`}
-            endpoint={`/api/products?emprendimiento_id=${product.id_emprendimiento}`}
+            endpoint={`/products?emprendimiento_id=${product.id_emprendimiento}`}
           />
         )}
       </div>

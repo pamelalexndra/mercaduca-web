@@ -15,7 +15,7 @@ export default function useCategories(availableOnly) {
         setLoading(true);
         setError(null);
 
-        const baseUrl = `${API_BASE_URL}/api/categories`;
+        const baseUrl = `${API_BASE_URL}/categories`;
         const url = availableOnly ? `${baseUrl}?available=true` : baseUrl;
 
         const res = await fetch(url, { signal: controller.signal });

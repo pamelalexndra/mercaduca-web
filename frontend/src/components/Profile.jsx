@@ -182,7 +182,7 @@ export default function Profile({ user, onProfileLoaded }) {
       setLoadingProductos(true);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/products?emprendimiento_id=${emprendimientoId}`,
+          `${API_BASE_URL}/products?emprendimiento_id=${emprendimientoId}`,
           {
             headers: {
               ...getAuthHeaders(currentUserRef.current),
@@ -217,7 +217,7 @@ export default function Profile({ user, onProfileLoaded }) {
 
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/entrepreneurship/${emprendimientoId}`,
+          `${API_BASE_URL}/entrepreneurship/${emprendimientoId}`,
           {
             headers: {
               ...getAuthHeaders(currentUserRef.current),
@@ -255,7 +255,7 @@ export default function Profile({ user, onProfileLoaded }) {
         const authSource = currentUserRef.current || baseUserData;
         const authToken = getStoredToken(authSource);
         const response = await fetch(
-          `${API_BASE_URL}/api/user/profile/${userId}`,
+          `${API_BASE_URL}/user/profile/${userId}`,
           {
             headers: {
               ...getAuthHeaders(authSource),
@@ -603,8 +603,8 @@ export default function Profile({ user, onProfileLoaded }) {
       setError("");
 
       const endpoint = productoEdit?.id
-        ? `${API_BASE_URL}/api/products/${productoEdit.id}`
-        : `${API_BASE_URL}/api/products`;
+        ? `${API_BASE_URL}/products/${productoEdit.id}`
+        : `${API_BASE_URL}/products`;
       const method = productoEdit?.id ? "PUT" : "POST";
 
       const response = await fetch(endpoint, {
@@ -676,8 +676,8 @@ export default function Profile({ user, onProfileLoaded }) {
       setError("");
 
       const endpoint = emprendimiento?.id_emprendimiento
-        ? `${API_BASE_URL}/api/entrepreneurship/${emprendimiento.id_emprendimiento}`
-        : `${API_BASE_URL}/api/entrepreneurship`;
+        ? `${API_BASE_URL}/entrepreneurship/${emprendimiento.id_emprendimiento}`
+        : `${API_BASE_URL}/entrepreneurship`;
 
       const method = emprendimiento?.id_emprendimiento ? "PUT" : "POST";
 
@@ -754,7 +754,7 @@ export default function Profile({ user, onProfileLoaded }) {
     try {
       setError("");
       const response = await fetch(
-        `${API_BASE_URL}/api/products/${producto.id}`,
+        `${API_BASE_URL}/products/${producto.id}`,
         {
           method: "DELETE",
           headers: {
@@ -808,7 +808,7 @@ export default function Profile({ user, onProfileLoaded }) {
       setError("");
 
       const response = await fetch(
-        `${API_BASE_URL}/api/user/profile/${userId}`,
+        `${API_BASE_URL}/user/profile/${userId}`,
         {
           method: "PUT",
           headers: {

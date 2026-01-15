@@ -39,7 +39,7 @@ export default function ActivityManagement() {
       console.log("Respuesta del servidor:", res);
 
       if (res && res.data) {
-        setActividades([res.data, ...actividades]);
+        setActividades((prev) => [res.data, ...prev]);
         setShowSuccess(true);
         resetForm();
       } else {

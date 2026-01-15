@@ -22,9 +22,11 @@ export default function AboutUs() {
   useEffect(() => {
     const loadActivities = async () => {
       try {
-        const data = await activityService.getAll();
-        const formatted = data.map(act => ({
-          image: act.Imagen_url,
+        const response = await activityService.getAll();
+        const activities = response.data || response;
+
+        const formatted = activities.map(act => ({
+          image: act.imagen_url || act.Imagen_url,
           text: `${act.nombre}: ${act.descripcion}`
         }));
         setActividadesParaCarrusel(formatted);

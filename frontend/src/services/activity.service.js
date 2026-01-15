@@ -1,4 +1,5 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
+console.log("URL Base detectada: ", BASE_URL);
 
 if (!BASE_URL) {
   console.warn("VITE_API_URL no está definida, revisar archivo .env")

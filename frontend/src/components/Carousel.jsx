@@ -24,6 +24,8 @@ export default function Carousel({
       try {
         setError(null);
         const url = `${API_BASE_URL}${endpoint}`;
+        console.log("URL:", url);
+
         const res = await fetch(url);
         if (!res.ok) throw new Error("No se pudieron cargar los elementos");
 

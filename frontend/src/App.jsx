@@ -25,6 +25,7 @@ import CategoriesPanel from "./components/Admin/Categories/CategoriesPanel";
 import EntrepreneurshipApplications from "./components/Admin/Requests/EntrepreneurshipApplications";
 import ActivityManagement from "./components/Admin/Activities/ActivityManagement.jsx";
 import CategoryManagement from "./components/Admin/Categories/CategoryManagement.jsx";
+import CategoryForm from "./components/Admin/Categories/CategoryForm.jsx";
 
 // Páginas de Error
 import NotFound from "./components/ErrorPages/NotFound";
