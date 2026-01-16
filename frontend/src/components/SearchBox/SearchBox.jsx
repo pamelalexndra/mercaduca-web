@@ -11,6 +11,7 @@ export default function SearchBox({
   enableDebounce = true,
   initialSelectedCategories = [],
   initialSearchTerm = "",
+  showFilterButton = true,
 }) {
   const { categories, loading, error } = useCategories(true);
   const [filterOpen, setFilterOpen] = useState(false);
@@ -60,6 +61,7 @@ export default function SearchBox({
           enableDebounce={enableDebounce}
           onToggleFilterOpen={() => setFilterOpen((s) => !s)}
           isFilterOpen={filterOpen}
+          showFilterButton={showFilterButton}
         />
       </div>
 
