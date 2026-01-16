@@ -7,7 +7,9 @@ import { verifyToken } from "../middlewares/verifyToken.js";
 
 const router = express.Router();
 
-router.get("/profiles", verifyToken, getProfiles);
+// router.get("/profiles", verifyToken, getProfiles);
+
+router.get("/profiles", getProfiles);
 router.get("/profile/:userId", verifyToken, getProfileById);
 router.put("/profile/:userId", verifyToken, updateProfile);
 router.delete("/profile/:userId", verifyToken, deleteProfile);

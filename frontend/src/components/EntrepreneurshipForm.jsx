@@ -33,9 +33,8 @@ export default function EntrepreneurshipForm({
   useEffect(() => {
     if (initialData) {
       setFormData({
-        nombre: initialData.nombre || initialData.Nombre || "",
-        descripcion: initialData.descripcion || initialData.Descripcion || "",
-        imagen_url: initialData.imagen_url || initialData.Imagen_URL || "",
+        nombre: initialData.nombre || "",
+        descripcion: initialData.descripcion || "", imagen_url: initialData.imagen_url || initialData.Imagen_URL || "",
         instagram: initialData.instagram || initialData.Instagram || "",
         id_categoria:
           initialData.id_categoria ||
@@ -44,7 +43,7 @@ export default function EntrepreneurshipForm({
       });
     }
     setError("");
-  }, [initialData]);
+  },[initialData?.id_emprendimiento]);
 
   useEffect(() => {
     if (!visible) {

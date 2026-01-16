@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SuccessDialog from "./SuccessDialog";
 import ProductCard from "./Card";
@@ -340,9 +340,9 @@ export default function Profile({ user, onProfileLoaded }) {
 
         const baseUser = baseUserData ||
           fallbackUser || {
-            id: profileData.id_usuario,
-            username: profileData.username || profileData.Usuario,
-          };
+          id: profileData.id_usuario,
+          username: profileData.username || profileData.Usuario,
+        };
 
         const updatedProfile = {
           ...profileData,
@@ -391,22 +391,12 @@ export default function Profile({ user, onProfileLoaded }) {
       return;
     }
 
-    const hasStoredEmprendimiento = Boolean(
-      storedUser?.profile?.emprendimiento?.id_emprendimiento
-    );
-
     if (
       lastLoadedUserIdRef.current === storedUserId &&
-      lastLoadedTokenRef.current === storedToken &&
-      hasStoredEmprendimiento
+      lastLoadedTokenRef.current === storedToken
     ) {
-      const normalized = normalizeEmprendimiento(
-        storedUser.profile.emprendimiento
-      );
-      setEmprendimiento(normalized);
-
-      if (normalized.id_emprendimiento && productos.length === 0) {
-        fetchProductos(normalized.id_emprendimiento);
+      if (emprendimiento?.id_emprendimiento && productos.length === 0) {
+        fetchProductos(emprendimiento.id_emprendimiento);
       }
       return;
     }
@@ -418,17 +408,14 @@ export default function Profile({ user, onProfileLoaded }) {
     if (!storedUser?.profile?.emprendimiento?.id_emprendimiento) {
       loadProfile(storedUserId, storedUser);
     } else {
-      const normalized = normalizeEmprendimiento(
-        storedUser.profile.emprendimiento
-      );
+      const normalized = normalizeEmprendimiento(storedUser.profile.emprendimiento);
       setEmprendimiento(normalized);
       setLoadingProfile(false);
-
       if (normalized.id_emprendimiento) {
         fetchProductos(normalized.id_emprendimiento);
       }
     }
-  }, [user, navigate, loadProfile, fetchProductos, productos.length]);
+  }, [user, navigate, loadProfile, fetchProductos]);
 
   useEffect(() => {
     if (location.pathname.includes("/perfil/producto/nuevo")) {
@@ -476,6 +463,17 @@ export default function Profile({ user, onProfileLoaded }) {
     setShowSuccessDialog(true);
   };
 
+  const entrepreneurshipFormData = useMemo(() => ({
+    ...emprendimiento
+  }), [emprendimiento]);
+
+
+  const profileDataForForm = useMemo(() => ({
+    ...(currentUser?.profile || {}),
+    ...(emprendimiento || {}),
+    username: currentUser?.profile?.username || currentUser?.username || "",
+  }), [currentUser, emprendimiento]);
+
   if (loadingProfile) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
@@ -492,18 +490,7 @@ export default function Profile({ user, onProfileLoaded }) {
     currentUser?.profile?.username ||
     "Tu emprendimiento";
   const emprendimientoDescripcion = emprendimiento?.descripcion || "";
-  const profileDataForForm = {
-    ...(currentUser?.profile || {}),
-    ...(emprendimiento || {}),
-    username:
-      currentUser?.profile?.username ||
-      currentUser?.username ||
-      currentUser?.profile?.Usuario ||
-      "",
-  };
-  const entrepreneurshipFormData = {
-    ...emprendimiento,
-  };
+
   const instagramValue = emprendimiento?.instagram || "";
   const instagramHref = instagramValue
     ? instagramValue.startsWith("http")
@@ -1047,11 +1034,10 @@ export default function Profile({ user, onProfileLoaded }) {
             <button
               onClick={handleAgregar}
               disabled={!hasEmprendimiento}
-              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform hover:-translate-y-0.5 ${
-                hasEmprendimiento
-                  ? "bg-[#557051] hover:bg-[#445a3f]"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
+              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform hover:-translate-y-0.5 ${hasEmprendimiento
+                ? "bg-[#557051] hover:bg-[#445a3f]"
+                : "bg-gray-300 cursor-not-allowed"
+                }`}
               aria-label="Agregar producto"
             >
               +
@@ -1077,11 +1063,10 @@ export default function Profile({ user, onProfileLoaded }) {
               <button
                 onClick={handleAgregar}
                 disabled={!hasEmprendimiento}
-                className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${
-                  hasEmprendimiento
-                    ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
-                    : "bg-gray-300 cursor-not-allowed shadow-none"
-                }`}
+                className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento
+                  ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
+                  : "bg-gray-300 cursor-not-allowed shadow-none"
+                  }`}
               >
                 Comparte tu primer producto
               </button>

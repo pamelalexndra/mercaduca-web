@@ -68,28 +68,27 @@ export default function App() {
     updateCurrentUser(null);
   }, [updateCurrentUser]);
 
-  useEffect(() => {
-    const handleStorageChange = () => {
-      const storedUser = localStorage.getItem("user");
-      if (storedUser) {
-        try {
-          setCurrentUser(JSON.parse(storedUser));
-        } catch (e) {
-          setCurrentUser(null);
-        }
-      } else {
+// App.jsx - Busca este bloque y reemplázalo
+useEffect(() => {
+  const handleStorageChange = () => {
+    const storedUser = localStorage.getItem("user");
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (e) {
         setCurrentUser(null);
       }
-    };
+    } else {
+      setCurrentUser(null);
+    }
+  };
 
-    window.addEventListener("storage", handleStorageChange);
-    const interval = setInterval(handleStorageChange, 1000);
+  window.addEventListener("storage", handleStorageChange);
 
-    return () => {
-      window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
-    };
-  }, []);
+  return () => {
+    window.removeEventListener("storage", handleStorageChange);
+  };
+}, []);
 
   return (
     <Router>
