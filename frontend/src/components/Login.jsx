@@ -85,7 +85,7 @@ const Login = ({ onLoginSuccess }) => {
 
     try {
       const profileResponse = await fetch(
-        `${API_BASE_URL}/api/user/profile/${initialUserId}`,
+        `${API_BASE_URL}/user/profile/${initialUserId}`,
         {
           headers: {
             Authorization: token ? `Bearer ${token}` : undefined,
@@ -109,7 +109,7 @@ const Login = ({ onLoginSuccess }) => {
       if (emprendimientoId) {
         try {
           const productosResponse = await fetch(
-            `${API_BASE_URL}/api/products?emprendimiento_id=${emprendimientoId}`,
+            `${API_BASE_URL}/products?emprendimiento_id=${emprendimientoId}`,
             {
               headers: {
                 Authorization: token ? `Bearer ${token}` : undefined,
@@ -166,7 +166,7 @@ const Login = ({ onLoginSuccess }) => {
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/api/auth/logIn`, {
+      const response = await fetch(`${API_BASE_URL}/auth/logIn`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

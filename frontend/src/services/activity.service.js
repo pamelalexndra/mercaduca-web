@@ -7,13 +7,13 @@ const getHeaders = () => ({
 
 export const activityService = {
   getAll: async () => {
-    const res = await fetch(`${API_BASE_URL}/api/activities`);
+    const res = await fetch(`${API_BASE_URL}/activities`);
     if (!res.ok) throw new Error("Error al obtener actividades");
     return res.json();
   },
 
   create: async (data) => {
-    const res = await fetch(`${API_BASE_URL}/api/activities`, {
+    const res = await fetch(`${API_BASE_URL}/activities`, {
       method: "POST",
       headers: getHeaders(),
       body: JSON.stringify(data),
@@ -22,7 +22,7 @@ export const activityService = {
   },
 
   delete: async (id) => {
-    const res = await fetch(`${API_BASE_URL}/api/activities/${id}`, {
+    const res = await fetch(`${API_BASE_URL}/activities/${id}`, {
       method: "DELETE",
       headers: getHeaders(),
     });

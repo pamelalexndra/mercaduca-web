@@ -21,13 +21,13 @@ export default function PublicProfile() {
   useEffect(() => {
     setIsLoading(true);
 
-    fetch(`${API_BASE_URL}/api/entrepreneurship/${id}`)
+    fetch(`${API_BASE_URL}/entrepreneurship/${id}`)
       .then((res) => res.json())
       .then((data) => setEmprendimiento(data))
       .catch((err) => console.error("Error cargando emprendimiento:", err))
       .finally(() => setIsLoading(false));
 
-    fetch(`${API_BASE_URL}/api/products?emprendimiento_id=${id}`)
+    fetch(`${API_BASE_URL}/products?emprendimiento_id=${id}`)
       .then((res) => res.json())
       .then((data) => setProductos(data.productos))
       .catch((err) => console.error("Error cargando productos:", err));

@@ -15,7 +15,7 @@ const CredentialsSection = ({
   return (
     <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
       <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-        Credenciales de Acceso
+        Credenciales de acceso
       </h3>
 
       <div className="space-y-4">
@@ -118,7 +118,7 @@ const CredentialsSection = ({
 
         <div>
           <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Confirmar Contraseña:
+            Confirmar contraseña:
           </label>
           <div className="relative">
             <input

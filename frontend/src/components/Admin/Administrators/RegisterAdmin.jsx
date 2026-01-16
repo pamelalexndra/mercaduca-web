@@ -236,7 +236,7 @@ const RegisterAdmin = ({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/auth/check-username/${encodeURIComponent(username)}`
+        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`
       );
       const data = await response.json();
 
@@ -280,10 +280,10 @@ const RegisterAdmin = ({
 
       let endpoint, method;
       if (isEditMode) {
-        endpoint = `${API_BASE_URL}/api/user/profile/${initialData.id_usuario}`;
+        endpoint = `${API_BASE_URL}/user/profile/${initialData.id_usuario}`;
         method = "PUT";
       } else {
-        endpoint = `${API_BASE_URL}/api/admin`;
+        endpoint = `${API_BASE_URL}/admin`;
         method = "POST";
       }
 

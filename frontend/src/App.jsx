@@ -19,10 +19,9 @@ import Register from "./components/Register";
 
 // Páginas Privadas (Usuario)
 import Profile from "./components/Profile";
-import CategoriesPanel from "./components/Admin/Categories/CategoriesPanel";
 
 // Páginas de Administración
-import EntrepreneurshipApplications from "./components/Admin/Requests/EntrepreneurshipApplications";
+import RequestManagement from "./components/Admin/Requests/RequestManagement.jsx";
 import ActivityManagement from "./components/Admin/Activities/ActivityManagement.jsx";
 import CategoryManagement from "./components/Admin/Categories/CategoryManagement.jsx";
 import AdministratorsManagement from "./components/Admin/Administrators/AdministratorsManagement.jsx";
@@ -142,7 +141,7 @@ export default function App() {
           }
         >
           {/* Sub-rutas que se renderizan dentro AdminLayout */}
-          <Route path="entrepreneurship-applications" element={<EntrepreneurshipApplications />} />
+          <Route path="entrepreneurship-applications" element={<RequestManagement />} />
           <Route path="activity-management" element={<ActivityManagement />} />
           <Route path="categories" element={<CategoryManagement/>} />
           <Route path="administrators" element={<AdministratorsManagement/>} />

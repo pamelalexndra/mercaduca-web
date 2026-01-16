@@ -2,7 +2,7 @@ const BASE_URL = import.meta.env.VITE_API_URL;
 
 export const deleteEntrepreneurshipService = async (id, token) => {
   try {
-    const response = await fetch(`${BASE_URL}/api/entrepreneurship/${id}`, {
+    const response = await fetch(`${BASE_URL}/entrepreneurship/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -25,7 +25,7 @@ export const deleteEntrepreneurshipService = async (id, token) => {
 export const getEntrepreneurshipApplications = async (token) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/admin/entrepreneurship-applications`,
+      `${BASE_URL}/admin/entrepreneurship-applications`,
       {
         method: "GET",
         headers: {
@@ -56,7 +56,7 @@ export const approveEntrepreneurshipApplication = async (
 ) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/admin/entrepreneurship-applications/${id}/approve`,
+      `${BASE_URL}/admin/entrepreneurship-applications/${id}/approve`,
       {
         method: "POST",
         headers: {
@@ -88,7 +88,7 @@ export const rejectEntrepreneurshipApplication = async (
 ) => {
   try {
     const response = await fetch(
-      `${BASE_URL}/api/admin/entrepreneurship-applications/${id}/reject`,
+      `${BASE_URL}/admin/entrepreneurship-applications/${id}/reject`,
       {
         method: "POST",
         headers: {

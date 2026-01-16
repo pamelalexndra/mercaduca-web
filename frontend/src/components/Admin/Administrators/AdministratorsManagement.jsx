@@ -27,7 +27,7 @@ export default function AdministratorsManagement() {
         throw new Error("No hay token de autenticación");
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/admin`, {
+      const response = await fetch(`${API_BASE_URL}/admin`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -81,7 +81,7 @@ export default function AdministratorsManagement() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/user/profile/${adminToDelete.id}`,
+        `${API_BASE_URL}/user/profile/${adminToDelete.id}`,
         {
           method: "DELETE",
           headers: {

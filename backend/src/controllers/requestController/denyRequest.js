@@ -1,16 +1,20 @@
 // src/controllers/adminController/denyRequest.js
 import pool from "../../database/connection.js";
+import { sendRejectionEmail } from "../../services/sendNotificationEmail.js";
 
 export const denyRequest = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const { id_solicitud } = req.params;
+    const { id } = req.params;
+    const id_solicitud = id;
+    const { razon } = req.body; // Obtener razón del cuerpo de la petición
 
     await client.query("BEGIN");
 
+    // Obtener datos completos de la solicitud para el correo
     const solicitudResult = await client.query(
-      `SELECT usuario, correo FROM Solicitudes WHERE id_solicitud = $1`,
+      `SELECT * FROM Solicitudes WHERE id_solicitud = $1`,
       [id_solicitud]
     );
 
@@ -24,11 +28,20 @@ export const denyRequest = async (req, res) => {
 
     const solicitud = solicitudResult.rows[0];
 
+    // Eliminar la solicitud
     await client.query(`DELETE FROM Solicitudes WHERE id_solicitud = $1`, [
       id_solicitud,
     ]);
 
     await client.query("COMMIT");
+
+    // Enviar correo de rechazo (no bloqueante)
+    try {
+      await sendRejectionEmail(solicitud, razon || "");
+    } catch (emailError) {
+      console.error("Error enviando correo de rechazo:", emailError);
+      // No fallar la operación principal si el correo falla
+    }
 
     res.json({
       success: true,
@@ -37,6 +50,9 @@ export const denyRequest = async (req, res) => {
         id_solicitud: id_solicitud,
         usuario: solicitud.usuario,
         correo: solicitud.correo,
+        nombres: solicitud.nombres,
+        apellidos: solicitud.apellidos,
+        razon: razon || "No especificada",
       },
     });
   } catch (error) {

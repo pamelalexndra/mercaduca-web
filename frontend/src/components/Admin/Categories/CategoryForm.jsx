@@ -41,8 +41,8 @@ const CategoryForm = ({ category, onClose, onSuccess }) => {
 
       const method = category ? "PUT" : "POST";
       const url = category
-        ? `${API_BASE_URL}/api/categories/${category.id_categoria || category.id}`
-        : `${API_BASE_URL}/api/categories`;
+        ? `${API_BASE_URL}/categories/${category.id_categoria || category.id}`
+        : `${API_BASE_URL}/categories`;
 
       // Preparar datos para enviar - usar minúscula 'categoria'
       const dataToSend = {

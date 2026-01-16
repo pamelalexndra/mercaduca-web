@@ -17,7 +17,7 @@ export function useEmprendimiento(id) {
     }
 
     setLoading(true);
-    fetch(`${API_BASE_URL}/api/entrepreneurship/${id}`)
+    fetch(`${API_BASE_URL}/entrepreneurship/${id}`)
       .then((res) => {
         if (!res.ok) throw new Error("No se pudo obtener el emprendimiento");
         return res.json();

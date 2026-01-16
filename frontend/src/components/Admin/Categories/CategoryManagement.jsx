@@ -4,6 +4,7 @@ import CategoriesPanel from "./CategoriesPanel";
 import CategoryForm from "./CategoryForm";
 import SuccessDialog from "../../SuccessDialog";
 import ConfirmationDialog from "../../ConfirmationDialog";
+import { API_BASE_URL } from "../../../utils/api";
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState([]);
@@ -18,7 +19,7 @@ export default function CategoryManagement() {
   const loadCategories = async () => {
     try {
       setLoading(true);
-      const response = await fetch("http://localhost:5000/api/categories");
+      const response = await fetch(`${API_BASE_URL}/categories`);
       const result = await response.json();
 
       if (result.success && Array.isArray(result.data)) {
@@ -62,7 +63,7 @@ export default function CategoryManagement() {
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/categories/${categoryToDelete.id_categoria || categoryToDelete.id}`,
+        `${API_BASE_URL}/categories/${categoryToDelete.id_categoria || categoryToDelete.id}`,
         {
           method: "DELETE",
           headers: {

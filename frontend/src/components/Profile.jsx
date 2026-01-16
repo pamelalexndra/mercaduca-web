@@ -1,4 +1,10 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SuccessDialog from "./SuccessDialog";
 import ProductCard from "./Card";
@@ -182,7 +188,7 @@ export default function Profile({ user, onProfileLoaded }) {
       setLoadingProductos(true);
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/products?emprendimiento_id=${emprendimientoId}`,
+          `${API_BASE_URL}/products?emprendimiento_id=${emprendimientoId}`,
           {
             headers: {
               ...getAuthHeaders(currentUserRef.current),
@@ -217,7 +223,7 @@ export default function Profile({ user, onProfileLoaded }) {
 
       try {
         const response = await fetch(
-          `${API_BASE_URL}/api/entrepreneurship/${emprendimientoId}`,
+          `${API_BASE_URL}/entrepreneurship/${emprendimientoId}`,
           {
             headers: {
               ...getAuthHeaders(currentUserRef.current),
@@ -254,14 +260,11 @@ export default function Profile({ user, onProfileLoaded }) {
       try {
         const authSource = currentUserRef.current || baseUserData;
         const authToken = getStoredToken(authSource);
-        const response = await fetch(
-          `${API_BASE_URL}/api/user/profile/${userId}`,
-          {
-            headers: {
-              ...getAuthHeaders(authSource),
-            },
-          }
-        );
+        const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
+          headers: {
+            ...getAuthHeaders(authSource),
+          },
+        });
 
         if (response.status === 401 || response.status === 403) {
           localStorage.removeItem("token");
@@ -391,22 +394,12 @@ export default function Profile({ user, onProfileLoaded }) {
       return;
     }
 
-    const hasStoredEmprendimiento = Boolean(
-      storedUser?.profile?.emprendimiento?.id_emprendimiento
-    );
-
     if (
       lastLoadedUserIdRef.current === storedUserId &&
-      lastLoadedTokenRef.current === storedToken &&
-      hasStoredEmprendimiento
+      lastLoadedTokenRef.current === storedToken
     ) {
-      const normalized = normalizeEmprendimiento(
-        storedUser.profile.emprendimiento
-      );
-      setEmprendimiento(normalized);
-
-      if (normalized.id_emprendimiento && productos.length === 0) {
-        fetchProductos(normalized.id_emprendimiento);
+      if (emprendimiento?.id_emprendimiento && productos.length === 0) {
+        fetchProductos(emprendimiento.id_emprendimiento);
       }
       return;
     }
@@ -423,12 +416,11 @@ export default function Profile({ user, onProfileLoaded }) {
       );
       setEmprendimiento(normalized);
       setLoadingProfile(false);
-
       if (normalized.id_emprendimiento) {
         fetchProductos(normalized.id_emprendimiento);
       }
     }
-  }, [user, navigate, loadProfile, fetchProductos, productos.length]);
+  }, [user, navigate, loadProfile, fetchProductos]);
 
   useEffect(() => {
     if (location.pathname.includes("/perfil/producto/nuevo")) {
@@ -460,6 +452,7 @@ export default function Profile({ user, onProfileLoaded }) {
 
   const handleSuccessClose = () => {
     setShowSuccessDialog(false);
+    setSuccessMessage("");
 
     if (successMessage.includes("Perfil eliminado")) {
       localStorage.removeItem("token");
@@ -471,10 +464,21 @@ export default function Profile({ user, onProfileLoaded }) {
     }
   };
 
-  const handleSuccessFromChild = (message) => {
-    setSuccessMessage(message);
-    setShowSuccessDialog(true);
-  };
+  const entrepreneurshipFormData = useMemo(
+    () => ({
+      ...emprendimiento,
+    }),
+    [emprendimiento]
+  );
+
+  const profileDataForForm = useMemo(
+    () => ({
+      ...(currentUser?.profile || {}),
+      ...(emprendimiento || {}),
+      username: currentUser?.profile?.username || currentUser?.username || "",
+    }),
+    [currentUser, emprendimiento]
+  );
 
   if (loadingProfile) {
     return (
@@ -492,18 +496,7 @@ export default function Profile({ user, onProfileLoaded }) {
     currentUser?.profile?.username ||
     "Tu emprendimiento";
   const emprendimientoDescripcion = emprendimiento?.descripcion || "";
-  const profileDataForForm = {
-    ...(currentUser?.profile || {}),
-    ...(emprendimiento || {}),
-    username:
-      currentUser?.profile?.username ||
-      currentUser?.username ||
-      currentUser?.profile?.Usuario ||
-      "",
-  };
-  const entrepreneurshipFormData = {
-    ...emprendimiento,
-  };
+
   const instagramValue = emprendimiento?.instagram || "";
   const instagramHref = instagramValue
     ? instagramValue.startsWith("http")
@@ -521,7 +514,6 @@ export default function Profile({ user, onProfileLoaded }) {
     setSuccessMessage("Emprendimiento eliminado correctamente");
     setShowSuccessDialog(true);
     setShouldRefresh(true);
-    setShowEntrepreneurshipModal(false);
   };
 
   const handleProfileDeleteSuccess = () => {
@@ -557,11 +549,6 @@ export default function Profile({ user, onProfileLoaded }) {
     if (location.pathname.includes("/perfil/producto/nuevo")) {
       navigate("/perfil", { replace: true });
     }
-  };
-
-  const handleEditar = () => {
-    setError("");
-    setShowEntrepreneurshipModal(true);
   };
 
   const handleSubmit = async (data) => {
@@ -603,8 +590,8 @@ export default function Profile({ user, onProfileLoaded }) {
       setError("");
 
       const endpoint = productoEdit?.id
-        ? `${API_BASE_URL}/api/products/${productoEdit.id}`
-        : `${API_BASE_URL}/api/products`;
+        ? `${API_BASE_URL}/products/${productoEdit.id}`
+        : `${API_BASE_URL}/products`;
       const method = productoEdit?.id ? "PUT" : "POST";
 
       const response = await fetch(endpoint, {
@@ -676,8 +663,8 @@ export default function Profile({ user, onProfileLoaded }) {
       setError("");
 
       const endpoint = emprendimiento?.id_emprendimiento
-        ? `${API_BASE_URL}/api/entrepreneurship/${emprendimiento.id_emprendimiento}`
-        : `${API_BASE_URL}/api/entrepreneurship`;
+        ? `${API_BASE_URL}/entrepreneurship/${emprendimiento.id_emprendimiento}`
+        : `${API_BASE_URL}/entrepreneurship`;
 
       const method = emprendimiento?.id_emprendimiento ? "PUT" : "POST";
 
@@ -725,12 +712,7 @@ export default function Profile({ user, onProfileLoaded }) {
         return merged;
       });
 
-      setShowEntrepreneurshipModal(false);
-
-      if (normalized.id_emprendimiento) {
-        await fetchProductos(normalized.id_emprendimiento);
-      }
-
+      // Mostramos mensaje de éxito
       setSuccessMessage(
         emprendimiento?.id_emprendimiento
           ? "Emprendimiento actualizado correctamente"
@@ -753,15 +735,12 @@ export default function Profile({ user, onProfileLoaded }) {
 
     try {
       setError("");
-      const response = await fetch(
-        `${API_BASE_URL}/api/products/${producto.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            ...getAuthHeaders(currentUser),
-          },
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/products/${producto.id}`, {
+        method: "DELETE",
+        headers: {
+          ...getAuthHeaders(currentUser),
+        },
+      });
 
       const result = await response.json();
 
@@ -807,28 +786,25 @@ export default function Profile({ user, onProfileLoaded }) {
       setSavingProfile(true);
       setError("");
 
-      const response = await fetch(
-        `${API_BASE_URL}/api/user/profile/${userId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(currentUser),
-          },
-          body: JSON.stringify({
-            nombres: datos.nombres?.trim(),
-            apellidos: datos.apellidos?.trim(),
-            correo: datos.correo?.trim(),
-            telefono: datos.telefono?.trim(),
-            username:
-              datos.username?.trim() ||
-              currentUser?.username ||
-              currentUser?.profile?.username ||
-              currentUser?.profile?.Usuario,
-            nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
-          }),
-        }
-      );
+      const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(currentUser),
+        },
+        body: JSON.stringify({
+          nombres: datos.nombres?.trim(),
+          apellidos: datos.apellidos?.trim(),
+          correo: datos.correo?.trim(),
+          telefono: datos.telefono?.trim(),
+          username:
+            datos.username?.trim() ||
+            currentUser?.username ||
+            currentUser?.profile?.username ||
+            currentUser?.profile?.Usuario,
+          nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
+        }),
+      });
 
       const result = await response.json();
 
@@ -867,6 +843,10 @@ export default function Profile({ user, onProfileLoaded }) {
         correo: datos.correo,
         telefono: datos.telefono,
       }));
+
+      // Mostramos mensaje de éxito
+      setSuccessMessage("Perfil actualizado correctamente");
+      setShowSuccessDialog(true);
 
       return true;
     } catch (profileError) {

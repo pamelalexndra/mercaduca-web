@@ -6,7 +6,7 @@
  * @returns {Object} { query, params, filtrosAplicados }
  */
 export const buildEntrepreneurshipQuery = (filtros) => {
-    const { ids, ordenar = "fecha_desc", search, limit } = filtros;
+    const { ids, ordenar, search, limit } = filtros;
 
   let sqlParts = [
     `SELECT
