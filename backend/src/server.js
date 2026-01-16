@@ -18,6 +18,7 @@ import authenticationRoutes from "./routes/authenticationRoutes.js";
 import userRoutes from "./routes/profileRoutes.js";
 import activitiesRoutes from "./routes/activitiesRoutes.js";
 import requestRoutes from "./routes/requestRoutes.js";
+import admintRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -42,6 +43,7 @@ app.use("/api/auth", authenticationRoutes);
 app.use("/api/user", userRoutes);
 app.use("/api/activities", activitiesRoutes);
 app.use("/api/request", requestRoutes);
+app.use("/api/admin", admintRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {

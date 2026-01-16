@@ -3,13 +3,8 @@ import pool from "../../database/connection.js";
 export const updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const {
-      nombre,
-      descripcion,
-      imagen_url,
-      precio_dolares,
-      id_categoria,
-    } = req.body;
+    const { nombre, descripcion, imagen_url, precio_dolares, id_categoria } =
+      req.body;
 
     if (!id || isNaN(id)) {
       return res.status(400).json({ error: "ID de producto inválido" });
@@ -28,21 +23,21 @@ export const updateProduct = async (req, res) => {
       `
             UPDATE Producto 
                 SET 
-                Nombre = $1,
-                Descripcion = $2,
-                Imagen_URL = $3,
-                Precio_dolares = $4,
+                Nombre = $2,
+                Descripcion = $3,
+                Imagen_URL = $4,
+                Precio_dolares = $5,
                 id_categoria = $6
-            WHERE id_producto = $7
+            WHERE id_producto = $1
             RETURNING *
             `,
       [
+        parseInt(id),
         nombre?.trim(),
         descripcion?.trim() || "",
         imagen_url?.trim() || "",
         parseFloat(precio_dolares),
         id_categoria ? parseInt(id_categoria) : null,
-        parseInt(id),
       ]
     );
 
