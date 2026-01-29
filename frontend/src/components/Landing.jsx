@@ -1,13 +1,39 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
+
 import SearchBox from "./SearchBox/SearchBox.jsx";
 import Carousel from "./Carousel";
-import { useNavigate } from "react-router-dom";
+
 import mercaducaBlanco from "../images/mercaducaBlanco.png";
 import bgLandingGato from "../images/bgLandingGato.jpg";
 
+import { activityService } from "../services/activity.service.js";
+
 export default function Landing() {
   const navigate = useNavigate();
+
+  const [actividadesParaCarrusel, setActividadesParaCarrusel] = useState([]);
+
+  useEffect(() => {
+    const loadActivities = async () => {
+      try {
+        const response = await activityService.getAll();
+        const activities = response.data || response;
+
+        const formatted = activities.map((act) => ({
+          image: act.imagen_url || act.Imagen_url,
+          text: `${act.nombre}: ${act.descripcion}`,
+        }));
+
+        setActividadesParaCarrusel(formatted);
+      } catch (err) {
+        console.error("Error cargando actividades", err);
+      }
+    };
+
+    loadActivities();
+  }, []);
 
   const handleSearchFromLanding = (searchTerm) => {
     navigate(`/catalog?search=${encodeURIComponent(searchTerm)}`);
@@ -50,6 +76,12 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {actividadesParaCarrusel.length > 0 && (
+        <div className="w-full flex justify-center">
+          <Carousel variant="activities" items={actividadesParaCarrusel} />
+        </div>
+      )}
 
       <Carousel
         title="Nuevos Productos"

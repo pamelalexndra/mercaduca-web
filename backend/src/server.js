@@ -65,6 +65,8 @@ app.use("*", (req, res) => {
       "/api/entrepreneurship",
       "/api/auth",
       "/api/user",
+      "/api/activities",
+      "/api/request",
     ],
   });
 });

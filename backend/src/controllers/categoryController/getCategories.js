@@ -12,10 +12,14 @@ export const getCategories = async (req, res) => {
         SELECT 
           c.id_categoria, 
           c.categoria, 
-          COUNT(p.id_producto)::INT as cantidad_productos
-        FROM categorias c
-        INNER JOIN Producto p ON c.id_categoria = p.id_categoria
+          COALESCE(COUNT(DISTINCT p.id_producto), 0)::INT as cantidad_productos,
+          COALESCE(COUNT(DISTINCT e.id_emprendimiento), 0)::INT as cantidad_emprendimientos
+        FROM categorias as c
+        LEFT JOIN Producto as p ON c.id_categoria = p.id_categoria
+        LEFT JOIN Emprendimiento as e ON c.id_categoria = e.id_categoria
         GROUP BY c.id_categoria, c.categoria
+        HAVING COALESCE(COUNT(DISTINCT p.id_producto), 0) > 0 
+           OR COALESCE(COUNT(DISTINCT e.id_emprendimiento), 0) > 0
         ORDER BY c.categoria;
       `;
     } else {
@@ -23,9 +27,11 @@ export const getCategories = async (req, res) => {
         SELECT 
           c.id_categoria, 
           c.categoria, 
-          COUNT(p.id_producto)::INT as cantidad_productos
-        FROM categorias c
-        LEFT JOIN Producto p ON c.id_categoria = p.id_categoria
+          COALESCE(COUNT(DISTINCT p.id_producto), 0)::INT as cantidad_productos,
+          COALESCE(COUNT(DISTINCT e.id_emprendimiento), 0)::INT as cantidad_emprendimientos
+        FROM categorias as c
+        LEFT JOIN Producto as p ON c.id_categoria = p.id_categoria
+        LEFT JOIN Emprendimiento as e ON c.id_categoria = e.id_categoria
         GROUP BY c.id_categoria, c.categoria
         ORDER BY c.categoria;
       `;

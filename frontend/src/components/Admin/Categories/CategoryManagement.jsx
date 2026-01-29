@@ -62,14 +62,38 @@ export default function CategoryManagement() {
         throw new Error("No estás autenticado");
       }
 
+      // Verificar si la categoría tiene productos o emprendimientos
+      const categoryToDeleteId =
+        categoryToDelete.id_categoria || categoryToDelete.id;
+      const categoryData = categories.find(
+        (cat) =>
+          cat.id_categoria === categoryToDeleteId ||
+          cat.id === categoryToDeleteId,
+      );
+
+      if (categoryData) {
+        const hasProducts = (categoryData.cantidad_productos || 0) > 0;
+        const hasEmprendimientos =
+          (categoryData.cantidad_emprendimientos || 0) > 0;
+
+        if (hasProducts || hasEmprendimientos) {
+          alert(
+            "No se puede eliminar la categoría porque tiene productos o emprendimientos asociados.",
+          );
+          setShowConfirm(false);
+          setCategoryToDelete(null);
+          return;
+        }
+      }
+
       const response = await fetch(
-        `${API_BASE_URL}/categories/${categoryToDelete.id_categoria || categoryToDelete.id}`,
+        `${API_BASE_URL}/categories/${categoryToDeleteId}`,
         {
           method: "DELETE",
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (!response.ok) {
@@ -80,8 +104,8 @@ export default function CategoryManagement() {
       // Actualizar la lista de categorías
       setCategories(
         categories.filter(
-          (cat) => cat.id_categoria !== categoryToDelete.id_categoria
-        )
+          (cat) => (cat.id_categoria || cat.id) !== categoryToDeleteId,
+        ),
       );
 
       // Mostrar mensaje de éxito
@@ -92,6 +116,8 @@ export default function CategoryManagement() {
     } catch (error) {
       console.error("Error al eliminar categoría:", error);
       alert(error.message || "Hubo un problema al eliminar la categoría.");
+      setShowConfirm(false);
+      setCategoryToDelete(null);
     }
   };
 
@@ -110,31 +136,55 @@ export default function CategoryManagement() {
   };
 
   return (
-    <div className="bg-cream font-montserrat text-gray-800 min-h-screen p-10">
-      <div className="max-w-6xl mx-auto space-y-10">
-        <header className="bg-white rounded-3xl shadow-xl p-10">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="font-poppins text-3xl text-[#557051] font-bold">
+    <div className="bg-cream font-montserrat text-gray-800 min-h-screen p-4 md:p-6 lg:p-10">
+      <div className="max-w-6xl mx-auto space-y-6 md:space-y-8 lg:space-y-10">
+        <header className="bg-white rounded-2xl md:rounded-3xl shadow-xl p-6 md:p-8 lg:p-10">
+          {/* Para pantallas grandes: diseño horizontal */}
+          <div className="hidden lg:flex justify-between items-center">
+            <div className="flex-1">
+              <h1 className="font-poppins text-2xl lg:text-3xl text-[#557051] font-bold">
                 Gestión de categorías
               </h1>
               <p className="font-montserrat text-gray-500 mt-1">
-                Administra las categorías de productos de{" "}
+                Administra las categorías de productos y emprendimientos de{" "}
                 <strong>MercadUCA</strong>
               </p>
             </div>
             <button
               onClick={handleAddCategory}
-              className="bg-[#557051] text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:bg-[#455a42] transition-transform active:scale-95 flex items-center gap-2"
+              className="bg-[#557051] text-white font-medium py-2.5 px-6 rounded-lg hover:bg-[#455a42] transition-colors flex items-center justify-center gap-2 w-full md:w-auto disabled:opacity-50 disabled:cursor-not-allowed text-sm md:text-base"
             >
               <PlusCircle size={20} />
               Agregar categoría
             </button>
           </div>
+
+          {/* Para pantallas medianas y pequeñas: diseño vertical */}
+          <div className="lg:hidden">
+            <div className="text-center md:text-left">
+              <h1 className="font-poppins text-xl md:text-2xl text-[#557051] font-bold">
+                Gestión de categorías
+              </h1>
+              <p className="font-montserrat text-gray-500 mt-1 text-sm md:text-base">
+                Administra las categorías de productos y emprendimientos de{" "}
+                <strong>MercadUCA</strong>
+              </p>
+            </div>
+
+            <div className="mt-6 flex justify-center md:justify-start">
+              <button
+                onClick={handleAddCategory}
+                className="bg-[#557051] text-white font-bold py-3 px-6 rounded-2xl shadow-lg hover:bg-[#455a42] transition-transform active:scale-95 flex items-center gap-2 w-full md:w-auto justify-center"
+              >
+                <PlusCircle size={20} />
+                Agregar categoría
+              </button>
+            </div>
+          </div>
         </header>
 
-        <section className="bg-white rounded-3xl shadow-xl p-8">
-          <h2 className="font-loubag text-xl text-[#557051] mb-6">
+        <section className="bg-white rounded-2xl md:rounded-3xl shadow-xl p-4 md:p-6 lg:p-8">
+          <h2 className="font-loubag text-lg md:text-xl text-[#557051] mb-4 md:mb-6">
             Categorías existentes
           </h2>
           <CategoriesPanel

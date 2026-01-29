@@ -12,7 +12,7 @@ const menuItems = [
   {
     icon: <ClipboardList size={18} />,
     label: "Solicitudes",
-    path: "/admin/entrepreneurship-applications", // Agregamos /admin/
+    path: "/admin/entrepreneurship-applications",
   },
   {
     icon: <LayoutDashboard size={18} />,
@@ -28,6 +28,11 @@ const menuItems = [
     icon: <Users size={18} />,
     label: "Administradores",
     path: "/admin/administrators",
+  },
+  {
+    icon: <Users size={18} />,
+    label: "Emprendedores",
+    path: "/admin/entrpreneurs",
   },
 ];
 
