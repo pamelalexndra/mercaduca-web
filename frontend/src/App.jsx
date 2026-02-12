@@ -25,6 +25,7 @@ import RequestManagement from "./components/Admin/Requests/RequestManagement.jsx
 import ActivityManagement from "./components/Admin/Activities/ActivityManagement.jsx";
 import CategoryManagement from "./components/Admin/Categories/CategoryManagement.jsx";
 import AdministratorsManagement from "./components/Admin/Administrators/AdministratorsManagement.jsx";
+import EntrepreneursManagement from "./components/Admin/Entrepreneurs/EntrepreneusManagement.jsx";
 
 // Páginas de Error
 import NotFound from "./components/ErrorPages/NotFound";
@@ -145,6 +146,7 @@ export default function App() {
           <Route path="activity-management" element={<ActivityManagement />} />
           <Route path="categories" element={<CategoryManagement/>} />
           <Route path="administrators" element={<AdministratorsManagement/>} />
+          <Route path="entrepreneurs" element={<EntrepreneursManagement/>} />
         </Route>
 
         {/* --- RUTAS DE ERROR --- */}

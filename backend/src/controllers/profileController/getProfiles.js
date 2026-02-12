@@ -9,7 +9,8 @@ export const getProfiles = async (req, res) => {
     const query = `
       SELECT 
         u.id_usuario, 
-        u.Usuario, 
+        u.Usuario,
+        u.Rol, 
         ed.id_emprendedor,
         ed.Nombres, 
         ed.Apellidos, 
@@ -20,6 +21,7 @@ export const getProfiles = async (req, res) => {
         ed.id_emprendimiento -- Útil para saber si ya tiene un negocio vinculado
       FROM Usuarios u
       JOIN Emprendedor ed ON u.id_emprendedor = ed.id_emprendedor
+      WHERE u.Rol IN ('Vendedor')
       ORDER BY ed.Fecha_registro ${sortOrder}
     `;
 

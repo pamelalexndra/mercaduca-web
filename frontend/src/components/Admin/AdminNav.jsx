@@ -32,7 +32,7 @@ const menuItems = [
   {
     icon: <Users size={18} />,
     label: "Emprendedores",
-    path: "/admin/entrpreneurs",
+    path: "/admin/entrepreneurs",
   },
 ];
 

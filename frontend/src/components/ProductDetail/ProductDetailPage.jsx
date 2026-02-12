@@ -21,14 +21,24 @@ export default function ProductDetailPage() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
+  const isAdminViewingProfile =
+    localStorage.getItem("isAdminViewingProfile") === "true";
   const storedUserStr = localStorage.getItem("user");
   const token = localStorage.getItem("token");
+
   let myEntrepreneurshipId = null;
+  let isAdmin = false;
 
   if (storedUserStr) {
     try {
       const userObj = JSON.parse(storedUserStr);
       const emp = userObj?.profile?.emprendimiento;
+
+      const userRole =
+        userObj?.profile?.Rol || userObj?.profile?.rol || userObj?.role;
+      isAdmin =
+        userRole?.toLowerCase() === "administrador" || isAdminViewingProfile;
+
       if (emp) {
         myEntrepreneurshipId =
           emp.id_emprendimiento || emp.id || emp.idEmprendimiento;
@@ -73,7 +83,7 @@ export default function ProductDetailPage() {
 
         if (producto.id_emprendimiento) {
           const emprendimientoRes = await fetch(
-            `${API_BASE_URL}/entrepreneurship/${producto.id_emprendimiento}`
+            `${API_BASE_URL}/entrepreneurship/${producto.id_emprendimiento}`,
           );
           if (emprendimientoRes.ok) {
             const emprendimientoData = await emprendimientoRes.json();
@@ -95,6 +105,8 @@ export default function ProductDetailPage() {
     myEntrepreneurshipId &&
     String(product.id_emprendimiento) === String(myEntrepreneurshipId);
 
+  const canEdit = esDueno || isAdmin;
+
   const handleUpdateProduct = async (formData) => {
     setUpdateError("");
     try {
@@ -104,17 +116,18 @@ export default function ProductDetailPage() {
         disponible: true,
       };
 
-      const response = await fetch(
-        `${API_BASE_URL}/products/${product.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(payload),
-        }
-      );
+      const authToken = isAdmin
+        ? token
+        : localStorage.getItem("adminOriginalToken") || token;
+
+      const response = await fetch(`${API_BASE_URL}/products/${product.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
       const result = await response.json();
 
@@ -126,12 +139,12 @@ export default function ProductDetailPage() {
 
       let categoriaNombre = product.categoria || "Sin categoría";
       const categoriaId = parseInt(
-        formData.id_categoria || product.id_categoria
+        formData.id_categoria || product.id_categoria,
       );
 
       if (Array.isArray(categories)) {
         const categoriaActualizada = categories.find(
-          (cat) => cat.id_categoria === categoriaId
+          (cat) => cat.id_categoria === categoriaId,
         );
 
         if (categoriaActualizada) {
@@ -155,7 +168,11 @@ export default function ProductDetailPage() {
 
       setProduct(productoActualizado);
       setShowModal(false);
-      setSuccessMessage("Producto actualizado correctamente");
+      setSuccessMessage(
+        isAdmin
+          ? "Producto actualizado correctamente"
+          : "Producto actualizado correctamente",
+      );
       setShowSuccess(true);
     } catch (err) {
       setUpdateError(err.message || "Error al actualizar el producto");
@@ -164,25 +181,42 @@ export default function ProductDetailPage() {
 
   const handleDeleteProduct = async () => {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/products/${product.id}`,
-        {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${token}` },
-        }
-      );
+      const authToken = isAdmin
+        ? token
+        : localStorage.getItem("adminOriginalToken") || token;
+
+      const response = await fetch(`${API_BASE_URL}/products/${product.id}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${authToken}`,
+          "Content-Type": "application/json",
+        },
+      });
 
       if (response.ok) {
-        setSuccessMessage("Producto eliminado correctamente");
+        setSuccessMessage(
+          isAdmin
+            ? "Producto eliminado correctamente"
+            : "Producto eliminado correctamente",
+        );
         setShowSuccess(true);
         setTimeout(() => {
-          navigate("/perfil");
+          if (isAdmin) {
+            if (isAdminViewingProfile) {
+              navigate(-1);
+            } else {
+              navigate("/admin/entrepreneurs");
+            }
+          } else {
+            navigate("/perfil");
+          }
         }, 1500);
       } else {
-        alert("No se pudo eliminar el producto");
+        const errorData = await response.json();
+        setUpdateError(errorData.message || "No se pudo eliminar el producto");
       }
     } catch (e) {
-      alert("Error de conexión al eliminar");
+      setUpdateError("Error de conexión al eliminar");
     }
   };
 
@@ -225,6 +259,26 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
+        {/* Banner para admin */}
+        {isAdmin && (
+          <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
+            <div className="flex items-center gap-2">
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              <span className="font-medium">Modo administrador</span>
+            </div>
+            <p className="text-sm mt-1">
+              Estás viendo este producto como administrador. Puedes editarlo o
+              eliminarlo.
+            </p>
+          </div>
+        )}
+
         {emprendimiento && (
           <div className="mb-8">
             <ProductHeader
@@ -232,6 +286,7 @@ export default function ProductDetailPage() {
               numero={emprendimiento.telefono}
               imagen={emprendimiento.imagen_url}
               instagram={emprendimiento.instagram}
+              isAdmin={isAdmin}
             />
           </div>
         )}
@@ -280,7 +335,7 @@ export default function ProductDetailPage() {
               )}
 
               <div className="space-y-3 mt-6">
-                {esDueno ? (
+                {canEdit ? (
                   <button
                     onClick={() => setShowModal(true)}
                     className="w-full bg-green-900 hover:bg-green-700 text-white py-3 px-4 rounded-xl transition-colors font-medium flex items-center justify-center gap-2 shadow-md"
@@ -299,7 +354,7 @@ export default function ProductDetailPage() {
                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                       />
                     </svg>
-                    Editar producto
+                    {isAdmin ? "Editar producto" : "Editar producto"}
                   </button>
                 ) : (
                   <>
@@ -331,8 +386,8 @@ export default function ProductDetailPage() {
 
         {product.id_emprendimiento && (
           <Carousel
-            title={`Más productos de ${product.nombre_emprendimiento}`}
-            subtitle={`Descubre otros artículos de ${product.nombre_emprendimiento}`}
+            title={`Más productos de ${emprendimiento?.nombre || "este emprendimiento"}`}
+            subtitle={`Descubre otros artículos de ${emprendimiento?.nombre || "este emprendedor"}`}
             endpoint={`/products?emprendimiento_id=${product.id_emprendimiento}`}
           />
         )}
@@ -346,6 +401,7 @@ export default function ProductDetailPage() {
         producto={product}
         errorMessage={updateError}
         categories={categories}
+        isAdminMode={isAdmin}
       />
 
       <SuccessDialog
