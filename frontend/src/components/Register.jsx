@@ -291,7 +291,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   };
 
   const handleLoginClick = () => {
-    navigate("/login");
+    navigate("/vender");
   };
 
   return (

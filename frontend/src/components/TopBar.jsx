@@ -46,7 +46,7 @@ export default function TopBar({ currentUser, onLogout, onUpdateUser }) {
 
   const getProfileRoute = () => {
     if (isAdmin) {
-      return "/Admin";
+      return "/Admin/entrepreneurship-applications";
     }
     return "/perfil";
   };

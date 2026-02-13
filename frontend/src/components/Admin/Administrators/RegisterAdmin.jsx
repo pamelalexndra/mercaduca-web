@@ -51,7 +51,7 @@ const areAllFieldsFilled = (formData, isEditMode) => {
   if (!isEditMode) {
     requiredFields.push(
       formData.password.trim(),
-      formData.confirmPassword.trim()
+      formData.confirmPassword.trim(),
     );
   }
 
@@ -59,19 +59,24 @@ const areAllFieldsFilled = (formData, isEditMode) => {
 };
 
 const doPasswordsMatch = (password, confirmPassword, isEditMode) => {
-  if (isEditMode && (!password || password === "")) {
-    return true; // En modo edición, si no se cambia la contraseña, es válido
+  if (isEditMode && !password && !confirmPassword) {
+    return true;
   }
+
+  if (isEditMode && (password || confirmPassword)) {
+    return password === confirmPassword && password !== "";
+  }
+
   return password === confirmPassword && password !== "";
 };
 
 const isPasswordValid = (password, isEditMode) => {
   if (isEditMode && (!password || password === "")) {
-    return true; // En modo edición, contraseña vacía es válida (no se cambia)
+    return true;
   }
   return (
     /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/.test(
-      password
+      password,
     ) && password.length >= 8
   );
 };
@@ -193,7 +198,7 @@ const RegisterAdmin = ({
         newErrors.password = "Mínimo 8 caracteres";
       } else if (
         !/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])[A-Za-z\d@$!%*?&#]/.test(
-          formData.password
+          formData.password,
         )
       ) {
         newErrors.password = "Mayúsculas, minúsculas, números y símbolos";
@@ -236,7 +241,7 @@ const RegisterAdmin = ({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`
+        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`,
       );
       const data = await response.json();
 
@@ -338,8 +343,38 @@ const RegisterAdmin = ({
     }
   };
 
-  // Función para verificar si el formulario está completo y válido
   const isFormCompleteAndValid = () => {
+    if (isEditMode) {
+      const requiredFieldsValid = [
+        formData.username.trim(),
+        formData.nombres.trim(),
+        formData.apellidos.trim(),
+        formData.correo.trim(),
+        formData.telefono.trim(),
+      ].every((field) => field !== "");
+
+      if (!requiredFieldsValid) return false;
+
+      if (formData.password || formData.confirmPassword) {
+        if (formData.password !== formData.confirmPassword) return false;
+
+        if (
+          formData.password &&
+          !isPasswordValid(formData.password, isEditMode)
+        )
+          return false;
+      }
+
+      if (
+        formData.username !== initialData?.usuario &&
+        usernameAvailable === false
+      ) {
+        return false;
+      }
+
+      return true;
+    }
+
     if (!areAllFieldsFilled(formData, isEditMode)) {
       return false;
     }
@@ -350,19 +385,11 @@ const RegisterAdmin = ({
       return false;
     }
 
-    if (!isEditMode && usernameAvailable === false) {
+    if (usernameAvailable === false) {
       return false;
     }
 
-    if (
-      isEditMode &&
-      formData.username !== initialData?.usuario &&
-      usernameAvailable === false
-    ) {
-      return false;
-    }
-
-    if (!isEditMode && !isPasswordValid(formData.password, isEditMode)) {
+    if (!isPasswordValid(formData.password, isEditMode)) {
       return false;
     }
 
