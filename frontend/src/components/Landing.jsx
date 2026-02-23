@@ -12,7 +12,6 @@ import { activityService } from "../services/activity.service.js";
 
 export default function Landing() {
   const navigate = useNavigate();
-
   const [actividadesParaCarrusel, setActividadesParaCarrusel] = useState([]);
 
   useEffect(() => {
@@ -50,6 +49,7 @@ export default function Landing() {
 
   return (
     <>
+      {/* HERO */}
       <section className="relative flex flex-col items-center text-center px-2 w-full">
         <motion.div
           initial={{ opacity: 0 }}
@@ -77,11 +77,43 @@ export default function Landing() {
         </div>
       </section>
 
-      {actividadesParaCarrusel.length > 0 && (
-        <div className="w-full flex justify-center">
-          <Carousel variant="activities" items={actividadesParaCarrusel} />
-        </div>
-      )}
+<section className="mb-14">
+  <div className="mx-auto max-w-6xl px-6">
+    <h3 className="text-xl font-loubag font-bold text-center">
+      Algunas de nuestras actividades...
+    </h3>
+    <p className="mt-1 text-center text-sm text-zinc-500 font-poppins">
+      Descubre lo que hacemos en Mercaduca
+    </p>
+
+    <div className="relative mt-6 pb-12 font-montserrat">
+      <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar">
+        {actividadesParaCarrusel.length > 0 ? (
+          actividadesParaCarrusel.map((act, i) => (
+            <div key={i} className="snap-start shrink-0 w-64 sm:w-72 md:w-80">
+              <div className="rounded-2xl overflow-hidden shadow-md bg-zinc-100">
+                <img
+                  src={act.image}
+                  alt={`actividad-${i}`}
+                  className="w-full h-48 object-cover"
+                />
+                {act.text && (
+                  <p className="text-xs text-zinc-600 font-montserrat p-3 text-center">
+                    {act.text}
+                  </p>
+                )}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="py-10 text-zinc-400 w-full text-center">
+            Cargando actividades...
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+</section>
 
       <Carousel
         title="Nuevos Productos"
