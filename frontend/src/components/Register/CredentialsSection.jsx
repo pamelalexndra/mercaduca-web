@@ -8,6 +8,8 @@ const CredentialsSection = ({
   usernameAvailable,
   passwordStrength,
   onUsernameCheck,
+  isEditMode = false,
+  errors = {},
 }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -15,13 +17,13 @@ const CredentialsSection = ({
   return (
     <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
       <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-        Credenciales de Acceso
+        Credenciales de acceso
       </h3>
 
       <div className="space-y-4">
         <div>
           <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Usuario:
+            Usuario: <span className="text-red-500">*</span>
           </label>
           <input
             type="text"
@@ -32,27 +34,52 @@ const CredentialsSection = ({
               onUsernameCheck(e.target.value);
             }}
             required
-            className={inputClass}
+            className={`${inputClass} ${errors.username ? "border-red-500 focus:ring-red-500" : ""}`}
             placeholder="Ingresa tu usuario"
             maxLength="30"
             pattern="[a-zA-Z0-9]+"
+            title="Solo letras y números, sin espacios"
           />
 
-          {usernameAvailable === true && (
-            <div className="text-green-600 text-sm font-semibold mt-2">
-              ✓ Usuario disponible
+          {errors.username && (
+            <p className="text-red-600 text-sm mt-1">{errors.username}</p>
+          )}
+
+          {!errors.username && usernameAvailable === true && (
+            <div className="text-green-600 text-sm font-semibold mt-2 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Usuario disponible
             </div>
           )}
-          {usernameAvailable === false && (
-            <div className="text-red-600 text-sm font-semibold mt-2">
-              ✗ Usuario no disponible
+          {!errors.username && usernameAvailable === false && (
+            <div className="text-red-600 text-sm font-semibold mt-2 flex items-center gap-1">
+              <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path
+                  fillRule="evenodd"
+                  d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                  clipRule="evenodd"
+                />
+              </svg>
+              Usuario no disponible
             </div>
           )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Contraseña:
+            Contraseña:{" "}
+            {isEditMode && (
+              <span className="text-gray-500 font-normal text-xs">
+                (dejar vacío para no cambiar)
+              </span>
+            )}
+            {!isEditMode && <span className="text-red-500">*</span>}
           </label>
           <div className="relative">
             <input
@@ -60,9 +87,13 @@ const CredentialsSection = ({
               name="password"
               value={formData.password}
               onChange={onChange}
-              required
-              className={`${inputClass} pr-10`}
-              placeholder="Mínimo 8 caracteres con mayúsculas, minúsculas, números y símbolos (@$!%*?&)"
+              required={!isEditMode}
+              className={`${inputClass} pr-10 ${errors.password ? "border-red-500 focus:ring-red-500" : ""}`}
+              placeholder={
+                isEditMode
+                  ? "Nueva contraseña (opcional)"
+                  : "Mínimo 8 caracteres"
+              }
               maxLength="128"
             />
             <button
@@ -110,15 +141,28 @@ const CredentialsSection = ({
               )}
             </button>
           </div>
-          <PasswordStrengthMeter
-            password={formData.password}
-            passwordStrength={passwordStrength}
-          />
+
+          {errors.password && (
+            <p className="text-red-600 text-sm mt-1">{errors.password}</p>
+          )}
+
+          {formData.password && (
+            <PasswordStrengthMeter
+              password={formData.password}
+              passwordStrength={passwordStrength}
+            />
+          )}
         </div>
 
         <div>
           <label className="block text-sm font-semibold text-gray-800 mb-2">
-            Confirmar Contraseña:
+            Confirmar contraseña:{" "}
+            {isEditMode && (
+              <span className="text-gray-500 font-normal text-xs">
+                (solo si cambiaste la contraseña)
+              </span>
+            )}
+            {!isEditMode && <span className="text-red-500">*</span>}
           </label>
           <div className="relative">
             <input
@@ -126,9 +170,13 @@ const CredentialsSection = ({
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={onChange}
-              required
-              className={`${inputClass} pr-10`}
-              placeholder="Confirma tu contraseña"
+              required={!isEditMode && formData.password !== ""}
+              className={`${inputClass} pr-10 ${errors.confirmPassword ? "border-red-500 focus:ring-red-500" : ""}`}
+              placeholder={
+                isEditMode
+                  ? "Confirma nueva contraseña"
+                  : "Confirma tu contraseña"
+              }
               maxLength="128"
             />
             <button
@@ -178,16 +226,48 @@ const CredentialsSection = ({
               )}
             </button>
           </div>
-          {formData.confirmPassword &&
+
+          {errors.confirmPassword && (
+            <p className="text-red-600 text-sm mt-1">
+              {errors.confirmPassword}
+            </p>
+          )}
+
+          {!errors.confirmPassword &&
+            formData.confirmPassword &&
             formData.password !== formData.confirmPassword && (
-              <div className="text-red-600 text-sm font-semibold mt-2">
-                ✗ Las contraseñas no coinciden
+              <div className="text-red-600 text-sm font-semibold mt-2 flex items-center gap-1">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Las contraseñas no coinciden
               </div>
             )}
-          {formData.confirmPassword &&
-            formData.password === formData.confirmPassword && (
-              <div className="text-green-600 text-sm font-semibold mt-2">
-                ✓ Las contraseñas coinciden
+          {!errors.confirmPassword &&
+            formData.confirmPassword &&
+            formData.password === formData.confirmPassword &&
+            formData.password !== "" && (
+              <div className="text-green-600 text-sm font-semibold mt-2 flex items-center gap-1">
+                <svg
+                  className="w-4 h-4"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                Las contraseñas coinciden
               </div>
             )}
         </div>

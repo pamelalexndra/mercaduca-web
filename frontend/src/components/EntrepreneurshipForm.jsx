@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import useCategories from "../hooks/useCategories";
 import { useEmprendimiento } from "../hooks/useEmprendimiento";
 import ConfirmationDialog from "./ConfirmationDialog";
-import SuccessDialog from "./SuccessDialog";
 
 export default function EntrepreneurshipForm({
   visible,
@@ -23,8 +22,6 @@ export default function EntrepreneurshipForm({
 
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [successMessage, setSuccessMessage] = useState("");
 
   const { categories } = useCategories();
   const { removeEntrepreneurship, loadingDelete, errorDelete } =
@@ -34,7 +31,8 @@ export default function EntrepreneurshipForm({
     if (initialData) {
       setFormData({
         nombre: initialData.nombre || "",
-        descripcion: initialData.descripcion || "", imagen_url: initialData.imagen_url || initialData.Imagen_URL || "",
+        descripcion: initialData.descripcion || "",
+        imagen_url: initialData.imagen_url || initialData.Imagen_URL || "",
         instagram: initialData.instagram || initialData.Instagram || "",
         id_categoria:
           initialData.id_categoria ||
@@ -43,12 +41,11 @@ export default function EntrepreneurshipForm({
       });
     }
     setError("");
-  },[initialData?.id_emprendimiento]);
+  }, [initialData?.id_emprendimiento]);
 
   useEffect(() => {
     if (!visible) {
       setShowConfirm(false);
-      setShowSuccess(false);
       setError("");
     }
   }, [visible]);
@@ -98,12 +95,8 @@ export default function EntrepreneurshipForm({
     try {
       const success = await onSubmit?.(formData);
       if (success) {
-        setSuccessMessage(
-          initialData?.id_emprendimiento
-            ? "Emprendimiento actualizado correctamente"
-            : "Emprendimiento creado correctamente"
-        );
-        setShowSuccess(true);
+        // No mostramos éxito aquí, lo maneja el componente padre
+        onClose?.(); // Cerramos el formulario después de éxito
       }
     } catch (err) {
       setError(err.message || "Error al procesar la solicitud");
@@ -125,9 +118,9 @@ export default function EntrepreneurshipForm({
     const success = await removeEntrepreneurship(idToDelete);
 
     if (success) {
-      setSuccessMessage("Emprendimiento eliminado correctamente");
-      setShowSuccess(true);
+      // No mostramos éxito aquí, lo maneja el componente padre
       onDeleteSuccess?.();
+      onClose?.(); // Cerramos el formulario después de eliminar
     }
   };
 
@@ -139,11 +132,6 @@ export default function EntrepreneurshipForm({
     if (e.target === e.currentTarget) {
       onClose?.();
     }
-  };
-
-  const handleSuccessClose = () => {
-    setShowSuccess(false);
-    onClose?.();
   };
 
   const isFormValid = () => {
@@ -302,12 +290,6 @@ export default function EntrepreneurshipForm({
         message="¿Estás seguro de eliminar este emprendimiento? Se eliminarán todos sus productos e información asociados."
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
-      />
-
-      <SuccessDialog
-        show={showSuccess}
-        message={successMessage}
-        onConfirm={handleSuccessClose}
       />
     </>
   );

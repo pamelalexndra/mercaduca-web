@@ -1,16 +1,17 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Filter } from "lucide-react";
 import Card from "./Card";
 import SearchBox from "./SearchBox/SearchBox.jsx";
 import FilterPanel from "./FilterPanel";
 import SuccessDialog from "./SuccessDialog";
 import useEntrepreneurships from "../hooks/useEntrepreneurships";
 import useCategories from "../hooks/useCategories";
-import { Filter } from "lucide-react";
 
 export default function Emprendedores({ onGoHome }) {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { entrepreneurships, loading, error, fetchEntrepreneurships } = useEntrepreneurships();
+  const { entrepreneurships, loading, error, fetchEntrepreneurships } =
+    useEntrepreneurships();
   const { categories } = useCategories(true);
 
   const [selectedCategories, setSelectedCategories] = useState([]);
@@ -30,9 +31,9 @@ export default function Emprendedores({ onGoHome }) {
 
     const categoryArray = urlCategories
       ? urlCategories
-        .split(",")
-        .map((id) => parseInt(id, 10))
-        .filter((n) => !Number.isNaN(n))
+          .split(",")
+          .map((id) => parseInt(id, 10))
+          .filter((n) => !Number.isNaN(n))
       : [];
 
     setSearchTerm(urlSearch);
@@ -44,13 +45,13 @@ export default function Emprendedores({ onGoHome }) {
     setIsInitialLoad(false);
   }, [searchParams, isInitialLoad, fetchEntrepreneurships]);
 
-
   const updateFilters = (newCategories, newSearch, newSort) => {
     if (newCategories !== undefined) setSelectedCategories(newCategories);
     if (newSearch !== undefined) setSearchTerm(newSearch);
     if (newSort !== undefined) setSortOption(newSort);
 
-    const cats = newCategories !== undefined ? newCategories : selectedCategories;
+    const cats =
+      newCategories !== undefined ? newCategories : selectedCategories;
     const search = newSearch !== undefined ? newSearch : searchTerm;
     const sort = newSort !== undefined ? newSort : sortOption;
 
@@ -70,7 +71,8 @@ export default function Emprendedores({ onGoHome }) {
     fetchEntrepreneurships(cats, search, { sort: sort });
   };
 
-  const handleCategoryChange = (ids) => updateFilters(ids, undefined, undefined);
+  const handleCategoryChange = (ids) =>
+    updateFilters(ids, undefined, undefined);
   const handleSortChange = (sort) => updateFilters(undefined, undefined, sort);
   const handleSearch = (search) => updateFilters(undefined, search, undefined);
 
@@ -132,8 +134,6 @@ export default function Emprendedores({ onGoHome }) {
             </button>
           </div>
 
-
-
           <div className="flex-1 w-full">
             <div className="hidden md:flex relative items-center justify-center mb-6 h-12">
               <button
@@ -168,7 +168,10 @@ export default function Emprendedores({ onGoHome }) {
 
             {entrepreneurships.length === 0 && !loading && (
               <div className="text-center py-16 text-zinc-500 bg-zinc-50 rounded-xl border border-dashed border-zinc-300">
-                <p>No se encontraron emprendimientos con los filtros seleccionados.</p>
+                <p>
+                  No se encontraron emprendimientos con los filtros
+                  seleccionados.
+                </p>
                 <div className="mt-4">
                   <button
                     onClick={() => updateFilters([], "", "")}

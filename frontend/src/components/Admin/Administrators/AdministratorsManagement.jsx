@@ -27,7 +27,7 @@ export default function AdministratorsManagement() {
         throw new Error("No hay token de autenticación");
       }
 
-      const response = await fetch(`${API_BASE_URL}/api/admin`, {
+      const response = await fetch(`${API_BASE_URL}/admin`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -81,7 +81,7 @@ export default function AdministratorsManagement() {
       }
 
       const response = await fetch(
-        `${API_BASE_URL}/api/user/profile/${adminToDelete.id}`,
+        `${API_BASE_URL}/user/profile/${adminToDelete.id}`,
         {
           method: "DELETE",
           headers: {
@@ -113,7 +113,6 @@ export default function AdministratorsManagement() {
   // Manejar éxito de registro/actualización
   const handleAdminSuccess = (adminData) => {
     if (adminToEdit) {
-      // Actualizar administrador en la lista
       setAdmins((prev) =>
         prev.map((admin) =>
           admin.id_usuario === adminData.id_usuario ? adminData : admin
@@ -128,13 +127,11 @@ export default function AdministratorsManagement() {
     setShowAdminForm(false);
     setShowSuccess(true);
     setAdminToEdit(null);
-    // Recargar la lista para asegurar consistencia
     fetchAdmins();
   };
 
   // Mostrar diálogo de confirmación para AdminPanel
   const showConfirmationDialog = (type, id, title, message, onConfirm) => {
-    // Usar el onConfirm directamente que ya tiene el nombre
     onConfirm();
   };
 
@@ -167,7 +164,7 @@ export default function AdministratorsManagement() {
                 Gestión de Administradores
               </h1>
               <p className="font-montserrat text-gray-500 mt-1 text-sm md:text-base">
-                Gestiona los administradores del MercadUCA
+                Gestiona los administradores del <strong>MercadUCA</strong>
               </p>
             </div>
             <div className="w-full md:w-auto mt-4 md:mt-0">
@@ -250,7 +247,6 @@ export default function AdministratorsManagement() {
         </section>
       </div>
 
-      {/* Modal para agregar/editar administrador */}
       {showAdminForm && (
         <AdminForm
           adminToEdit={adminToEdit}
@@ -260,7 +256,6 @@ export default function AdministratorsManagement() {
         />
       )}
 
-      {/* Diálogo de confirmación */}
       <ConfirmationDialog
         show={showConfirm}
         message={`¿Estás seguro de que deseas eliminar al administrador ${adminToDelete?.name}? Esta acción no se puede deshacer.`}
@@ -268,7 +263,6 @@ export default function AdministratorsManagement() {
         onCancel={handleCancelDelete}
       />
 
-      {/* Diálogo de éxito */}
       <SuccessDialog
         show={showSuccess}
         message={successMessage}

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "../utils/api";
 import CredentialsSection from "./Register/CredentialsSection";
 import PersonalInfoSection from "./Register/PersonalInfoSection";
-import RequestDialog from "./RequestDialog";
+import RequestDialog from "./Admin/Requests/RequestDialog";
 
 const evaluatePasswordStrength = (password) => {
   const feedback = [];
@@ -291,13 +291,13 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
   };
 
   const handleLoginClick = () => {
-    navigate("/login");
+    navigate("/vender");
   };
 
   return (
     <div className="bg-white p-8 rounded-2xl shadow-2xl border border-gray-200 w-full max-w-4xl mx-auto font-montserrat">
       <h2 className="text-2xl font-bold text-center text-gray-900 mb-6">
-        Solicitud de Registro
+        Solicitud de registro
       </h2>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -309,7 +309,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
 
         <div className="border border-gray-200 rounded-xl p-6 bg-gray-50 shadow-sm">
           <h3 className="text-lg font-semibold text-gray-800 mb-4 pb-2 border-b border-gray-200">
-            Motivo del Registro
+            Motivo del registro
           </h3>
           <div>
             <label className="block text-sm font-semibold text-gray-800 mb-2">
@@ -321,7 +321,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
               onChange={handleChange}
               required
               className={`${inputClass} min-h-[120px] resize-y`}
-              placeholder="Cuéntanos por qué deseas unirte a nuestra plataforma, qué productos o servicios ofreces, y cualquier información adicional que consideres importante..."
+              placeholder="Cuéntanos por qué deseas unirte a nuestra plataforma, qué productos o servicios ofreces, y cualquier red social como refencia del emprendimiento o productos"
               maxLength="1000"
             />
             <div className="text-xs text-gray-500 mt-2">
@@ -364,7 +364,7 @@ const Register = ({ onRegisterSuccess, switchToLogin }) => {
             ) || loading
           }
         >
-          {loading ? "Enviando solicitud..." : "Enviar Solicitud"}
+          {loading ? "Enviando solicitud..." : "Enviar solicitud"}
         </button>
       </form>
 

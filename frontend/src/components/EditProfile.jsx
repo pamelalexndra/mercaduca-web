@@ -1,5 +1,5 @@
 // src/components/EditProfile.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import ConfirmationDialog from "./ConfirmationDialog";
@@ -26,41 +26,47 @@ export default function EditProfile({
   const [localError, setLocalError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
 
+  const initializedRef = useRef(false);
+
   const { removeProfile, loadingDelete, errorDelete } = useProfile();
 
   const inputClass =
     "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
 
   useEffect(() => {
-    if (emprendimientoData) {
-      setFormData({
-        nombres: emprendimientoData.nombres || "",
-        apellidos: emprendimientoData.apellidos || "",
-        correo: emprendimientoData.correo || "",
-        telefono: emprendimientoData.telefono || "",
-        username:
-          emprendimientoData.username ||
-          emprendimientoData.Usuario ||
-          emprendimientoData.usuario ||
-          "",
-        nuevaContraseña: "",
-        confirmarContraseña: "",
-      });
-    }
-  }, [emprendimientoData]);
-
-  useEffect(() => {
     if (visible) {
       setLocalError("");
       setShowConfirm(false);
+
+      if (emprendimientoData) {
+        setFormData({
+          nombres: emprendimientoData.nombres || "",
+          apellidos: emprendimientoData.apellidos || "",
+          correo: emprendimientoData.correo || "",
+          telefono: emprendimientoData.telefono || "",
+          username:
+            emprendimientoData.username ||
+            emprendimientoData.Usuario ||
+            emprendimientoData.usuario ||
+            "",
+          nuevaContraseña: "",
+          confirmarContraseña: "",
+        });
+      }
+
+      initializedRef.current = true;
+    } else {
+      initializedRef.current = false;
     }
   }, [visible]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+
     if (name === "nuevaContraseña" || name === "confirmarContraseña") {
       setLocalError("");
     }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 

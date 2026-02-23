@@ -25,10 +25,8 @@ CREATE TABLE Emprendedor (
   Telefono VARCHAR(8) UNIQUE,
 	Activo BOOLEAN DEFAULT TRUE,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-	CONSTRAINT fk_Emprendedor_Emprendimiento
-  FOREIGN KEY (id_emprendimiento)
-  REFERENCES Emprendimiento(id_emprendimiento)
-  ON DELETE SET NULL
+	CONSTRAINT fk_Emprendedor_Emprendimiento FOREIGN KEY (id_emprendimiento)
+    REFERENCES Emprendimiento(id_emprendimiento) ON DELETE SET NULL
 );
 
 CREATE TABLE Producto(
@@ -75,7 +73,8 @@ CREATE TABLE Solicitudes (
   telefono VARCHAR(20) UNIQUE,
   usuario VARCHAR(100) UNIQUE,
   contraseña TEXT,
-  descripcion_solicitud TEXT
+  descripcion_solicitud TEXT,
+  Fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 INSERT INTO Categorias (Categoria) VALUES 
@@ -193,6 +192,12 @@ VALUES ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Jochips'),
 ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Collares', '', 'https://i.ibb.co/d02XVvYt/Collar.png', 16.00),
 ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Aritos', '', 'https://i.ibb.co/jvF5Hj5n/Aritos.png', 10.00),
 ((SELECT id_emprendimiento FROM Emprendimiento WHERE Nombre = 'Ambar by Sof'),  11, 'Pulseras', '', 'https://i.ibb.co/mFFjLTZJ/Pulsera.png', 12.00);
+
+INSERT INTO Emprendedor (Nombres, Apellidos, Correo, Telefono) 
+VALUES ('Rodrigo Josué', 'Aguiñada Córdova', 'rjaguinada@uca.edu.sv', '12345678');
+
+INSERT INTO Usuarios (id_emprendedor, Usuario, Contraseña, Rol) 
+VALUES ('1', 'rjaguinada', '$2b$10$FYCERjMTj52vhT8BGa7RluLdN.AkwphoBrYpZDFWl.aMCiy.xJM72', 'Administrador');
 
 CREATE OR REPLACE FUNCTION notificar_nueva_solicitud()
 RETURNS TRIGGER AS $$

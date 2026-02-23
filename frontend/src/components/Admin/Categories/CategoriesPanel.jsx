@@ -19,7 +19,12 @@ const CategoryItem = ({ category, onEdit, onDelete }) => {
 
   const productCount =
     category.cantidad_productos || category.productCount || 0;
+  const emprendimientoCount =
+    category.cantidad_emprendimientos || category.emprendimientoCount || 0;
+
   const hasProducts = productCount > 0;
+  const hasEmprendimientos = emprendimientoCount > 0;
+  const hasAnyAssociation = hasProducts || hasEmprendimientos;
 
   return (
     <div
@@ -32,12 +37,24 @@ const CategoryItem = ({ category, onEdit, onDelete }) => {
         </div>
 
         <div className="mt-1">
-          {hasProducts ? (
-            <div className="text-sm text-gray-600">
-              {productCount} producto{productCount !== 1 ? "s" : ""}
+          {hasAnyAssociation ? (
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 text-sm">
+              {hasProducts && (
+                <div className="text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                  {productCount} producto{productCount !== 1 ? "s" : ""}
+                </div>
+              )}
+              {hasEmprendimientos && (
+                <div className="text-gray-600 bg-gray-100 px-2 py-1 rounded">
+                  {emprendimientoCount} emprendimiento
+                  {emprendimientoCount !== 1 ? "s" : ""}
+                </div>
+              )}
             </div>
           ) : (
-            <div className="text-sm text-gray-400">Sin productos asociados</div>
+            <div className="text-sm text-gray-400">
+              Sin productos o emprendimientos asociados
+            </div>
           )}
         </div>
       </div>
@@ -85,19 +102,26 @@ const CategoryItem = ({ category, onEdit, onDelete }) => {
             <button
               onClick={() => {
                 setShowMenu(false);
-                if (hasProducts) {
+                if (hasAnyAssociation) {
+                  const message = [];
+                  if (hasProducts) {
+                    message.push(`${productCount} producto(s)`);
+                  }
+                  if (hasEmprendimientos) {
+                    message.push(`${emprendimientoCount} emprendimiento(s)`);
+                  }
                   alert(
-                    `No se puede eliminar esta categoría porque tiene ${productCount} producto(s) asociado(s). Elimine primero los productos.`
+                    `No se puede eliminar esta categoría porque tiene ${message.join(" y ")} asociado(s). Elimine primero los productos y emprendimientos antes de eliminar la categoría.`,
                   );
                 } else {
                   onDelete(category);
                 }
               }}
-              className={`block w-full text-left px-4 py-2 text-sm ${hasProducts ? "text-gray-400 cursor-not-allowed" : "text-red-600 hover:bg-gray-100"} transition-colors flex items-center gap-2`}
-              disabled={hasProducts}
+              className={`block w-full text-left px-4 py-2 text-sm ${hasAnyAssociation ? "text-gray-400 cursor-not-allowed" : "text-red-600 hover:bg-gray-100"} transition-colors flex items-center gap-2`}
+              disabled={hasAnyAssociation}
               title={
-                hasProducts
-                  ? `No se puede eliminar (${productCount} productos)`
+                hasAnyAssociation
+                  ? `No se puede eliminar (${productCount} productos, ${emprendimientoCount} emprendimientos)`
                   : "Eliminar"
               }
             >
@@ -163,6 +187,29 @@ export const CategoriesPanel = ({
 
   return (
     <div className="space-y-4">
+      <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md mb-4">
+        <div className="flex items-start gap-2">
+          <svg
+            className="w-5 h-5 mt-0.5 flex-shrink-0"
+            fill="currentColor"
+            viewBox="0 0 20 20"
+          >
+            <path
+              fillRule="evenodd"
+              d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+              clipRule="evenodd"
+            />
+          </svg>
+          <div>
+            <p className="text-sm mt-1">
+              Las categorías no pueden eliminarse mientras tengan productos o
+              emprendimientos asociados. Primero se deben eliminar o modificar todos los
+              productos y emprendimientos asociados.
+            </p>
+          </div>
+        </div>
+      </div>
+
       {error && (
         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
           <div className="flex items-center gap-2">

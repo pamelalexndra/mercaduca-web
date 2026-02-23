@@ -10,7 +10,8 @@ export const getRequest = async (req, res) => {
         correo,
         telefono,
         usuario,
-        descripcion_solicitud
+        descripcion_solicitud,
+        fecha_solicitud
       FROM solicitudes 
       ORDER BY id_solicitud ASC
     `);

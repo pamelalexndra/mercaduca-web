@@ -32,7 +32,11 @@ export default function useProducts(baseUrl = `${API_BASE_URL}/products`) {
         const data = await response.json();
         const productos = data.productos || [];
 
-        if (categoryIds.length === 0 && !search && Object.keys(options).length === 0) {
+        if (
+          categoryIds.length === 0 &&
+          !search &&
+          Object.keys(options).length === 0
+        ) {
           setAllProducts(productos);
         }
         setFilteredProducts(productos);

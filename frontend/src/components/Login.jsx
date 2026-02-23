@@ -75,7 +75,7 @@ const Login = ({ onLoginSuccess }) => {
 
     // Redirigir según el rol
     if (userRole === "Administrador" || userRole === "administrador") {
-      navigate("/Admin");
+      navigate("/Admin/entrepreneurship-applications");
       return;
     }
 

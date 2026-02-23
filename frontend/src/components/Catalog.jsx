@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { Filter } from "lucide-react";
 import SearchBox from "./SearchBox/SearchBox.jsx";
 import ProductCard from "./Card";
 import FilterPanel from "./FilterPanel";
 import useProducts from "../hooks/useProducts";
 import useCategories from "../hooks/useCategories";
-import { Filter } from "lucide-react";
 
 export default function Catalog({ onGoHome }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -32,9 +32,9 @@ export default function Catalog({ onGoHome }) {
 
     const categoryArray = urlCategories
       ? urlCategories
-        .split(",")
-        .map((id) => parseInt(id, 10))
-        .filter((n) => !Number.isNaN(n))
+          .split(",")
+          .map((id) => parseInt(id, 10))
+          .filter((n) => !Number.isNaN(n))
       : [];
 
     setSearchTerm(urlSearch);
@@ -61,7 +61,8 @@ export default function Catalog({ onGoHome }) {
     if (newPrice !== undefined) setPriceRange(newPrice);
     if (newSort !== undefined) setSortOption(newSort);
 
-    const cats = newCategories !== undefined ? newCategories : selectedCategories;
+    const cats =
+      newCategories !== undefined ? newCategories : selectedCategories;
     const search = newSearch !== undefined ? newSearch : searchTerm;
     const price = newPrice !== undefined ? newPrice : priceRange;
     const sort = newSort !== undefined ? newSort : sortOption;
@@ -92,10 +93,14 @@ export default function Catalog({ onGoHome }) {
     });
   };
 
-  const handleCategoryChange = (ids) => updateFilters(ids, undefined, undefined, undefined);
-  const handlePriceChange = (range) => updateFilters(undefined, undefined, range, undefined);
-  const handleSortChange = (sort) => updateFilters(undefined, undefined, undefined, sort);
-  const handleSearch = (search) => updateFilters(undefined, search, undefined, undefined);
+  const handleCategoryChange = (ids) =>
+    updateFilters(ids, undefined, undefined, undefined);
+  const handlePriceChange = (range) =>
+    updateFilters(undefined, undefined, range, undefined);
+  const handleSortChange = (sort) =>
+    updateFilters(undefined, undefined, undefined, sort);
+  const handleSearch = (search) =>
+    updateFilters(undefined, search, undefined, undefined);
 
   const handleLoadMore = () => {
     setVisibleProductsCount((prevCount) => prevCount + 20);
@@ -133,7 +138,9 @@ export default function Catalog({ onGoHome }) {
   return (
     <>
       <section className="mx-auto max-w-6xl px-6 py-8">
-        <h2 className="text-3xl font-bold text-center font-loubag mb-8 text-zinc-800">Catálogo</h2>
+        <h2 className="text-3xl font-bold text-center font-loubag mb-8 text-zinc-800">
+          Catálogo
+        </h2>
 
         <div className="flex flex-col items-start">
           <div className="md:hidden relative w-full flex items-center justify-center mb-6">
@@ -153,9 +160,6 @@ export default function Catalog({ onGoHome }) {
             </button>
           </div>
 
-
-
-          
           <div className="flex-1 w-full">
             <div className="hidden md:flex relative items-center justify-center mb-6 h-12">
               <button
@@ -176,7 +180,11 @@ export default function Catalog({ onGoHome }) {
               </div>
             </div>
 
-            {(selectedCategories.length > 0 || searchTerm || priceRange.min || priceRange.max || sortOption) && (
+            {(selectedCategories.length > 0 ||
+              searchTerm ||
+              priceRange.min ||
+              priceRange.max ||
+              sortOption) && (
               <div className="mb-4 text-sm text-zinc-500">
                 Encontrados {filteredProducts.length} productos
               </div>
@@ -190,10 +198,14 @@ export default function Catalog({ onGoHome }) {
 
             {filteredProducts.length === 0 && !loading && (
               <div className="text-center py-16 text-zinc-500 bg-zinc-50 rounded-xl border border-dashed border-zinc-300">
-                <p>No se encontraron productos con los filtros seleccionados.</p>
+                <p>
+                  No se encontraron productos con los filtros seleccionados.
+                </p>
                 <div className="mt-4">
                   <button
-                    onClick={() => updateFilters([], "", { min: "", max: "" }, "")}
+                    onClick={() =>
+                      updateFilters([], "", { min: "", max: "" }, "")
+                    }
                     className="text-[#557051] hover:underline"
                   >
                     Limpiar filtros

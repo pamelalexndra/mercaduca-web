@@ -41,8 +41,8 @@ const CategoryForm = ({ category, onClose, onSuccess }) => {
 
       const method = category ? "PUT" : "POST";
       const url = category
-        ? `${API_BASE_URL}/api/categories/${category.id_categoria || category.id}`
-        : `${API_BASE_URL}/api/categories`;
+        ? `${API_BASE_URL}/categories/${category.id_categoria || category.id}`
+        : `${API_BASE_URL}/categories`;
 
       // Preparar datos para enviar - usar minúscula 'categoria'
       const dataToSend = {
@@ -95,7 +95,7 @@ const CategoryForm = ({ category, onClose, onSuccess }) => {
       <div className="bg-white rounded-xl w-full max-w-md">
         <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
           <h3 className="text-lg font-semibold">
-            {category ? "Editar Categoría" : "Nueva Categoría"}
+            {category ? "Editar categoría" : "Nueva categoría"}
           </h3>
           <button
             onClick={onClose}

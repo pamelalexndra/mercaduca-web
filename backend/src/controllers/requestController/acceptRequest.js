@@ -1,14 +1,17 @@
 // src/controllers/adminController/acceptRequest.js
 import pool from "../../database/connection.js";
+import { sendAcceptanceEmail } from "../../services/sendNotificationEmail.js";
 
 export const acceptRequest = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const { id_solicitud } = req.params;
+    const { id } = req.params;
+    const id_solicitud = id;
 
     await client.query("BEGIN");
 
+    // Obtener datos completos de la solicitud para el correo
     const solicitudResult = await client.query(
       `SELECT * FROM Solicitudes WHERE id_solicitud = $1`,
       [id_solicitud]
@@ -24,6 +27,7 @@ export const acceptRequest = async (req, res) => {
 
     const solicitud = solicitudResult.rows[0];
 
+    // Insertar en Emprendedor
     const emprendedorResult = await client.query(
       `
       INSERT INTO Emprendedor (nombres, apellidos, correo, telefono, activo)
@@ -40,20 +44,30 @@ export const acceptRequest = async (req, res) => {
 
     const idEmprendedor = emprendedorResult.rows[0].id_emprendedor;
 
+    // Insertar en Usuarios
     const usuarioResult = await client.query(
       `
-      INSERT INTO Usuarios (usuario, contraseña, id_emprendedor)
-      VALUES ($1, $2, $3)
+      INSERT INTO Usuarios (usuario, contraseña, id_emprendedor, rol)
+      VALUES ($1, $2, $3, 'Vendedor')
       RETURNING id_usuario, usuario
       `,
       [solicitud.usuario, solicitud.contraseña, idEmprendedor]
     );
 
+    // Eliminar la solicitud
     await client.query(`DELETE FROM Solicitudes WHERE id_solicitud = $1`, [
       id_solicitud,
     ]);
 
     await client.query("COMMIT");
+
+    // Enviar correo de aceptación (no bloqueante)
+    try {
+      await sendAcceptanceEmail(solicitud);
+    } catch (emailError) {
+      console.error("Error enviando correo de aceptación:", emailError);
+      // No fallar la operación principal si el correo falla
+    }
 
     res.json({
       success: true,
