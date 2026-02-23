@@ -1,10 +1,11 @@
 import React from "react";
-import { Mail, Phone, MapPin } from "lucide-react";
+import { Mail, Phone, MapPin, Clock } from "lucide-react";
 import logoVerde from "../images/mercaducaVerde.png";
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
 
+  {/* Links a redes sociales del mercaduca con ícono*/}
   const socialLinks = [
     {
       name: "Instagram",
@@ -32,6 +33,7 @@ const Footer = () => {
     },
   ];
 
+  {/* Links a enlaces de interés del propio sitio */}
   const quickLinks = [
     { name: "Inicio", href: "/" },
     { name: "Sobre Nosotros", href: "/sobreNosotros" },
@@ -40,6 +42,7 @@ const Footer = () => {
     { name: "Quiero vender", href: "/vender" },
   ];
 
+  {/* Link a categorías más destacadas */}
   const categories = [
     { name: "Ropa", href: "/catalog?categories=17" },
     { name: "Joyería", href: "/catalog?categories=11" },
@@ -105,6 +108,7 @@ const Footer = () => {
             </div>
           </div>
 
+          {/* Enlaces de contacto y de información para el local Mercaduca */}
           <div className="lg:w-2/6">
             <h4 className="text-[#557051] text-base font-semibold font-poppins mb-4">
               Contacto
@@ -124,6 +128,15 @@ const Footer = () => {
                   UCA, San Salvador, El Salvador
                 </a>
               </li>
+
+              <li className="flex items-start gap-3 group">
+                <Clock size={18} className="text-[#557051] mt-1 flex-shrink-0 group-hover:scale-110 transition-transform"
+                />
+                <p className="text-gray-600 hover:text-[#557051] hover:font-bold transition-colors">
+                  De lunes a jueves de 8:30-12:00 a.m / 2:00-5:00 p.m y los días viernes 8:30-12:00 a.m 
+                </p>
+              </li>
+
               <li className="flex items-start gap-3 group">
                 <Phone
                   size={18}
