@@ -45,6 +45,20 @@ CREATE TABLE Producto(
     REFERENCES Categorias(id_categoria)
 );
 
+CREATE TABLE Cupon(
+  id_cupon SERIAL PRIMARY KEY NOT NULL,
+  id_emprendimiento INT,
+  Nombre VARCHAR(200),
+  Description TEXT,
+  Imagen_URL TEXT,
+  Descuento DECIMAL(18,2),
+  Disponible BOOLEAN DEFAULT TRUE,
+  Fecha_creacion TIMESTAMP,
+  Precio_original DECIMAL(18,2),
+  Fecha_limite TIMESTAMP,
+  Id_categoria INT
+);
+
 CREATE TABLE Usuarios (
 	id_usuario SERIAL PRIMARY KEY NOT NULL,
 	id_emprendedor INT, 
@@ -76,6 +90,15 @@ CREATE TABLE Solicitudes (
   descripcion_solicitud TEXT,
   Fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+CREATE TABLE sitio_configuracion (
+  id SERIAL PRIMARY KEY,
+  clave VARCHAR(50) UNIQUE NOT NULL,
+  valor TEXT NOT NULL -- URL de la imagen
+);
+
+INSERT INTO sitio_configuracion (clave, valor) 
+VALUES ('landing_banner', 'https://res.cloudinary.com/dwyrfwnro/image/upload/v1772065363/gato-landing_enx9dx.jpg');
 
 INSERT INTO Categorias (Categoria) VALUES 
 ('Alimentos y bebidas'),

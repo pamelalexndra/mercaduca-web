@@ -1,6 +1,10 @@
 {
   "dependencies": {
+    "cloudinary": "^2.9.0",
+    "multer": "^2.0.2",
+    "node-cache": "^5.1.2",
     "react-slick": "^0.31.0",
-    "slick-carousel": "^1.8.1"
+    "slick-carousel": "^1.8.1",
+    "streamifier": "^0.1.1"
   }
 }

@@ -58,11 +58,20 @@ export default function TopBar({ currentUser, onLogout, onUpdateUser }) {
     return "Perfil";
   };
 
+  const clearSession = () => {
+    ["token", "user", "isAuthenticated"].forEach(key =>
+      localStorage.removeItem(key)
+    );
+  };
+
   const handleLogoutClick = () => {
-    if (onLogout) onLogout();
+    clearSession();
+    window.dispatchEvent(new Event("storage"));
+
+    onLogout?.();
     setMenuOpen(false);
     setProfileMenuOpen(false);
-    navigate("/");
+    navigate("/", { replace: true });
   };
 
   const refreshUserFromStorage = () => {
