@@ -49,7 +49,6 @@ export default function Landing() {
 
   return (
     <>
-      {/* HERO */}
       <section className="relative flex flex-col items-center text-center px-2 w-full">
         <motion.div
           initial={{ opacity: 0 }}
