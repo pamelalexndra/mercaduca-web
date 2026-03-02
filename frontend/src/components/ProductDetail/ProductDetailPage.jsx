@@ -5,6 +5,8 @@ import ProductHeader from "./ProductHeader";
 import ProductForm from "../ProductForm";
 import SuccessDialog from "../SuccessDialog";
 import { API_BASE_URL } from "../../utils/api";
+import ShippingCheckoutModal from "../ShippingCheckoutModal";
+import { Truck } from "lucide-react";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -25,6 +27,8 @@ export default function ProductDetailPage() {
     localStorage.getItem("isAdminViewingProfile") === "true";
   const storedUserStr = localStorage.getItem("user");
   const token = localStorage.getItem("token");
+
+  const [showBoxful, setShowBoxful] = useState(false);
 
   let myEntrepreneurshipId = null;
   let isAdmin = false;
@@ -369,14 +373,14 @@ export default function ProductDetailPage() {
                       </a>
                     )}
 
-                    {emprendimiento?.correo && (
-                      <a
-                        href={`mailto:${emprendimiento.correo}?subject=Consulta sobre ${product.nombre}`}
-                        className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium shadow-sm"
-                      >
-                        Enviar Email
-                      </a>
-                    )}
+                    {/* NUEVO BOTÓN DE BOXFUL */}
+                    <button
+                      onClick={() => setShowBoxful(true)}
+                      className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium shadow-sm"
+                    >
+                      📦 Comprar por Boxful
+                    </button>
+
                   </>
                 )}
               </div>
@@ -408,6 +412,14 @@ export default function ProductDetailPage() {
         show={showSuccess}
         message={successMessage}
         onConfirm={handleSuccessClose}
+      />
+
+      {/* MODAL DE BOXFUL */}
+      <ShippingCheckoutModal
+        visible={showBoxful}
+        onClose={() => setShowBoxful(false)}
+        product={product}
+        emprendimiento={emprendimiento}
       />
     </div>
   );

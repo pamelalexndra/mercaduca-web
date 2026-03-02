@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { Pencil } from "lucide-react";
 
 import SearchBox from "./SearchBox/SearchBox.jsx";
 import Carousel from "./Carousel";
@@ -10,9 +11,50 @@ import bgLandingGato from "../images/bgLandingGato.jpg";
 
 import { activityService } from "../services/activity.service.js";
 
-export default function Landing() {
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+export default function Landing({ currentUser }) {
   const navigate = useNavigate();
+  const fileInputRef = useRef(null);
+  const bannerRef = useRef(null);
+  const dragStart = useRef(null);
+  const currentPositionRef = useRef("50% 50%");
+
   const [actividadesParaCarrusel, setActividadesParaCarrusel] = useState([]);
+  const [bannerImg, setBannerImg] = useState(bgLandingGato);
+  const [uploading, setUploading] = useState(false);
+  const [bannerPosition, setBannerPosition] = useState("50% 50%");
+  const [isRepositioning, setIsRepositioning] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+
+  useEffect(() => {
+    const fetchBannerData = async () => {
+      try {
+        const [bannerRes, posRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/config/landing_banner`),
+          fetch(`${API_BASE_URL}/config/landing_banner_position`),
+        ]);
+
+        if (bannerRes.ok) {
+          const bannerData = await bannerRes.json();
+          if (bannerData.valor) setBannerImg(bannerData.valor);
+        }
+
+        if (posRes.ok) {
+          const posData = await posRes.json();
+          if (posData.valor) setBannerPosition(posData.valor);
+        }
+      } catch {
+        console.log("Usando banner por defecto");
+      }
+    };
+
+    fetchBannerData();
+  }, []);
+
+  useEffect(() => {
+    currentPositionRef.current = bannerPosition;
+  }, [bannerPosition]);
 
   useEffect(() => {
     const loadActivities = async () => {
@@ -20,9 +62,9 @@ export default function Landing() {
         const response = await activityService.getAll();
         const activities = response.data || response;
 
-        const formatted = activities.map((act) => ({
-          image: act.imagen_url || act.Imagen_url,
-          text: `${act.nombre}: ${act.descripcion}`,
+        const formatted = (activities || []).map((act) => ({
+          image: act?.imagen_url || act?.Imagen_url,
+          text: `${act?.nombre ?? ""}: ${act?.descripcion ?? ""}`,
         }));
 
         setActividadesParaCarrusel(formatted);
@@ -34,28 +76,140 @@ export default function Landing() {
     loadActivities();
   }, []);
 
+  useEffect(() => {
+    console.log("BannerPosition actual:", bannerPosition);
+  }, [bannerPosition]);
+
+  const userRole =
+    currentUser?.role || currentUser?.Rol || currentUser?.rol;
+
+  const isAdmin =
+    userRole?.toLowerCase() === "administrador";
+
+  const handleImageChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => setBannerImg(reader.result);
+    reader.readAsDataURL(file);
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("image", file);
+      formData.append("clave", "landing_banner");
+
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_BASE_URL}/config/update-config`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setBannerImg(data.newUrl);
+      } else {
+        console.error("Error al subir banner:", data.message);
+      }
+    } catch (error) {
+      console.error("Error subiendo el banner", error);
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Guardar posicion en backend
+  const savePosition = async (position) => {
+    const token = localStorage.getItem("token");
+    try {
+      const res = await fetch(`${API_BASE_URL}/admin/update-config-text`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          clave: "landing_banner_position",
+          valor: position,
+        }),
+      });
+
+      const data = await res.json();
+      console.log("Respuesta guardado:", data);
+    } catch (error) {
+      console.error("Error guardando posicion:", error);
+    }
+  };
+
+  // Drag handlers
+  const handleMouseDown = (e) => {
+    if (!isRepositioning) return;
+    setIsDragging(true);
+    dragStart.current = {
+      x: e.clientX,
+      y: e.clientY,
+      pos: bannerPosition,
+    };
+  };
+
+  const handleMouseMove = (e) => {
+    if (!isDragging || !dragStart.current || !bannerRef.current) return;
+
+    const rect = bannerRef.current.getBoundingClientRect();
+    const dx = ((e.clientX - dragStart.current.x) / rect.width) * 100;
+    const dy = ((e.clientY - dragStart.current.y) / rect.height) * 100;
+
+    const [px, py] = dragStart.current.pos.split(" ").map(parseFloat);
+    const newX = Math.min(100, Math.max(0, px - dx));
+    const newY = Math.min(100, Math.max(0, py - dy));
+
+    const newPos = `${newX.toFixed(1)}% ${newY.toFixed(1)}%`;
+    currentPositionRef.current = newPos; // ← guardar en ref
+    setBannerPosition(newPos);
+  };
+
+  const handleMouseUp = async () => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    await savePosition(currentPositionRef.current); // ← usar ref, no estado
+  };
+
   const handleSearchFromLanding = (searchTerm) => {
     navigate(`/catalog?search=${encodeURIComponent(searchTerm)}`);
   };
 
   const handleCategoryFilterFromLanding = (categoryIds) => {
     if (categoryIds.length > 0) {
-      const categoriesParam = categoryIds.join(",");
-      navigate(`/catalog?categories=${categoriesParam}`);
+      navigate(`/catalog?categories=${categoryIds.join(",")}`);
     } else {
       navigate("/catalog");
     }
   };
 
+  console.log("currentUser:", currentUser);
+  console.log("userRole:", userRole);
+  console.log("isAdmin:", isAdmin);
+
   return (
     <>
       <section className="relative flex flex-col items-center text-center px-2 w-full">
         <motion.div
+          ref={bannerRef}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 1 }}
-          className="relative w-full rounded-3xl overflow-hidden shadow-md bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: `url(${bgLandingGato})` }}
+          onMouseDown={handleMouseDown}
+          onMouseMove={handleMouseMove}
+          onMouseUp={handleMouseUp}
+          onMouseLeave={handleMouseUp}
+          className={`relative w-full rounded-3xl overflow-hidden shadow-md bg-cover bg-no-repeat
+            ${isRepositioning ? "cursor-grab active:cursor-grabbing" : ""}`}
+          style={{
+            backgroundImage: `url(${bannerImg})`,
+            backgroundPosition: bannerPosition,
+          }}
         >
           <div className="absolute inset-0 bg-zinc-400/50" />
           <img
@@ -63,6 +217,59 @@ export default function Landing() {
             alt="MercadUCA"
             className="relative mx-auto w-50 h-30 object-contain my-6 md:w-80 md:h-60 lg:w-92 lg:h-60"
           />
+
+          {/* Controles de admin */}
+          {isAdmin && (
+            <div className="absolute top-3 right-3 z-10 flex gap-2">
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handleImageChange}
+              />
+
+              {/* Boton cambiar imagen */}
+              <button
+                onClick={() => fileInputRef.current.click()}
+                disabled={uploading}
+                className="bg-white/80 hover:bg-white text-zinc-700 rounded-full p-2 shadow-md transition-all"
+                title="Cambiar imagen del banner"
+              >
+                {uploading ? (
+                  <span className="text-xs px-1">...</span>
+                ) : (
+                  <Pencil size={18} />
+                )}
+              </button>
+
+              {/* Boton reposicionar */}
+              <button
+                onClick={async () => {
+                  if (isRepositioning) {
+                    await savePosition(currentPositionRef.current);
+                  }
+                  setIsRepositioning(!isRepositioning);
+                }}
+                className={`rounded-full p-2 shadow-md transition-all text-xs font-semibold px-3
+                  ${isRepositioning
+                    ? "bg-green-500 text-white hover:bg-green-600"
+                    : "bg-white/80 text-zinc-700 hover:bg-white"
+                  }`}
+                title="Reposicionar imagen"
+              >
+                {isRepositioning ? "Guardar" : "Mover"}
+              </button>
+            </div>
+          )}
+
+          {isRepositioning && (
+            <div className="absolute inset-0 border-4 border-dashed border-white/70 rounded-3xl pointer-events-none flex items-center justify-center">
+              <span className="bg-black/40 text-white text-sm px-3 py-1 rounded-full">
+                Arrastra para reposicionar
+              </span>
+            </div>
+          )}
         </motion.div>
 
         <div className="-mt-5 w-full flex justify-center pb-12">
@@ -76,47 +283,48 @@ export default function Landing() {
         </div>
       </section>
 
-<section className="mb-14">
-  <div className="mx-auto max-w-6xl px-6">
-    <h3 className="text-xl font-loubag font-bold text-center">
-      Algunas de nuestras actividades...
-    </h3>
-    <p className="mt-1 text-center text-sm text-zinc-500 font-poppins">
-      Descubre lo que hacemos en Mercaduca
-    </p>
+      {/* Actividades */}
+      <section className="mb-14">
+        <div className="mx-auto max-w-6xl px-6">
+          <h3 className="text-xl font-loubag font-bold text-center">
+            Algunas de nuestras actividades...
+          </h3>
+          <p className="mt-1 text-center text-sm text-zinc-500 font-poppins">
+            Descubre lo que hacemos en Mercaduca
+          </p>
 
-    <div className="relative mt-6 pb-12 font-montserrat">
-      <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar">
-        {actividadesParaCarrusel.length > 0 ? (
-          actividadesParaCarrusel.map((act, i) => (
-            <div key={i} className="snap-start shrink-0 w-64 sm:w-72 md:w-80">
-              <div className="rounded-2xl overflow-hidden shadow-md bg-zinc-100">
-                <img
-                  src={act.image}
-                  alt={`actividad-${i}`}
-                  className="w-full h-48 object-cover"
-                />
-                {act.text && (
-                  <p className="text-xs text-zinc-600 font-montserrat p-3 text-center">
-                    {act.text}
-                  </p>
-                )}
-              </div>
+          <div className="relative mt-6 pb-12 font-montserrat">
+            <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar">
+              {actividadesParaCarrusel.length > 0 ? (
+                actividadesParaCarrusel.map((act, i) => (
+                  <div key={i} className="snap-start shrink-0 w-64 sm:w-72 md:w-80">
+                    <div className="rounded-2xl overflow-hidden shadow-md bg-zinc-100">
+                      <img
+                        src={act.image}
+                        alt={`actividad-${i}`}
+                        className="w-full h-48 object-cover"
+                      />
+                      {act.text && (
+                        <p className="text-xs text-zinc-600 font-montserrat p-3 text-center">
+                          {act.text}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-10 text-zinc-400 w-full text-center">
+                  Cargando actividades...
+                </div>
+              )}
             </div>
-          ))
-        ) : (
-          <div className="py-10 text-zinc-400 w-full text-center">
-            Cargando actividades...
           </div>
-        )}
-      </div>
-    </div>
-  </div>
-</section>
+        </div>
+      </section>
 
       <Carousel
         title="Nuevos Productos"
-        subtitle="Descubre los productos agregados recientemente al catálogo"
+        subtitle="Descubre los productos agregados recientemente al catalogo"
         endpoint="/products?ordenar=fecha_desc&limit=15"
       />
 

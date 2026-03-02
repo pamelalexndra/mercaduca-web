@@ -19,6 +19,8 @@ import userRoutes from "./routes/profileRoutes.js";
 import activitiesRoutes from "./routes/activitiesRoutes.js";
 import requestRoutes from "./routes/requestRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
+import configRoutes from "./routes/configRoutes.js";
+import boxfulRoutes from "./routes/boxfulRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -44,6 +46,8 @@ app.use("/api/user", userRoutes);
 app.use("/api/activities", activitiesRoutes);
 app.use("/api/request", requestRoutes);
 app.use("/api/admin", adminRoutes);
+app.use("/api/config", configRoutes);
+app.use('api/boxful', boxfulRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {

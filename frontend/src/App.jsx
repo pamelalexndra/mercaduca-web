@@ -101,7 +101,7 @@ useEffect(() => {
 
       <Routes>
         {/* --- RUTAS PÚBLICAS --- */}
-        <Route path="/" element={<Landing />} />
+        <Route path="/" element={<Landing currentUser={currentUser}/>} />
         <Route path="/catalog" element={<Catalog />} />
         <Route path="/emprendimientos" element={<Sellers />} />
         <Route path="/emprendimiento/:id" element={<PublicProfile />} />
