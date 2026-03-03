@@ -6,6 +6,7 @@ import {
   Tags,
   Users,
   Settings,
+  TicketPercent,
 } from "lucide-react";
 
 const menuItems = [
@@ -34,6 +35,11 @@ const menuItems = [
     label: "Emprendedores",
     path: "/admin/entrepreneurs",
   },
+  {
+  icon: <TicketPercent size={18} />,
+  label: "Cupones",
+  path: "/admin/coupons",
+},
 ];
 
 export default function AdminNav() {
