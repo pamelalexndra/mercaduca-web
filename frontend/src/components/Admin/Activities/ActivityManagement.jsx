@@ -77,8 +77,8 @@ export default function ActivityManagement() {
 
       setActividades((prevActividades) =>
         prevActividades.filter(
-          (a) => a.id_actividad !== actividadAEliminar.id_actividad
-        )
+          (a) => a.id_actividad !== actividadAEliminar.id_actividad,
+        ),
       );
 
       setSuccessMessage("Actividad eliminada con éxito.");
@@ -119,7 +119,7 @@ export default function ActivityManagement() {
           {/* LISTADO */}
           <section className="lg:col-span-2 space-y-6 order-2 lg:order-1">
             <h2 className="font-loubag text-xl text-[#557051]">
-              Actividades Programadas
+              Actividades programadas
             </h2>
 
             {error && (
@@ -178,7 +178,7 @@ export default function ActivityManagement() {
                           <Trash2 size={20} className="text-red-500" />
                         </button>
                       </div>
-                    )
+                    ),
                 )
               )}
             </div>
@@ -191,9 +191,8 @@ export default function ActivityManagement() {
               className="bg-white rounded-3xl shadow-xl p-8 sticky top-10 border border-gray-50"
             >
               <h2 className="font-loubag text-xl text-[#557051] mb-6 flex items-center gap-2">
-                <PlusCircle size={20} /> Nueva Actividad
+                <PlusCircle size={20} /> Nueva actividad
               </h2>
-
               <div className="space-y-5">
                 <input
                   type="text"
@@ -210,7 +209,8 @@ export default function ActivityManagement() {
                   placeholder="Descripción"
                   required
                 />
-                <div className="relative">
+
+                <div className="space-y-2">
                   <input
                     type="text"
                     value={imagenUrl}
@@ -219,6 +219,36 @@ export default function ActivityManagement() {
                     placeholder="Agregar enlace de imagen"
                     required
                   />
+
+                  <div className="bg-[#f4f4f2] border border-blue-100 rounded-xl p-3">
+                    <p className="text-xs text-gray-600 flex items-start gap-2">
+                      <svg
+                        className="w-4 h-4 text-gray-400 flex-shrink-0"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        />
+                      </svg>
+                      <span>
+                        Para generar el enlace de tu imagen se recomienda usar{" "}
+                        <a
+                          href="https://imgbb.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-[#557051] hover:text-[#3a4d36] underline font-medium transition-colors"
+                        >
+                          imgbb.com
+                        </a>{" "}
+                        para continuar con el proceso de creación.
+                      </span>
+                    </p>
+                  </div>
                 </div>
 
                 <button
@@ -246,12 +276,12 @@ export default function ActivityManagement() {
                           className="opacity-75"
                           fill="currentColor"
                           d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        ></path>
+                        />
                       </svg>
                       Publicando...
                     </>
                   ) : (
-                    "Publicar Actividad"
+                    "Publicar actividad"
                   )}
                 </button>
               </div>

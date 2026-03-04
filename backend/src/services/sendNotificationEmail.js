@@ -8,6 +8,7 @@ import {
   generateRejectionEmailHTML,
   generateRejectionEmailText,
 } from "./generateEmailContent.js";
+import { getAllAdminRecipients } from "./emailToAdmins.js";
 
 dotenv.config();
 
@@ -24,24 +25,35 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const destinatarios = [process.env.EMAIL_TO_OUTLOOK].filter((email) => email);
-
 export const sendNotificationEmail = async (solicitud) => {
-  const mailOptions = {
-    from: process.env.EMAIL_FROM,
-    to: destinatarios.join(", "),
-    subject: `Nueva Solicitud de Registro - MercadUCA`,
-    html: generateEmailHTML(solicitud),
-    text: generateEmailText(solicitud),
-  };
+  try {
+    const destinatarios = await getAllAdminRecipients();
 
-  const info = await transporter.sendMail(mailOptions);
+    if (destinatarios.length === 0) {
+      throw new Error("No hay destinatarios configurados para notificar");
+    }
 
-  return {
-    success: true,
-    messageId: info.messageId,
-    destinatarios: destinatarios,
-  };
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: destinatarios.join(", "),
+      subject: `Nueva Solicitud de Registro - MercadUCA`,
+      html: generateEmailHTML(solicitud),
+      text: generateEmailText(solicitud),
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      destinatarios: destinatarios,
+    };
+  } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
 };
 
 export const sendAcceptanceEmail = async (solicitud) => {
@@ -56,15 +68,12 @@ export const sendAcceptanceEmail = async (solicitud) => {
 
     const info = await transporter.sendMail(mailOptions);
 
-    console.log(`Correo de aceptación enviado a: ${solicitud.correo}`);
-
     return {
       success: true,
       messageId: info.messageId,
       destinatario: solicitud.correo,
     };
   } catch (error) {
-    console.error("Error enviando correo de aceptación:", error);
     return {
       success: false,
       error: error.message,
@@ -84,15 +93,12 @@ export const sendRejectionEmail = async (solicitud, razon = "") => {
 
     const info = await transporter.sendMail(mailOptions);
 
-    console.log(`Correo de rechazo enviado a: ${solicitud.correo}`);
-
     return {
       success: true,
       messageId: info.messageId,
       destinatario: solicitud.correo,
     };
   } catch (error) {
-    console.error("Error enviando correo de rechazo:", error);
     return {
       success: false,
       error: error.message,
