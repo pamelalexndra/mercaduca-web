@@ -194,7 +194,6 @@ export default function Landing({ currentUser }) {
 
   return (
     <>
-      {/* HERO */}
       <section className="relative flex flex-col items-center text-center px-2 w-full">
         <motion.div
           ref={bannerRef}

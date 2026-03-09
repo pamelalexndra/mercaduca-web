@@ -1,0 +1,12 @@
+<svg width="300" height="350" viewBox="0 0 300 350" xmlns="http://www.w3.org/2000/svg">
+<defs>
+<linearGradient id="shimmer">
+<stop offset="0%" stop-color="#e9ecef"/>
+<stop offset="50%" stop-color="#f4f4f2"/>
+<stop offset="100%" stop-color="#e9ecef"/>
+</linearGradient>
+</defs>
+<rect x="20" y="20" width="260" height="200" rx="20" fill="url(#shimmer)"/>
+<rect x="40" y="240" width="180" height="15" rx="8" fill="#e9ecef"/>
+<rect x="40" y="270" width="100" height="15" rx="8" fill="#e9ecef"/>
+</svg>

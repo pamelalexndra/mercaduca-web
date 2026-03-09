@@ -1,0 +1,13 @@
+<svg width="160" height="160" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+<style>
+@keyframes rotate { 100% { transform: rotate(360deg); } }
+.spinner { transform-origin: center; animation: rotate 1.4s linear infinite; }
+</style>
+<circle class="spinner" cx="100" cy="100" r="80"
+stroke="#557051" stroke-width="10"
+stroke-linecap="round" stroke-dasharray="100 400"
+fill="none"/>
+<ellipse cx="100" cy="115" rx="35" ry="45" fill="#557051"/>
+<circle cx="85" cy="105" r="8" fill="#fff"/>
+<circle cx="115" cy="105" r="8" fill="#fff"/>
+</svg>

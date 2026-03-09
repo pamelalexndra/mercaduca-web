@@ -47,7 +47,7 @@ app.use("/api/activities", activitiesRoutes);
 app.use("/api/request", requestRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/config", configRoutes);
-app.use('api/boxful', boxfulRoutes);
+app.use("/api/boxful", boxfulRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {
@@ -79,13 +79,6 @@ app.use("*", (req, res) => {
 app.listen(PORT, () => {
   console.log(`Servidor backend corriendo en http://localhost:${PORT}`);
 });
-
-/*/ Manejar cierre de PostgreSQL
-process.on("SIGINT", async () => {
-  console.log("Closing PostgreSQL pool...");
-  await pool.end();
-  process.exit(0);
-});*/
 
 // Manejar inicio del listener
 const initListener = async () => {

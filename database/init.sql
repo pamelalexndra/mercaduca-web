@@ -45,20 +45,6 @@ CREATE TABLE Producto(
     REFERENCES Categorias(id_categoria)
 );
 
-CREATE TABLE Cupon(
-  id_cupon SERIAL PRIMARY KEY NOT NULL,
-  id_emprendimiento INT,
-  Nombre VARCHAR(200),
-  Description TEXT,
-  Imagen_URL TEXT,
-  Descuento DECIMAL(18,2),
-  Disponible BOOLEAN DEFAULT TRUE,
-  Fecha_creacion TIMESTAMP,
-  Precio_original DECIMAL(18,2),
-  Fecha_limite TIMESTAMP,
-  Id_categoria INT
-);
-
 CREATE TABLE Usuarios (
 	id_usuario SERIAL PRIMARY KEY NOT NULL,
 	id_emprendedor INT, 
@@ -91,14 +77,29 @@ CREATE TABLE Solicitudes (
   Fecha_solicitud TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+CREATE TABLE Cupon(
+  id_cupon SERIAL PRIMARY KEY NOT NULL,
+  id_emprendimiento INT,
+  id_categoria INT,
+  Nombre VARCHAR(200),
+  Descripcion TEXT,
+  Imagen_URL TEXT,
+  Descuento DECIMAL(18,2),
+  Disponible BOOLEAN DEFAULT TRUE,
+  Fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  Precio_original DECIMAL(18,2),
+  Fecha_limite TIMESTAMP,
+  CONSTRAINT fk_Cupon_Emprendimiento FOREIGN KEY (id_emprendimiento)
+    REFERENCES Emprendimiento (id_emprendimiento),
+  CONSTRAINT fk_Cupon_Categorias FOREIGN KEY (id_categoria)
+    REFERENCES Categorias (id_categoria)
+);
+
 CREATE TABLE sitio_configuracion (
-  id SERIAL PRIMARY KEY,
+  id SERIAL PRIMARY KEY NOT NULL,
   clave VARCHAR(50) UNIQUE NOT NULL,
   valor TEXT NOT NULL -- URL de la imagen
 );
-
-INSERT INTO sitio_configuracion (clave, valor) 
-VALUES ('landing_banner', 'https://res.cloudinary.com/dwyrfwnro/image/upload/v1772065363/gato-landing_enx9dx.jpg');
 
 INSERT INTO Categorias (Categoria) VALUES 
 ('Alimentos y bebidas'),
@@ -221,6 +222,9 @@ VALUES ('Rodrigo Josué', 'Aguiñada Córdova', 'rjaguinada@uca.edu.sv', '123456
 
 INSERT INTO Usuarios (id_emprendedor, Usuario, Contraseña, Rol) 
 VALUES ('1', 'rjaguinada', '$2b$10$FYCERjMTj52vhT8BGa7RluLdN.AkwphoBrYpZDFWl.aMCiy.xJM72', 'Administrador');
+
+INSERT INTO sitio_configuracion (clave, valor) 
+VALUES ('landing_banner', 'https://res.cloudinary.com/dwyrfwnro/image/upload/v1772065363/gato-landing_enx9dx.jpg');
 
 CREATE OR REPLACE FUNCTION notificar_nueva_solicitud()
 RETURNS TRIGGER AS $$

@@ -26,6 +26,7 @@ import ActivityManagement from "./components/Admin/Activities/ActivityManagement
 import CategoryManagement from "./components/Admin/Categories/CategoryManagement.jsx";
 import AdministratorsManagement from "./components/Admin/Administrators/AdministratorsManagement.jsx";
 import EntrepreneursManagement from "./components/Admin/Entrepreneurs/EntrepreneusManagement.jsx";
+import CouponsPage from "./components/Admin/Coupons/CouponsPage.jsx";
 
 // Páginas de Error
 import NotFound from "./components/ErrorPages/NotFound";
@@ -146,6 +147,7 @@ useEffect(() => {
           <Route path="categories" element={<CategoryManagement/>} />
           <Route path="administrators" element={<AdministratorsManagement/>} />
           <Route path="entrepreneurs" element={<EntrepreneursManagement/>} />
+          <Route path="coupons" element={<CouponsPage />} />
         </Route>
 
         {/* --- RUTAS DE ERROR --- */}

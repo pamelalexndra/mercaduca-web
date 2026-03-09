@@ -115,8 +115,13 @@ export default function Catalog({ onGoHome }) {
 
   if (loading && isInitialLoad) {
     return (
-      <div className="container mx-auto max-w-7xl px-6 py-8 text-center min-h-[50vh] flex items-center justify-center">
-        <div className="text-lg text-zinc-500">Cargando catálogo...</div>
+      <div className="container mx-auto max-w-7xl px-6 py-8 min-h-[50vh] flex items-center justify-center">
+        <img
+          src="/assets/loaders/owl-loader-mercaduca.svg"
+          alt="Cargando catálogo"
+          className="w-36"
+        />
+        <p className="mt-4 text-[#557051] font-medium">Cargando catálogo...</p>
       </div>
     );
   }
@@ -191,9 +196,25 @@ export default function Catalog({ onGoHome }) {
             )}
 
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
-              {visibleProducts.map((p) => (
-                <ProductCard key={p.id} p={p} />
-              ))}
+              {loading && !isInitialLoad
+                ? Array(8)
+                    .fill()
+                    .map((_, i) => (
+                      <div
+                        key={i}
+                        className="rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden animate-pulse"
+                      >
+                        <div className="w-full aspect-[4/3] bg-zinc-200" />
+
+                        <div className="p-3 pt-5 text-[12px]">
+                          <div className="flex items-center justify-between">
+                            <div className="h-3 bg-zinc-200 rounded w-2/3" />
+                            <div className="h-3 bg-zinc-200 rounded w-1/4" />
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                : visibleProducts.map((p) => <ProductCard key={p.id} p={p} />)}
             </div>
 
             {filteredProducts.length === 0 && !loading && (

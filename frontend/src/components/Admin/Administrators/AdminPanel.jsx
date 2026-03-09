@@ -1,6 +1,12 @@
 import React, { useState, useEffect } from "react";
 
-const AdminItem = ({ admin, onEdit, onDelete, showConfirmation }) => {
+const AdminItem = ({
+  admin,
+  onEdit,
+  onDelete,
+  showConfirmation,
+  currentUserId,
+}) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = React.useRef(null);
 
@@ -21,6 +27,7 @@ const AdminItem = ({ admin, onEdit, onDelete, showConfirmation }) => {
   const usuario = admin.usuario || "";
   const telefono = admin.telefono || "";
   const inicial = nombres[0]?.toUpperCase() || "A";
+  const isCurrentUser = adminId === currentUserId;
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 relative hover:shadow-sm transition-shadow">
@@ -30,7 +37,7 @@ const AdminItem = ({ admin, onEdit, onDelete, showConfirmation }) => {
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900 truncate">
+            <h3 className="font-medium text-gray-900 truncate flex items-center gap-2">
               {nombres} {apellidos}
             </h3>
           </div>
@@ -88,8 +95,8 @@ const AdminItem = ({ admin, onEdit, onDelete, showConfirmation }) => {
                     "delete_admin",
                     adminId,
                     "Eliminar Administrador",
-                    `¿Estás seguro de que deseas eliminar al administrador ${nombres} ${apellidos}?`,
-                    () => onDelete(adminId, `${nombres} ${apellidos}`)
+                    `¿Estás seguro de que deseas eliminar al administrador ${nombres} ${apellidos}?${isCurrentUser ? " Al eliminarte a ti mismo, se cerrará tu sesión." : ""}`,
+                    () => onDelete(adminId, `${nombres} ${apellidos}`),
                   );
                 }}
                 className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 transition-colors flex items-center gap-2"
@@ -123,6 +130,7 @@ const AdminPanel = ({
   onEditAdmin,
   onDeleteAdmin,
   showConfirmation,
+  currentUserId,
 }) => {
   const [error, setError] = useState("");
 
@@ -156,7 +164,6 @@ const AdminPanel = ({
     );
   }
 
-  // Validar que admins sea un array
   if (!admins || !Array.isArray(admins)) {
     return (
       <div className="text-center py-8 text-gray-500">
@@ -186,6 +193,7 @@ const AdminPanel = ({
               onEdit={onEditAdmin}
               onDelete={onDeleteAdmin}
               showConfirmation={showConfirmation}
+              currentUserId={currentUserId}
             />
           ))}
         </div>

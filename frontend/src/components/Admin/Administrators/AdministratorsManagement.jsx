@@ -5,6 +5,7 @@ import AdminPanel from "./AdminPanel";
 import AdminForm from "./AdminForm";
 import ConfirmationDialog from "../../ConfirmationDialog";
 import SuccessDialog from "../../SuccessDialog";
+import { useNavigate } from "react-router-dom";
 
 export default function AdministratorsManagement() {
   const [admins, setAdmins] = useState([]);
@@ -16,6 +17,22 @@ export default function AdministratorsManagement() {
   const [adminToDelete, setAdminToDelete] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const navigate = useNavigate();
+
+  const getCurrentUserId = () => {
+    const token = localStorage.getItem("token");
+    if (token) {
+      try {
+        const payload = JSON.parse(atob(token.split(".")[1]));
+        return payload.id || payload.userId || null;
+      } catch (error) {
+        console.error("Error decodificando token:", error);
+        return null;
+      }
+    }
+    return null;
+  };
 
   // Cargar administradores
   const fetchAdmins = async () => {
@@ -36,6 +53,7 @@ export default function AdministratorsManagement() {
       if (response.ok) {
         const data = await response.json();
         setAdmins(data.data || []);
+        setCurrentUserId(getCurrentUserId());
       } else {
         const errorData = await response.json();
         setError(errorData.message || "Error al cargar administradores");
@@ -66,6 +84,14 @@ export default function AdministratorsManagement() {
 
   // Eliminar administrador
   const handleDeleteAdmin = async (adminId, adminName) => {
+    // Validar que haya al menos 2 administradores
+    if (admins.length < 2) {
+      setError(
+        "No se puede eliminar este administrador. Debe haber al menos un administrador en el sistema.",
+      );
+      return;
+    }
+
     setAdminToDelete({ id: adminId, name: adminName });
     setShowConfirm(true);
   };
@@ -87,18 +113,31 @@ export default function AdministratorsManagement() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       if (response.ok) {
+        const isDeletingSelf = adminToDelete.id === currentUserId;
+
         setAdmins((prev) =>
-          prev.filter((admin) => admin.id_usuario !== adminToDelete.id)
+          prev.filter((admin) => admin.id_usuario !== adminToDelete.id),
         );
+
         setSuccessMessage(
-          `Administrador "${adminToDelete.name}" eliminado exitosamente`
+          `Administrador "${adminToDelete.name}" eliminado exitosamente`,
         );
         setShowSuccess(true);
         setShowConfirm(false);
+
+        // Si el administrador se eliminó a sí mismo, cerrar sesión y redirigir
+        if (isDeletingSelf) {
+          setTimeout(() => {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user");
+            navigate("/");
+          }, 2000); // Dar tiempo para ver el mensaje de éxito
+        }
+
         setAdminToDelete(null);
       } else {
         const data = await response.json();
@@ -115,8 +154,8 @@ export default function AdministratorsManagement() {
     if (adminToEdit) {
       setAdmins((prev) =>
         prev.map((admin) =>
-          admin.id_usuario === adminData.id_usuario ? adminData : admin
-        )
+          admin.id_usuario === adminData.id_usuario ? adminData : admin,
+        ),
       );
       setSuccessMessage("Administrador actualizado exitosamente");
     } else {
@@ -243,6 +282,7 @@ export default function AdministratorsManagement() {
             onEditAdmin={handleEditAdmin}
             onDeleteAdmin={handleDeleteAdmin}
             showConfirmation={showConfirmationDialog}
+            currentUserId={currentUserId}
           />
         </section>
       </div>
@@ -258,7 +298,11 @@ export default function AdministratorsManagement() {
 
       <ConfirmationDialog
         show={showConfirm}
-        message={`¿Estás seguro de que deseas eliminar al administrador ${adminToDelete?.name}? Esta acción no se puede deshacer.`}
+        message={`¿Estás seguro de que deseas eliminar al administrador ${adminToDelete?.name}? Esta acción no se puede deshacer.${
+          adminToDelete?.id === currentUserId
+            ? " Al eliminarte a ti mismo, se cerrará tu sesión."
+            : ""
+        }`}
         onConfirm={confirmDelete}
         onCancel={handleCancelDelete}
       />
