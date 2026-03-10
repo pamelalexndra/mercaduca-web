@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import useCategories from "../hooks/useCategories";
 import { useEmprendimiento } from "../hooks/useEmprendimiento";
 import ConfirmationDialog from "./ConfirmationDialog";
+import { API_BASE_URL } from "../utils/api";
 
 export default function EntrepreneurshipForm({
   visible,
@@ -11,6 +12,7 @@ export default function EntrepreneurshipForm({
   loading = false,
   errorMessage = "",
   onDeleteSuccess,
+  isAdminMode = false,
 }) {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -95,8 +97,7 @@ export default function EntrepreneurshipForm({
     try {
       const success = await onSubmit?.(formData);
       if (success) {
-        // No mostramos éxito aquí, lo maneja el componente padre
-        onClose?.(); // Cerramos el formulario después de éxito
+        onClose?.();
       }
     } catch (err) {
       setError(err.message || "Error al procesar la solicitud");
@@ -115,12 +116,46 @@ export default function EntrepreneurshipForm({
 
     if (!idToDelete) return;
 
-    const success = await removeEntrepreneurship(idToDelete);
+    const token = localStorage.getItem(
+      isAdminMode ? "adminOriginalToken" : "token",
+    );
 
-    if (success) {
-      // No mostramos éxito aquí, lo maneja el componente padre
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/entrepreneurship/${idToDelete}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Error al eliminar el emprendimiento");
+      }
+
+      const EMPRENDIMIENTO_CACHE_KEY = "emprendimientoCache";
+      const userId = localStorage.getItem("userId") || initialData.id_usuario;
+
+      if (userId) {
+        try {
+          const cache = JSON.parse(
+            localStorage.getItem(EMPRENDIMIENTO_CACHE_KEY) || "{}",
+          );
+          delete cache[userId];
+          localStorage.setItem(EMPRENDIMIENTO_CACHE_KEY, JSON.stringify(cache));
+        } catch (e) {
+          console.error("Error limpiando caché:", e);
+        }
+      }
+
       onDeleteSuccess?.();
-      onClose?.(); // Cerramos el formulario después de eliminar
+      onClose?.();
+    } catch (err) {
+      console.error("Error eliminando emprendimiento:", err);
+      setError(err.message || "Error al eliminar el emprendimiento");
     }
   };
 

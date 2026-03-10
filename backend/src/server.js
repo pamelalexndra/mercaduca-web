@@ -49,7 +49,7 @@ app.use("/api/request", requestRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/boxful", boxfulRoutes);
-app.use('/api/cupones', cuponRoutes);
+app.use("/api/cupones", cuponRoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {

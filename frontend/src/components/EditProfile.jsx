@@ -4,6 +4,7 @@ import { X } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import ConfirmationDialog from "./ConfirmationDialog";
 import { API_BASE_URL } from "../utils/api";
+import CredentialsSection from "./Register/CredentialsSection";
 
 export default function EditProfile({
   visible,
@@ -21,8 +22,8 @@ export default function EditProfile({
     correo: "",
     telefono: "",
     username: "",
-    nuevaContraseña: "",
-    confirmarContraseña: "",
+    password: "",
+    confirmPassword: "",
     boxful_state_id: "",
     boxful_city_id: "",
     direccion_recoleccion: "",
@@ -33,6 +34,11 @@ export default function EditProfile({
   const [showConfirm, setShowConfirm] = useState(false);
   const [states, setStates] = useState([]);
   const [selectedStateId, setSelectedStateId] = useState("");
+  const [usernameAvailable, setUsernameAvailable] = useState(null);
+  const [passwordStrength, setPasswordStrength] = useState({
+    score: 0,
+    feedback: { warning: "", suggestions: [] },
+  });
 
   const initializedRef = useRef(false);
   const { removeProfile, loadingDelete, errorDelete } = useProfile();
@@ -46,7 +52,7 @@ export default function EditProfile({
       fetch(`${API_BASE_URL}/boxful/states`)
         .then((r) => r.json())
         .then((data) => setStates(data.states || []))
-        .catch(() => { });
+        .catch(() => {});
     }
   }, [visible]);
 
@@ -55,6 +61,7 @@ export default function EditProfile({
     if (visible) {
       setLocalError("");
       setShowConfirm(false);
+      setUsernameAvailable(null);
 
       if (emprendimientoData) {
         setFormData({
@@ -67,11 +74,12 @@ export default function EditProfile({
             emprendimientoData.Usuario ||
             emprendimientoData.usuario ||
             "",
-          nuevaContraseña: "",
-          confirmarContraseña: "",
+          password: "",
+          confirmPassword: "",
           boxful_city_id: emprendimientoData.boxful_city_id || "",
           direccion_recoleccion: emprendimientoData.direccion_recoleccion || "",
-          referencia_recoleccion: emprendimientoData.referencia_recoleccion || "",
+          referencia_recoleccion:
+            emprendimientoData.referencia_recoleccion || "",
         });
       }
 
@@ -85,14 +93,14 @@ export default function EditProfile({
   useEffect(() => {
     if (states.length > 0 && emprendimientoData?.boxful_city_id) {
       const estadoPrevio = states.find((s) =>
-        s.Cities?.some((c) => c.id === emprendimientoData.boxful_city_id)
+        s.Cities?.some((c) => c.id === emprendimientoData.boxful_city_id),
       );
       if (estadoPrevio) {
         setSelectedStateId(estadoPrevio.id);
 
         setFormData((prev) => ({
           ...prev,
-          boxful_state_id: estadoPrevio.id
+          boxful_state_id: estadoPrevio.id,
         }));
       }
     }
@@ -100,9 +108,11 @@ export default function EditProfile({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    if (name === "nuevaContraseña" || name === "confirmarContraseña") {
+
+    if (name === "password" || name === "confirmPassword") {
       setLocalError("");
     }
+
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -114,9 +124,72 @@ export default function EditProfile({
     setFormData((prev) => ({
       ...prev,
       boxful_state_id: stateId,
-      boxful_city_id: ""
+      boxful_city_id: "",
     }));
   };
+
+  const handleUsernameCheck = async (username) => {
+    if (!username || username.length < 3) {
+      setUsernameAvailable(null);
+      return;
+    }
+
+    if (
+      emprendimientoData?.username === username ||
+      emprendimientoData?.Usuario === username ||
+      emprendimientoData?.usuario === username
+    ) {
+      setUsernameAvailable(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`,
+      );
+      const data = await response.json();
+      setUsernameAvailable(data.available);
+    } catch (error) {
+      console.error("Error verificando usuario:", error);
+      setUsernameAvailable(null);
+    }
+  };
+
+  useEffect(() => {
+    if (formData.password) {
+      const password = formData.password;
+      let score = 0;
+      const feedback = { warning: "", suggestions: [] };
+
+      if (password.length >= 8) score += 1;
+      if (password.length >= 12) score += 1;
+      if (/[A-Z]/.test(password)) score += 1;
+      if (/[0-9]/.test(password)) score += 1;
+      if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+      if (score <= 2) {
+        feedback.warning = "Contraseña débil";
+        feedback.suggestions = [
+          "Usa al menos 8 caracteres",
+          "Incluye mayúsculas, números y símbolos",
+        ];
+      } else if (score <= 4) {
+        feedback.warning = "Contraseña media";
+        feedback.suggestions = [
+          "Agrega más variedad de caracteres para mejorarla",
+        ];
+      } else {
+        feedback.warning = "Contraseña fuerte";
+      }
+
+      setPasswordStrength({ score: Math.min(score, 5), feedback });
+    } else {
+      setPasswordStrength({
+        score: 0,
+        feedback: { warning: "", suggestions: [] },
+      });
+    }
+  }, [formData.password]);
 
   const handleDeleteClick = () => setShowConfirm(true);
 
@@ -136,22 +209,64 @@ export default function EditProfile({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (
-      (formData.nuevaContraseña || formData.confirmarContraseña) &&
-      formData.nuevaContraseña !== formData.confirmarContraseña
-    ) {
-      setLocalError("Las contraseñas no coinciden.");
+    if (formData.password || formData.confirmPassword) {
+      if (formData.password !== formData.confirmPassword) {
+        setLocalError("Las contraseñas no coinciden.");
+        return;
+      }
+
+      if (formData.password && passwordStrength.score < 3) {
+        setLocalError(
+          "La contraseña es demasiado débil. Usa al menos 8 caracteres, mayúsculas, números y símbolos.",
+        );
+        return;
+      }
+    }
+
+    // Validar dirección de recolección
+    if (formData.boxful_city_id && !formData.direccion_recoleccion.trim()) {
+      setLocalError(
+        "Si seleccionas un municipio, debes ingresar la dirección de recolección.",
+      );
       return;
     }
 
-    if (formData.boxful_city_id && !formData.direccion_recoleccion.trim()) {
-      setLocalError("Si seleccionas un municipio, debes ingresar la dirección de recolección.");
+    if (!formData.username.trim()) {
+      setLocalError("El nombre de usuario es obligatorio.");
       return;
+    }
+
+    if (
+      formData.username !==
+      (emprendimientoData?.username ||
+        emprendimientoData?.Usuario ||
+        emprendimientoData?.usuario)
+    ) {
+      if (usernameAvailable === false) {
+        setLocalError("El nombre de usuario no está disponible.");
+        return;
+      }
+
+      if (usernameAvailable === null) {
+        await handleUsernameCheck(formData.username);
+        if (usernameAvailable === false) {
+          setLocalError("El nombre de usuario no está disponible.");
+          return;
+        }
+      }
     }
 
     console.log("Datos enviados:", formData);
     setLocalError("");
-    const success = await onSave?.(formData);
+
+    const dataToSend = {
+      ...formData,
+      ...(formData.password ? { nuevaContraseña: formData.password } : {}),
+    };
+    delete dataToSend.password;
+    delete dataToSend.confirmPassword;
+
+    const success = await onSave?.(dataToSend);
     if (success) onSuccess?.("Perfil actualizado correctamente");
   };
 
@@ -167,6 +282,17 @@ export default function EditProfile({
   // Determina si la dirección de envíos está completa
   const enviosConfigurados =
     formData.boxful_city_id && formData.direccion_recoleccion.trim();
+
+  const credentialsErrors = {};
+  if (currentError) {
+    if (currentError.includes("contraseñas no coinciden")) {
+      credentialsErrors.confirmPassword = currentError;
+    } else if (currentError.includes("usuario no está disponible")) {
+      credentialsErrors.username = currentError;
+    } else if (currentError.includes("contraseña es demasiado débil")) {
+      credentialsErrors.password = currentError;
+    }
+  }
 
   return (
     <>
@@ -184,17 +310,19 @@ export default function EditProfile({
 
           <div className="p-6 font-montserrat">
             <h2 className="text-xl font-bold text-zinc-800 mb-6 text-center">
-              Editar Perfil
+              Editar perfil
             </h2>
 
-            {currentError && (
-              <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
-                {currentError}
-              </div>
-            )}
+            {currentError &&
+              !credentialsErrors.username &&
+              !credentialsErrors.password &&
+              !credentialsErrors.confirmPassword && (
+                <div className="mb-4 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm text-red-700">
+                  {currentError}
+                </div>
+              )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-
               {/* Nombres */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
@@ -228,7 +356,7 @@ export default function EditProfile({
               {/* Correo */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                  Correo Electrónico *
+                  Correo electrónico *
                 </label>
                 <input
                   type="email"
@@ -255,50 +383,20 @@ export default function EditProfile({
                 />
               </div>
 
-              {/* Usuario */}
-              <div className="space-y-1">
-                <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                  Usuario de acceso
-                </label>
-                <input
-                  type="text"
-                  name="username"
-                  value={formData.username}
-                  onChange={handleChange}
-                  className={inputClass}
-                  placeholder="Nombre de usuario"
-                />
-              </div>
-
-              {/* Contraseñas */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1">
-                  <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                    Nueva contraseña
-                  </label>
-                  <input
-                    type="password"
-                    name="nuevaContraseña"
-                    value={formData.nuevaContraseña}
-                    onChange={handleChange}
-                    className={inputClass}
-                    placeholder="Actualizar contraseña"
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                    Confirmar contraseña
-                  </label>
-                  <input
-                    type="password"
-                    name="confirmarContraseña"
-                    value={formData.confirmarContraseña}
-                    onChange={handleChange}
-                    className={inputClass}
-                    placeholder="Repite la nueva contraseña"
-                  />
-                </div>
-              </div>
+              <CredentialsSection
+                formData={{
+                  username: formData.username,
+                  password: formData.password,
+                  confirmPassword: formData.confirmPassword,
+                }}
+                onChange={handleChange}
+                inputClass={inputClass}
+                usernameAvailable={usernameAvailable}
+                passwordStrength={passwordStrength}
+                onUsernameCheck={handleUsernameCheck}
+                isEditMode={true}
+                errors={credentialsErrors}
+              />
 
               {/* ── Sección de envíos ── */}
               <div className="border-t border-zinc-100 pt-5 space-y-4">
@@ -307,8 +405,8 @@ export default function EditProfile({
                     Dirección de recolección (envíos)
                   </p>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    Configura desde dónde Boxful recogerá los pedidos de tus clientes.
-                    Se usará tu teléfono de perfil como contacto.
+                    Configura desde dónde Boxful recogerá los pedidos de tus
+                    clientes. Se usará tu teléfono de perfil como contacto.
                   </p>
                 </div>
 
@@ -390,7 +488,8 @@ export default function EditProfile({
                   </p>
                 ) : (
                   <p className="text-xs text-amber-600 flex items-center gap-1">
-                    <span>⚠</span> Sin configurar — tus clientes no podrán solicitar envíos
+                    <span>⚠</span> Sin configurar — tus clientes no podrán
+                    solicitar envíos
                   </p>
                 )}
               </div>

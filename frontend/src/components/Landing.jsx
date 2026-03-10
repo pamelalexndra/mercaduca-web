@@ -45,7 +45,7 @@ export default function Landing({ currentUser }) {
           if (posData.valor) setBannerPosition(posData.valor);
         }
       } catch {
-        console.log("Usando banner por defecto");
+        // Usando banner por defecto
       }
     };
 
@@ -69,22 +69,16 @@ export default function Landing({ currentUser }) {
 
         setActividadesParaCarrusel(formatted);
       } catch (err) {
-        console.error("Error cargando actividades", err);
+        // Error cargando actividades
       }
     };
 
     loadActivities();
   }, []);
 
-  useEffect(() => {
-    console.log("BannerPosition actual:", bannerPosition);
-  }, [bannerPosition]);
+  const userRole = currentUser?.role || currentUser?.Rol || currentUser?.rol;
 
-  const userRole =
-    currentUser?.role || currentUser?.Rol || currentUser?.rol;
-
-  const isAdmin =
-    userRole?.toLowerCase() === "administrador";
+  const isAdmin = userRole?.toLowerCase() === "administrador";
 
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
@@ -111,10 +105,10 @@ export default function Landing({ currentUser }) {
       if (response.ok) {
         setBannerImg(data.newUrl);
       } else {
-        console.error("Error al subir banner:", data.message);
+        // Error al subir banner
       }
     } catch (error) {
-      console.error("Error subiendo el banner", error);
+      // Error subiendo el banner
     } finally {
       setUploading(false);
     }
@@ -136,10 +130,9 @@ export default function Landing({ currentUser }) {
         }),
       });
 
-      const data = await res.json();
-      console.log("Respuesta guardado:", data);
+      await res.json();
     } catch (error) {
-      console.error("Error guardando posicion:", error);
+      // Error guardando posicion
     }
   };
 
@@ -166,14 +159,14 @@ export default function Landing({ currentUser }) {
     const newY = Math.min(100, Math.max(0, py - dy));
 
     const newPos = `${newX.toFixed(1)}% ${newY.toFixed(1)}%`;
-    currentPositionRef.current = newPos; // ← guardar en ref
+    currentPositionRef.current = newPos;
     setBannerPosition(newPos);
   };
 
   const handleMouseUp = async () => {
     if (!isDragging) return;
     setIsDragging(false);
-    await savePosition(currentPositionRef.current); // ← usar ref, no estado
+    await savePosition(currentPositionRef.current);
   };
 
   const handleSearchFromLanding = (searchTerm) => {
@@ -187,10 +180,6 @@ export default function Landing({ currentUser }) {
       navigate("/catalog");
     }
   };
-
-  console.log("currentUser:", currentUser);
-  console.log("userRole:", userRole);
-  console.log("isAdmin:", isAdmin);
 
   return (
     <>
@@ -252,9 +241,10 @@ export default function Landing({ currentUser }) {
                   setIsRepositioning(!isRepositioning);
                 }}
                 className={`rounded-full p-2 shadow-md transition-all text-xs font-semibold px-3
-                  ${isRepositioning
-                    ? "bg-green-500 text-white hover:bg-green-600"
-                    : "bg-white/80 text-zinc-700 hover:bg-white"
+                  ${
+                    isRepositioning
+                      ? "bg-green-500 text-white hover:bg-green-600"
+                      : "bg-white/80 text-zinc-700 hover:bg-white"
                   }`}
                 title="Reposicionar imagen"
               >
@@ -297,7 +287,10 @@ export default function Landing({ currentUser }) {
             <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar">
               {actividadesParaCarrusel.length > 0 ? (
                 actividadesParaCarrusel.map((act, i) => (
-                  <div key={i} className="snap-start shrink-0 w-64 sm:w-72 md:w-80">
+                  <div
+                    key={i}
+                    className="snap-start shrink-0 w-64 sm:w-72 md:w-80"
+                  >
                     <div className="rounded-2xl overflow-hidden shadow-md bg-zinc-100">
                       <img
                         src={act.image}

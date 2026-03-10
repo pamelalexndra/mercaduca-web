@@ -1,3 +1,5 @@
+import pool from "../../database/connection.js";
+
 export const updateEntrepreneurship = async (req, res) => {
   try {
     const { id } = req.params;

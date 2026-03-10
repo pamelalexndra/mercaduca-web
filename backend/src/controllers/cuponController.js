@@ -13,7 +13,7 @@ const uploadToCloudinary = (buffer) =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
       { folder: "mercaduca_cupones" },
-      (error, result) => (error ? reject(error) : resolve(result))
+      (error, result) => (error ? reject(error) : resolve(result)),
     );
     streamifier.createReadStream(buffer).pipe(stream);
   });
@@ -34,7 +34,8 @@ const validarAlcance = (id_producto, id_categoria) => {
 // ─── GET /cupones ─── Público
 export const getCupones = async (req, res) => {
   try {
-    const { id_emprendimiento, id_categoria, id_producto, solo_disponibles } = req.query;
+    const { id_emprendimiento, id_categoria, id_producto, solo_disponibles } =
+      req.query;
 
     let query = `
       SELECT
@@ -50,7 +51,7 @@ export const getCupones = async (req, res) => {
       FROM Cupon c
       LEFT JOIN Emprendimiento e  ON c.id_emprendimiento = e.id_emprendimiento
       LEFT JOIN Categorias    cat ON c.id_categoria      = cat.id_categoria
-      LEFT JOIN Productos      p  ON c.id_producto       = p.id_producto
+      LEFT JOIN Producto      p  ON c.id_producto       = p.id_producto
       WHERE 1=1
     `;
     const params = [];
@@ -102,7 +103,7 @@ export const getCuponById = async (req, res) => {
        LEFT JOIN Categorias    cat ON c.id_categoria      = cat.id_categoria
        LEFT JOIN Productos      p  ON c.id_producto       = p.id_producto
        WHERE c.id_cupon = $1`,
-      [id]
+      [id],
     );
 
     if (rows.length === 0) {
@@ -132,10 +133,14 @@ export const createCupon = async (req, res) => {
     } = req.body;
 
     if (!id_emprendimiento) {
-      return res.status(400).json({ message: "El cupón debe pertenecer a un emprendimiento." });
+      return res
+        .status(400)
+        .json({ message: "El cupón debe pertenecer a un emprendimiento." });
     }
     if (!nombre || descuento === undefined || descuento === null) {
-      return res.status(400).json({ message: "Nombre y descuento son obligatorios." });
+      return res
+        .status(400)
+        .json({ message: "Nombre y descuento son obligatorios." });
     }
 
     const alcanceError = validarAlcance(id_producto, id_categoria);
@@ -155,23 +160,24 @@ export const createCupon = async (req, res) => {
        RETURNING *`,
       [
         id_emprendimiento,
-        id_categoria    || null,
-        id_producto     || null,
+        id_categoria || null,
+        id_producto || null,
         nombre,
-        descripcion     || null,
+        descripcion || null,
         imagen_url,
         descuento,
         precio_original || null,
         disponible !== undefined ? disponible : true,
-        fecha_limite    || null,
-      ]
+        fecha_limite || null,
+      ],
     );
 
     res.status(201).json({ message: "Cupón creado", cupon: rows[0] });
   } catch (error) {
     if (error.code === "23505") {
       return res.status(409).json({
-        message: "Ya existe un cupón para ese producto. Solo se permite uno por producto.",
+        message:
+          "Ya existe un cupón para ese producto. Solo se permite uno por producto.",
       });
     }
     console.error("Error creando cupón:", error);
@@ -184,7 +190,10 @@ export const updateCupon = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const existing = await pool.query("SELECT * FROM Cupon WHERE id_cupon = $1", [id]);
+    const existing = await pool.query(
+      "SELECT * FROM Cupon WHERE id_cupon = $1",
+      [id],
+    );
     if (existing.rows.length === 0) {
       return res.status(404).json({ message: "Cupón no encontrado" });
     }
@@ -202,8 +211,10 @@ export const updateCupon = async (req, res) => {
     } = req.body;
 
     // Calcular alcance resultante combinando lo recibido con lo existente
-    const nuevo_id_producto  = id_producto  !== undefined ? (id_producto  || null) : current.id_producto;
-    const nuevo_id_categoria = id_categoria !== undefined ? (id_categoria || null) : current.id_categoria;
+    const nuevo_id_producto =
+      id_producto !== undefined ? id_producto || null : current.id_producto;
+    const nuevo_id_categoria =
+      id_categoria !== undefined ? id_categoria || null : current.id_categoria;
 
     const alcanceError = validarAlcance(nuevo_id_producto, nuevo_id_categoria);
     if (alcanceError) return res.status(400).json({ message: alcanceError });
@@ -230,22 +241,23 @@ export const updateCupon = async (req, res) => {
       [
         nuevo_id_categoria,
         nuevo_id_producto,
-        nombre          || null,
-        descripcion     || null,
+        nombre || null,
+        descripcion || null,
         imagen_url,
-        descuento       !== undefined ? descuento : null,
+        descuento !== undefined ? descuento : null,
         precio_original || null,
-        disponible      !== undefined ? disponible : null,
-        fecha_limite    || null,
+        disponible !== undefined ? disponible : null,
+        fecha_limite || null,
         id,
-      ]
+      ],
     );
 
     res.json({ message: "Cupón actualizado", cupon: rows[0] });
   } catch (error) {
     if (error.code === "23505") {
       return res.status(409).json({
-        message: "Ya existe un cupón para ese producto. Solo se permite uno por producto.",
+        message:
+          "Ya existe un cupón para ese producto. Solo se permite uno por producto.",
       });
     }
     console.error("Error actualizando cupón:", error);
@@ -260,7 +272,7 @@ export const deleteCupon = async (req, res) => {
 
     const { rowCount } = await pool.query(
       "DELETE FROM Cupon WHERE id_cupon = $1",
-      [id]
+      [id],
     );
 
     if (rowCount === 0) {

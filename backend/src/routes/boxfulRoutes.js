@@ -1,10 +1,8 @@
 import express from "express";
-import {
-  handleGetStates,
-  handleGetQuote,
-  handleCreateOrder,
-  handleCreateAddress
-} from "../controllers/boxfulController.js";
+import { handleGetStates } from "../controllers/boxfulController/handleGetStates.js";
+import { handleGetQuote } from "../controllers/boxfulController/handleGetQuote.js";
+import { handleCreateOrder } from "../controllers/boxfulController/handleCreateOrder.js";
+import { handleCreateAddress } from "../controllers/boxfulController/handleCreateAddress.js";
 
 const router = express.Router();
 
