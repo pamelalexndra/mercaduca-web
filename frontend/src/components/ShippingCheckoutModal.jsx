@@ -97,6 +97,7 @@ export default function ShippingCheckoutModal({
 
   // 1. Guardar dirección y Cotizar
   const handleGetQuote = async () => {
+    console.log("EMPRENDIMIENTO RECIBIDO:", emprendimiento);
     if (!isAddressFormValid()) {
       setError("Por favor completa todos los campos obligatorios.");
       return;

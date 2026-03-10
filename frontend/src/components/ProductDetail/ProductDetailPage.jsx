@@ -18,6 +18,8 @@ export default function ProductDetailPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
+  
+  const [activeCoupon, setActiveCoupon] = useState(null);
 
   const [showModal, setShowModal] = useState(false);
   const [updateError, setUpdateError] = useState("");
@@ -94,6 +96,38 @@ export default function ProductDetailPage() {
             const emprendimientoData = await emprendimientoRes.json();
             setEmprendimiento(emprendimientoData);
           }
+
+          // NUEVO: Fetch de cupones activos del emprendimiento
+          try {
+            const cuponesRes = await fetch(
+              `${API_BASE_URL}/cupones?id_emprendimiento=${producto.id_emprendimiento}&solo_disponibles=true`
+            );
+            if (cuponesRes.ok) {
+              const cuponesData = await cuponesRes.json();
+              const cupones = cuponesData.cupones || [];
+
+              // Evaluamos la jerarquía del cupón (Producto > Categoría > Emprendimiento)
+              let applicable = cupones.find(
+                (c) => String(c.id_producto) === String(producto.id || producto.id_producto)
+              );
+              
+              if (!applicable) {
+                applicable = cupones.find(
+                  (c) => String(c.id_categoria) === String(producto.id_categoria)
+                );
+              }
+              
+              if (!applicable) {
+                applicable = cupones.find(
+                  (c) => !c.id_producto && !c.id_categoria
+                );
+              }
+
+              setActiveCoupon(applicable);
+            }
+          } catch (err) {
+            console.error("Error obteniendo cupones:", err);
+          }
         }
       } catch (err) {
         setError(err.message);
@@ -113,6 +147,7 @@ export default function ProductDetailPage() {
   const canEdit = esDueno || isAdmin;
 
   const handleUpdateProduct = async (formData) => {
+    // ... tu lógica original de handleUpdateProduct ...
     setUpdateError("");
     try {
       const payload = {
@@ -173,11 +208,7 @@ export default function ProductDetailPage() {
 
       setProduct(productoActualizado);
       setShowModal(false);
-      setSuccessMessage(
-        isAdmin
-          ? "Producto actualizado correctamente"
-          : "Producto actualizado correctamente",
-      );
+      setSuccessMessage("Producto actualizado correctamente");
       setShowSuccess(true);
     } catch (err) {
       setUpdateError(err.message || "Error al actualizar el producto");
@@ -185,6 +216,7 @@ export default function ProductDetailPage() {
   };
 
   const handleDeleteProduct = async () => {
+    // ... tu lógica original de handleDeleteProduct ...
     try {
       const authToken = isAdmin
         ? token
@@ -199,11 +231,7 @@ export default function ProductDetailPage() {
       });
 
       if (response.ok) {
-        setSuccessMessage(
-          isAdmin
-            ? "Producto eliminado correctamente"
-            : "Producto eliminado correctamente",
-        );
+        setSuccessMessage("Producto eliminado correctamente");
         setShowSuccess(true);
         setTimeout(() => {
           if (isAdmin) {
@@ -264,7 +292,6 @@ export default function ProductDetailPage() {
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
-        {/* Banner para admin */}
         {isAdmin && (
           <div className="mb-4 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
             <div className="flex items-center gap-2">
@@ -318,9 +345,26 @@ export default function ProductDetailPage() {
                 {product.nombre}
               </h1>
 
-              <p className="text-3xl font-bold text-green-900 mb-4">
-                ${product.precio}
-              </p>
+              {/* RENDERIZADO CONDICIONAL DEL PRECIO */}
+              {activeCoupon ? (
+                <div className="mb-4 flex items-center gap-3">
+                  <p className="text-xl text-gray-400 line-through font-medium">
+                    ${product.precio}
+                  </p>
+                  <div className="flex flex-col">
+                    <p className="text-3xl font-bold text-red-600">
+                      ${Math.max(0, product.precio - activeCoupon.descuento).toFixed(2)}
+                    </p>
+                    <span className="text-xs font-semibold text-red-600 uppercase tracking-wide">
+                      Descuento aplicado
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <p className="text-3xl font-bold text-green-900 mb-4">
+                  ${product.precio}
+                </p>
+              )}
 
               <div className="mb-4">
                 <span className="inline-block bg-gray-100 px-3 py-1 rounded-full text-sm text-gray-600">
@@ -375,14 +419,12 @@ export default function ProductDetailPage() {
                       </a>
                     )}
 
-                    {/* NUEVO BOTÓN DE BOXFUL */}
                     <button
                       onClick={() => setShowBoxful(true)}
                       className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium shadow-sm"
                     >
                       📦 Comprar por Boxful
                     </button>
-
                   </>
                 )}
               </div>
@@ -416,7 +458,6 @@ export default function ProductDetailPage() {
         onConfirm={handleSuccessClose}
       />
 
-      {/* MODAL DE BOXFUL */}
       <ShippingCheckoutModal
         visible={showBoxful}
         onClose={() => setShowBoxful(false)}

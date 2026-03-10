@@ -39,14 +39,14 @@ export default function ProductForm({
       setNombre(producto.nombre || "");
       setDescripcion(producto.descripcion || producto.Descripcion || "");
       setImagenUrl(
-        producto.imagen || producto.imagen_url || producto.Imagen_URL || ""
+        producto.imagen || producto.imagen_url || producto.Imagen_URL || "",
       );
       const normalizedPrecio =
         producto.precio || producto.precio_dolares || producto.Precio_dolares;
       setPrecioDolares(
         normalizedPrecio !== undefined && normalizedPrecio !== null
           ? normalizedPrecio.toString()
-          : ""
+          : "",
       );
       setIdCategoria(producto.id_categoria || "");
     } else {
@@ -122,7 +122,7 @@ export default function ProductForm({
         setSuccessMessage(
           producto
             ? "Producto actualizado correctamente"
-            : "Producto creado correctamente"
+            : "Producto creado correctamente",
         );
         setShowSuccess(true);
       }
@@ -271,6 +271,34 @@ export default function ProductForm({
                 placeholder="https://..."
                 className={inputClass}
               />
+
+              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
+                <svg
+                  className="w-4 h-4 text-gray-400 flex-shrink-0"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                <span>
+                  Para generar el enlace de tu imagen se recomienda usar{" "}
+                  <a
+                    href="https://imgbb.com"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[#557051] hover:text-[#3a4d36] underline font-medium transition-colors"
+                  >
+                    imgbb.com
+                  </a>{" "}
+                  para continuar con el proceso de creación o modificación.
+                </span>
+              </p>
             </div>
 
             <div className="space-y-1">

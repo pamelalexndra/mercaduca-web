@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
 import ConfirmationDialog from "./ConfirmationDialog";
+import { API_BASE_URL } from "../utils/api";
 
 export default function EditProfile({
   visible,
@@ -22,17 +23,34 @@ export default function EditProfile({
     username: "",
     nuevaContraseña: "",
     confirmarContraseña: "",
+    boxful_state_id: "",
+    boxful_city_id: "",
+    direccion_recoleccion: "",
+    referencia_recoleccion: "",
   });
+
   const [localError, setLocalError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const [states, setStates] = useState([]);
+  const [selectedStateId, setSelectedStateId] = useState("");
 
   const initializedRef = useRef(false);
-
   const { removeProfile, loadingDelete, errorDelete } = useProfile();
 
   const inputClass =
     "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
 
+  // Cargar departamentos de Boxful
+  useEffect(() => {
+    if (visible) {
+      fetch(`${API_BASE_URL}/boxful/states`)
+        .then((r) => r.json())
+        .then((data) => setStates(data.states || []))
+        .catch(() => { });
+    }
+  }, [visible]);
+
+  // Inicializar form cuando abre
   useEffect(() => {
     if (visible) {
       setLocalError("");
@@ -51,6 +69,9 @@ export default function EditProfile({
             "",
           nuevaContraseña: "",
           confirmarContraseña: "",
+          boxful_city_id: emprendimientoData.boxful_city_id || "",
+          direccion_recoleccion: emprendimientoData.direccion_recoleccion || "",
+          referencia_recoleccion: emprendimientoData.referencia_recoleccion || "",
         });
       }
 
@@ -60,39 +81,57 @@ export default function EditProfile({
     }
   }, [visible]);
 
+  // Preseleccionar departamento si ya tiene ciudad guardada
+  useEffect(() => {
+    if (states.length > 0 && emprendimientoData?.boxful_city_id) {
+      const estadoPrevio = states.find((s) =>
+        s.Cities?.some((c) => c.id === emprendimientoData.boxful_city_id)
+      );
+      if (estadoPrevio) {
+        setSelectedStateId(estadoPrevio.id);
+
+        setFormData((prev) => ({
+          ...prev,
+          boxful_state_id: estadoPrevio.id
+        }));
+      }
+    }
+  }, [states, emprendimientoData]);
+
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "nuevaContraseña" || name === "confirmarContraseña") {
       setLocalError("");
     }
-
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleDeleteClick = () => {
-    setShowConfirm(true);
+  const handleStateChange = (e) => {
+    const stateId = e.target.value;
+
+    setSelectedStateId(stateId);
+
+    setFormData((prev) => ({
+      ...prev,
+      boxful_state_id: stateId,
+      boxful_city_id: ""
+    }));
   };
+
+  const handleDeleteClick = () => setShowConfirm(true);
 
   const handleConfirmDelete = async () => {
     setShowConfirm(false);
-
     const userId = emprendimientoData?.id_usuario;
     if (!userId) {
       setLocalError("No se pudo identificar el usuario.");
       return;
     }
-
     const success = await removeProfile(userId);
-
-    if (success) {
-      onDeleteSuccess?.();
-    }
+    if (success) onDeleteSuccess?.();
   };
 
-  const handleCancelDelete = () => {
-    setShowConfirm(false);
-  };
+  const handleCancelDelete = () => setShowConfirm(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -105,22 +144,29 @@ export default function EditProfile({
       return;
     }
 
+    if (formData.boxful_city_id && !formData.direccion_recoleccion.trim()) {
+      setLocalError("Si seleccionas un municipio, debes ingresar la dirección de recolección.");
+      return;
+    }
+
+    console.log("Datos enviados:", formData);
     setLocalError("");
     const success = await onSave?.(formData);
-    if (success) {
-      onSuccess?.("Perfil actualizado correctamente");
-    }
+    if (success) onSuccess?.("Perfil actualizado correctamente");
   };
 
   const handleBackgroundClick = (e) => {
-    if (e.target === e.currentTarget) {
-      onClose?.();
-    }
+    if (e.target === e.currentTarget) onClose?.();
   };
 
   if (!visible) return null;
 
   const currentError = localError || errorMessage || errorDelete;
+  const cities = states.find((s) => s.id === selectedStateId)?.Cities || [];
+
+  // Determina si la dirección de envíos está completa
+  const enviosConfigurados =
+    formData.boxful_city_id && formData.direccion_recoleccion.trim();
 
   return (
     <>
@@ -148,6 +194,8 @@ export default function EditProfile({
             )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
+
+              {/* Nombres */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Nombres *
@@ -162,6 +210,7 @@ export default function EditProfile({
                 />
               </div>
 
+              {/* Apellidos */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Apellidos *
@@ -176,6 +225,7 @@ export default function EditProfile({
                 />
               </div>
 
+              {/* Correo */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Correo Electrónico *
@@ -190,6 +240,7 @@ export default function EditProfile({
                 />
               </div>
 
+              {/* Teléfono */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Teléfono
@@ -204,6 +255,7 @@ export default function EditProfile({
                 />
               </div>
 
+              {/* Usuario */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Usuario de acceso
@@ -218,6 +270,7 @@ export default function EditProfile({
                 />
               </div>
 
+              {/* Contraseñas */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <label className="block text-sm font-semibold text-zinc-700 mb-2">
@@ -247,7 +300,103 @@ export default function EditProfile({
                 </div>
               </div>
 
-              <div className="flex gap-3 pt-4">
+              {/* ── Sección de envíos ── */}
+              <div className="border-t border-zinc-100 pt-5 space-y-4">
+                <div>
+                  <p className="text-sm font-semibold text-zinc-700">
+                    Dirección de recolección (envíos)
+                  </p>
+                  <p className="text-xs text-zinc-400 mt-0.5">
+                    Configura desde dónde Boxful recogerá los pedidos de tus clientes.
+                    Se usará tu teléfono de perfil como contacto.
+                  </p>
+                </div>
+
+                {/* Departamento y Municipio */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-zinc-500">
+                      Departamento
+                    </label>
+                    <select
+                      value={selectedStateId}
+                      onChange={handleStateChange}
+                      className={inputClass}
+                    >
+                      <option value="">Selecciona...</option>
+                      {states.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="block text-xs font-medium text-zinc-500">
+                      Municipio
+                    </label>
+                    <select
+                      name="boxful_city_id"
+                      value={formData.boxful_city_id}
+                      onChange={handleChange}
+                      disabled={!selectedStateId}
+                      className={`${inputClass} disabled:opacity-50 disabled:bg-zinc-100`}
+                    >
+                      <option value="">Selecciona...</option>
+                      {cities.map((c) => (
+                        <option key={c.id} value={c.id}>
+                          {c.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                {/* Dirección exacta */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-zinc-500">
+                    Dirección exacta {formData.boxful_city_id && "*"}
+                  </label>
+                  <input
+                    type="text"
+                    name="direccion_recoleccion"
+                    value={formData.direccion_recoleccion}
+                    onChange={handleChange}
+                    placeholder="Colonia, Calle, Número de casa o local..."
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* Punto de referencia */}
+                <div className="space-y-1">
+                  <label className="block text-xs font-medium text-zinc-500">
+                    Punto de referencia (opcional)
+                  </label>
+                  <input
+                    type="text"
+                    name="referencia_recoleccion"
+                    value={formData.referencia_recoleccion}
+                    onChange={handleChange}
+                    placeholder="Ej. Frente al parque central"
+                    className={inputClass}
+                  />
+                </div>
+
+                {/* Indicador de estado */}
+                {enviosConfigurados ? (
+                  <p className="text-xs text-[#557051] flex items-center gap-1">
+                    <span>✓</span> Dirección de recolección configurada
+                  </p>
+                ) : (
+                  <p className="text-xs text-amber-600 flex items-center gap-1">
+                    <span>⚠</span> Sin configurar — tus clientes no podrán solicitar envíos
+                  </p>
+                )}
+              </div>
+
+              {/* Botones */}
+              <div className="flex gap-3 pt-2">
                 <button
                   type="button"
                   onClick={handleDeleteClick}
