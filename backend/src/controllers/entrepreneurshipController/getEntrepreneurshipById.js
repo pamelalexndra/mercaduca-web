@@ -16,6 +16,8 @@ export const getEntrepreneurshipById = async (req, res) => {
         e.disponible,
         e.Imagen_URL as imagen_url,
         e.instagram,
+        e.boxful_city_id,
+        e.direccion_recoleccion,
         em.correo,
         em.telefono
       FROM emprendimiento e

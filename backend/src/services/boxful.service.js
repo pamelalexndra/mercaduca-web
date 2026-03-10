@@ -1,66 +1,65 @@
-import axios from "axios";
-
+// src/services/boxful.service.js
 const BOXFUL_API = "https://api.goboxful.com";
 
-// Cache del token para no autenticar en cada petición
 let cachedToken = null;
 let tokenExpiry = null;
 
-/**
- * Obtiene un token de Boxful, usando caché si aún es válido.
- * Las credenciales viven SOLO en el servidor (variables de entorno).
- */
+const boxfulFetch = async (path, options = {}) => {
+  const res = await fetch(`${BOXFUL_API}${path}`, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...options.headers,
+    },
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.message || `Boxful error ${res.status}`);
+  }
+  return res.json();
+};
+
 const getBoxfulToken = async () => {
   const now = Date.now();
-
-  // El token dura ~1h, renovamos con 5min de margen
   if (cachedToken && tokenExpiry && now < tokenExpiry - 5 * 60 * 1000) {
     return cachedToken;
   }
-
-  const response = await axios.post(`${BOXFUL_API}/auth/client`, {
-    email: process.env.BOXFUL_EMAIL,
-    password: process.env.BOXFUL_PASSWORD,
+  const data = await boxfulFetch("/auth/client", {
+    method: "POST",
+    body: JSON.stringify({
+      email: process.env.BOXFUL_EMAIL,
+      password: process.env.BOXFUL_PASSWORD,
+    }),
   });
-
-  cachedToken = response.data.accessToken;
-  tokenExpiry = now + 60 * 60 * 1000; // 1 hora
+  cachedToken = data.accessToken;
+  tokenExpiry = now + 60 * 60 * 1000;
   return cachedToken;
 };
 
-/** Obtiene departamentos y municipios de El Salvador */
 export const getStates = async () => {
   const token = await getBoxfulToken();
-  const response = await axios.get(`${BOXFUL_API}/states`, {
+  const data = await boxfulFetch("/states", {
     headers: { Authorization: `Bearer ${token}` },
   });
-  return response.data.states;
+  return data.states;
 };
 
-/**
- * Cotiza el costo de envío entre dos ciudades.
- * @param {string} recollectionCityId - cityId del municipio del emprendedor
- * @param {string} customerCityId     - cityId del municipio del cliente
- */
 export const getQuote = async (recollectionCityId, customerCityId) => {
   const token = await getBoxfulToken();
-  const response = await axios.post(
-    `${BOXFUL_API}/quoter`,
-    { recollectionCityId, customerCityId },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  return response.data.couriers;
+  const data = await boxfulFetch("/quoter", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ recollectionCityId, customerCityId }),
+  });
+  return data.couriers;
 };
 
-/**
- * Crea una orden de envío en Boxful.
- * @param {object} orderData - Datos del cliente, producto y courier seleccionado
- */
 export const createOrder = async (orderData) => {
   const token = await getBoxfulToken();
-  const response = await axios.post(
-    `${BOXFUL_API}/shiphero/orders`,
-    {
+  const data = await boxfulFetch("/shiphero/orders", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
       cityId: orderData.customerCityId,
       completeName: orderData.completeName,
       email: orderData.email || "",
@@ -68,7 +67,7 @@ export const createOrder = async (orderData) => {
       customerPhone: orderData.customerPhone,
       customerAddress: orderData.customerAddress,
       customerReferencePoint: orderData.customerReferencePoint,
-      cod: true, // Cobro Contra Entrega — cliente paga al recibir
+      cod: true,
       courierId: orderData.courierId,
       totalTax: 0,
       subtotal: orderData.productPrice,
@@ -79,16 +78,32 @@ export const createOrder = async (orderData) => {
       makeCustomerFavorite: false,
       isFavoriteCustomerSelected: false,
       favoriteCustomerId: null,
-      products: [
-        {
-          sku: String(orderData.productId),
-          quantity: 1,
-          price: orderData.productPrice,
-          productName: orderData.productName,
-        },
-      ],
-    },
-    { headers: { Authorization: `Bearer ${token}` } }
-  );
-  return response.data.shipmentData;
+      products: [{
+        sku: String(orderData.productId),
+        quantity: 1,
+        price: orderData.productPrice,
+        productName: orderData.productName,
+      }],
+    }),
+  });
+  return data.shipmentData;
+};
+
+export const createAddress = async (addressData) => {
+  const token = await getBoxfulToken();
+  const data = await boxfulFetch("/addresses", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify({
+      address: addressData.address,
+      referencePoint: addressData.referencePoint,
+      latitude: addressData.latitude || 13.6929,
+      longitude: addressData.longitude || -89.2182,
+      stateId: addressData.stateId,
+      cityId: addressData.cityId,
+      addressPhone: addressData.addressPhone,
+      addressAreaCode: addressData.addressAreaCode || "503",
+    }),
+  });
+  return data.address;
 };

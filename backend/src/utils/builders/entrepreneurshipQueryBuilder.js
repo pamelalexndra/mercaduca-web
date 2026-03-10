@@ -1,12 +1,7 @@
 // utils/builders/entrepreneurshipQueryBuilder.js
-/**
- * Construye la consulta SQL dinámica para obtener emprendimientos.
- * Incluye lógica de búsqueda por texto (search).
- * @param {Object} filtros - req.query
- * @returns {Object} { query, params, filtrosAplicados }
- */
+
 export const buildEntrepreneurshipQuery = (filtros) => {
-    const { ids, ordenar, search, limit } = filtros;
+  const { ids, ordenar, search, limit } = filtros;
 
   let sqlParts = [
     `SELECT
@@ -18,7 +13,11 @@ export const buildEntrepreneurshipQuery = (filtros) => {
         e.Instagram AS instagram,
         e.Fecha_registro,
         c.id_categoria AS categoria_id,
-        c.Categoria AS categoria_nombre
+        c.Categoria AS categoria_nombre,
+        e.boxful_city_id,
+        e.boxful_address_id,
+        e.direccion_recoleccion,
+        e.referencia_recoleccion
     FROM Emprendimiento e
     JOIN Categorias c ON e.id_categoria = c.id_categoria
     WHERE e.Disponible = true`,
@@ -37,6 +36,7 @@ export const buildEntrepreneurshipQuery = (filtros) => {
         LOWER(e.Nombre) LIKE ${idx} 
         OR LOWER(e.Descripcion) LIKE ${idx}
     )`);
+
     params.push(searchTerm);
     filtrosAplicados.search = search.trim();
   }
@@ -51,7 +51,9 @@ export const buildEntrepreneurshipQuery = (filtros) => {
       const placeholders = categoriasIds
         .map((_, i) => `$${params.length + i + 1}`)
         .join(",");
+
       sqlParts.push(` AND e.id_categoria IN (${placeholders})`);
+
       params.push(...categoriasIds);
       filtrosAplicados.categorias = categoriasIds;
     }
@@ -64,15 +66,16 @@ export const buildEntrepreneurshipQuery = (filtros) => {
     nombre_desc: "e.Nombre DESC",
   };
 
-    const clausulaOrden = ordenamientos[ordenar] || ordenamientos.fecha_desc;
-    sqlParts.push(`ORDER BY ${clausulaOrden}`);
-    filtrosAplicados.ordenamiento = ordenar;
+  const clausulaOrden = ordenamientos[ordenar] || ordenamientos.fecha_desc;
 
-    if (limit && !isNaN(parseInt(limit))) {
-        sqlParts.push(` LIMIT ${getNextIndex()}`);
-        params.push(parseInt(limit));
-        filtrosAplicados.limit = parseInt(limit);
-    }
+  sqlParts.push(`ORDER BY ${clausulaOrden}`);
+  filtrosAplicados.ordenamiento = ordenar;
+
+  if (limit && !isNaN(parseInt(limit))) {
+    sqlParts.push(` LIMIT ${getNextIndex()}`);
+    params.push(parseInt(limit));
+    filtrosAplicados.limit = parseInt(limit);
+  }
 
   return {
     query: sqlParts.join(" "),
@@ -81,12 +84,12 @@ export const buildEntrepreneurshipQuery = (filtros) => {
   };
 };
 
+
 /**
- * Construye la query dinámica para UPDATE parcial de emprendimientos.
- * @param {string|number} id
- * @param {Object} updates
+ * UPDATE parcial de emprendimientos
  */
 export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
+
   const dbMap = {
     nombre: "Nombre",
     descripcion: "Descripcion",
@@ -94,6 +97,12 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
     instagram: "Instagram",
     disponible: "Disponible",
     id_categoria: "id_categoria",
+
+    // NUEVOS CAMPOS BOXFUL
+    boxful_city_id: "boxful_city_id",
+    boxful_address_id: "boxful_address_id",
+    direccion_recoleccion: "direccion_recoleccion",
+    referencia_recoleccion: "referencia_recoleccion"
   };
 
   const setParts = [];
@@ -101,16 +110,27 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
   let paramCount = 1;
 
   for (const [key, value] of Object.entries(updates)) {
+
     if (dbMap[key]) {
+
       setParts.push(`${dbMap[key]} = $${paramCount}`);
 
       if (key === "id_categoria") {
         params.push(value ? parseInt(value) : null);
-      } else if (key === "disponible") {
-        params.push(Boolean(value));
-      } else {
-        params.push(value?.toString().trim() || "");
       }
+
+      else if (key === "disponible") {
+        params.push(Boolean(value));
+      }
+
+      else if (key === "boxful_city_id" || key === "boxful_address_id") {
+        params.push(value ? value.toString() : null);
+      }
+
+      else {
+        params.push(value?.toString().trim() || null);
+      }
+
       paramCount++;
     }
   }
@@ -122,11 +142,15 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
   params.push(parseInt(id));
 
   const query = `
-      UPDATE Emprendimiento 
-      SET ${setParts.join(", ")}
-      WHERE id_emprendimiento = $${paramCount}
-      RETURNING *
+    UPDATE Emprendimiento 
+    SET ${setParts.join(", ")}
+    WHERE id_emprendimiento = $${paramCount}
+    RETURNING *
   `;
 
-  return { query, params, count: setParts.length };
+  return {
+    query,
+    params,
+    count: setParts.length
+  };
 };

@@ -186,7 +186,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
-  
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -196,7 +196,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const lastNotifiedUserIdRef = useRef(null);
   const loadingRef = useRef(false);
   const currentUserRef = useRef(null);
-  
+
   const isAdminMode = useMemo(() => {
     return isAdminViewMode({
       isAdminView: user?.isAdminView,
@@ -209,10 +209,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     const parsed = typeof stored === "string" ? JSON.parse(stored) : stored;
     const rawEmpr = parsed?.profile?.emprendimiento || parsed?.profile;
     const cached = getCachedEmprendimiento(getUserId(parsed));
-    return rawEmpr 
-      ? normalizeEmprendimiento(rawEmpr) 
-      : cached 
-        ? normalizeEmprendimiento(cached) 
+    return rawEmpr
+      ? normalizeEmprendimiento(rawEmpr)
+      : cached
+        ? normalizeEmprendimiento(cached)
         : {};
   });
 
@@ -313,7 +313,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       try {
         const storedUser = user || JSON.parse(localStorage.getItem("user") || "null");
         const userId = getUserId(storedUser);
-        
+
         if (!userId) {
           if (!isAdminMode) navigate("/vender");
           setLoading(false);
@@ -322,8 +322,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
         currentUserIdRef.current = userId;
 
-        if (storedUser?.profile?.emprendimiento?.id_emprendimiento && 
-            storedUser?.profile?.productos?.length >= 0) {
+        if (storedUser?.profile?.emprendimiento?.id_emprendimiento &&
+          storedUser?.profile?.productos?.length >= 0) {
           setLoading(false);
           initializedRef.current = true;
           return;
@@ -351,7 +351,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           const normalized = normalizeEmprendimiento(profileData.emprendimiento);
           setEmprendimiento(normalized);
           saveCachedEmprendimiento(userId, normalized);
-          
+
           if (normalized.id_emprendimiento) {
             await fetchProductos(normalized.id_emprendimiento);
           }
@@ -407,7 +407,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         const normalized = normalizeEmprendimiento(profileData.emprendimiento);
         setEmprendimiento(normalized);
         saveCachedEmprendimiento(userId, normalized);
-        
+
         if (normalized.id_emprendimiento) {
           await fetchProductos(normalized.id_emprendimiento);
         }
@@ -496,7 +496,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       const endpoint = productoEdit?.id
         ? `${API_BASE_URL}/products/${productoEdit.id}`
         : `${API_BASE_URL}/products`;
-      
+
       const response = await fetch(endpoint, {
         method: productoEdit?.id ? "PUT" : "POST",
         headers: {
@@ -530,7 +530,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       );
       setShowSuccessDialog(true);
       closeProductForm();
-      
+
       // Solo refrescar después de la operación exitosa
       await refreshData();
       return true;
@@ -561,7 +561,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setSuccessMessage(`Producto eliminado correctamente`);
       setShowSuccessDialog(true);
       closeProductForm();
-      
+
       await refreshData();
       return true;
     } catch (err) {
@@ -573,7 +573,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
   const handleSaveEntrepreneurship = async (data) => {
     if (!data?.nombre?.trim() || !data?.id_categoria) {
-      setError(!data?.nombre?.trim() 
+      setError(!data?.nombre?.trim()
         ? "El nombre del emprendimiento es obligatorio."
         : "Selecciona una categoría para tu emprendimiento.");
       return false;
@@ -623,7 +623,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       );
       setShowSuccessDialog(true);
       setShowEntrepreneurshipModal(false);
-      
+
       await refreshData();
       return true;
     } catch (err) {
@@ -651,7 +651,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setSavingProfile(true);
       setError("");
 
-      const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
+      // 1. Petición para guardar los datos personales (Usuario)
+      const responseUser = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -667,16 +668,48 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         }),
       });
 
-      const result = await response.json();
+      const resultUser = await responseUser.json();
 
-      if (!response.ok) {
-        throw new Error(result.error || "No se pudo actualizar el perfil");
+      if (!responseUser.ok) {
+        throw new Error(resultUser.error || "No se pudo actualizar el perfil personal");
+      }
+
+      // 2. Petición para guardar los datos de envío (Emprendimiento)
+      // NUEVO: Verificamos que realmente haya llenado los campos de Boxful antes de enviar la petición
+      const configuroEnvios = datos.boxful_city_id && datos.direccion_recoleccion?.trim();
+
+      if (emprendimiento?.id_emprendimiento && configuroEnvios) {
+        const boxfulPayload = {
+          boxful_city_id: datos.boxful_city_id,
+          boxful_state_id: datos.boxful_state_id,
+          direccion_recoleccion: datos.direccion_recoleccion.trim(),
+          referencia_recoleccion: datos.referencia_recoleccion?.trim() || "",
+          telefono: datos.telefono?.trim() // Para que el controlador lo tome al crear la dirección en Boxful
+        };
+
+        try {
+          const responseEmp = await fetch(`${API_BASE_URL}/entrepreneurship/${emprendimiento.id_emprendimiento}`, {
+            method: "PATCH",
+            headers: {
+              "Content-Type": "application/json",
+              ...getAuthHeaders(currentUser),
+            },
+            body: JSON.stringify(boxfulPayload),
+          });
+
+          if (!responseEmp.ok) {
+            const errorEmp = await responseEmp.json();
+            console.error("Error guardando datos de envío:", errorEmp);
+          }
+        } catch (error) {
+          console.error("Fallo de red al guardar el emprendimiento:", error);
+        }
       }
 
       setSuccessMessage("Perfil actualizado correctamente");
       setShowSuccessDialog(true);
       setShowEditProfileModal(false);
-      
+
       await refreshData();
       return true;
     } catch (profileError) {
@@ -882,11 +915,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             <button
               onClick={handleAgregar}
               disabled={!canAddProducts}
-              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${
-                canAddProducts
+              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${canAddProducts
                   ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
                   : "bg-gray-300 cursor-not-allowed"
-              }`}
+                }`}
               aria-label="Agregar producto"
               title={isAdminMode ? "Los administradores no pueden agregar productos" : "Agregar producto"}
             >
@@ -915,11 +947,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                 <button
                   onClick={handleAgregar}
                   disabled={!hasEmprendimiento}
-                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${
-                    hasEmprendimiento
+                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento
                       ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
                       : "bg-gray-300 cursor-not-allowed shadow-none"
-                  }`}
+                    }`}
                 >
                   Comparte tu primer producto
                 </button>

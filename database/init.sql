@@ -10,6 +10,10 @@ CREATE TABLE Emprendimiento (
   Descripcion TEXT, 
   Disponible BOOLEAN DEFAULT TRUE,
   Imagen_URL TEXT,
+  boxful_city_id VARCHAR(50),
+  boxful_address_id VARCHAR(100),
+  direccion_recoleccion TEXT,
+  referencia_recoleccion TEXT,
 	Instagram TEXT,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Emprendimiento_Categoria FOREIGN KEY (id_categoria) 
@@ -79,20 +83,31 @@ CREATE TABLE Solicitudes (
 
 CREATE TABLE Cupon(
   id_cupon SERIAL PRIMARY KEY NOT NULL,
-  id_emprendimiento INT,
+  id_emprendimiento INT NOT NULL, -- Todo cupón le pertenece a un emprendimiento
   id_categoria INT,
-  Nombre VARCHAR(200),
+  id_producto INT UNIQUE, -- Garantiza máximo 1 cupón activo/creado por producto
+  Nombre VARCHAR(200) NOT NULL,
   Descripcion TEXT,
   Imagen_URL TEXT,
-  Descuento DECIMAL(18,2),
+  Descuento DECIMAL(18,2) NOT NULL,
+  Precio_original DECIMAL(18,2),
   Disponible BOOLEAN DEFAULT TRUE,
   Fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  Precio_original DECIMAL(18,2),
   Fecha_limite TIMESTAMP,
+  
   CONSTRAINT fk_Cupon_Emprendimiento FOREIGN KEY (id_emprendimiento)
-    REFERENCES Emprendimiento (id_emprendimiento),
+    REFERENCES Emprendimiento (id_emprendimiento) ON DELETE CASCADE,
   CONSTRAINT fk_Cupon_Categorias FOREIGN KEY (id_categoria)
-    REFERENCES Categorias (id_categoria)
+    REFERENCES Categorias (id_categoria) ON DELETE CASCADE,
+  CONSTRAINT fk_Cupon_Producto FOREIGN KEY (id_producto)
+    REFERENCES Producto (id_producto) ON DELETE CASCADE,
+    
+  -- Restricción para evitar conflictos de alcance (no puede aplicar a un producto y a una categoría a la vez en el mismo registro)
+  CONSTRAINT chk_alcance_cupon CHECK (
+    (id_producto IS NOT NULL AND id_categoria IS NULL) OR
+    (id_producto IS NULL AND id_categoria IS NOT NULL) OR
+    (id_producto IS NULL AND id_categoria IS NULL)
+  )
 );
 
 CREATE TABLE sitio_configuracion (
