@@ -371,7 +371,7 @@ export default function ProductDetailPage() {
                   {product.categoria || "Sin categoría"}
                 </span>
               </div>
-              <ProductCoupon />
+              <ProductCoupon categoria={product.categoria} />
 
               {product.descripcion && (
                 <div className="mb-6">
