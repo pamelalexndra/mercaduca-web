@@ -205,24 +205,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     });
   }, [user?.isAdminView, disableActions]);
 
-  const [emprendimiento, setEmprendimiento] = useState(() => {
-    const stored = user || localStorage.getItem("user");
-    const parsed = typeof stored === "string" ? JSON.parse(stored) : stored;
-    const rawEmpr = parsed?.profile?.emprendimiento || parsed?.profile;
-    const cached = getCachedEmprendimiento(getUserId(parsed));
-    return rawEmpr
-      ? normalizeEmprendimiento(rawEmpr)
-      : cached
-        ? normalizeEmprendimiento(cached)
-        : {};
-  });
-
-  const [productos, setProductos] = useState(() => {
-    const stored = user || localStorage.getItem("user");
-    const parsed = typeof stored === "string" ? JSON.parse(stored) : stored;
-    const storedProductos = parsed?.profile?.productos || [];
-    return storedProductos.map(normalizeProducto);
-  });
+  const [emprendimiento, setEmprendimiento] = useState({});
+  const [productos, setProductos] = useState([]);
 
   const [currentUser, setCurrentUser] = useState(() => {
     if (user) return user;
@@ -244,7 +228,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const fetchProductos = useCallback(async (emprendimientoId) => {
     if (!emprendimientoId) {
       setProductos([]);
-      return;
+      return [];
     }
 
     try {
@@ -257,7 +241,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
       if (response.status === 404 || response.status === 204) {
         setProductos([]);
-        return;
+        return [];
       }
 
       if (!response.ok) {
@@ -269,11 +253,13 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         normalizeProducto,
       );
       setProductos(productosNormalizados);
+      return productosNormalizados;
     } catch (fetchError) {
       console.error("Error cargando productos:", fetchError);
       if (!fetchError.message.includes("404")) {
         setError("Error al cargar los productos");
       }
+      return [];
     }
   }, []);
 
@@ -306,6 +292,78 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   }, []);
 
+  const refreshData = useCallback(async () => {
+    const userId = currentUserIdRef.current;
+    if (!userId || loadingRef.current) return;
+
+    loadingRef.current = true;
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
+        headers: { ...getAuthHeaders(currentUserRef.current) },
+      });
+
+      if (!response.ok) throw new Error("No se pudo actualizar los datos");
+
+      const payload = await response.json();
+      const profileData = payload.profile || payload;
+
+      let emprendimientoId = null;
+
+      if (profileData?.emprendimiento) {
+        const normalized = normalizeEmprendimiento(profileData.emprendimiento);
+        setEmprendimiento(normalized);
+        saveCachedEmprendimiento(userId, normalized);
+        emprendimientoId = normalized.id_emprendimiento;
+      } else if (profileData?.id_emprendimiento) {
+        emprendimientoId = profileData.id_emprendimiento;
+        const emprendimientoData =
+          await fetchEmprendimientoById(emprendimientoId);
+        if (emprendimientoData) {
+          setEmprendimiento(emprendimientoData);
+        }
+      } else {
+        setEmprendimiento({});
+        setProductos([]);
+      }
+
+      if (emprendimientoId) {
+        await fetchProductos(emprendimientoId);
+      }
+
+      if (!isAdminMode) {
+        const updatedUser = {
+          ...currentUserRef.current,
+          profile: {
+            ...profileData,
+            emprendimiento: profileData?.emprendimiento || {},
+          },
+        };
+        localStorage.setItem("user", JSON.stringify(updatedUser));
+        setCurrentUser(updatedUser);
+      }
+    } catch (error) {
+      console.error("Error actualizando datos:", error);
+      setError("Error al actualizar los datos");
+    } finally {
+      setLoading(false);
+      loadingRef.current = false;
+    }
+  }, [fetchProductos, fetchEmprendimientoById, isAdminMode]);
+
+  const resetEntrepreneurshipData = useCallback(() => {
+    setEmprendimiento({});
+    setProductos([]);
+
+    const userId = currentUserIdRef.current;
+    if (userId) {
+      const cache = readCachedEmprendimientos();
+      delete cache[userId];
+      localStorage.setItem(EMPRENDIMIENTO_CACHE_KEY, JSON.stringify(cache));
+    }
+  }, []);
+
   useEffect(() => {
     if (initializedRef.current) return;
 
@@ -326,13 +384,9 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
         currentUserIdRef.current = userId;
 
-        if (
-          storedUser?.profile?.emprendimiento?.id_emprendimiento &&
-          storedUser?.profile?.productos?.length >= 0
-        ) {
-          setLoading(false);
-          initializedRef.current = true;
-          return;
+        const cachedEmprendimiento = getCachedEmprendimiento(userId);
+        if (cachedEmprendimiento) {
+          setEmprendimiento(normalizeEmprendimiento(cachedEmprendimiento));
         }
 
         // Cargar perfil completo
@@ -352,7 +406,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         const payload = await response.json();
         const profileData = payload.profile || payload;
 
-        // Cargar emprendimiento
         if (profileData?.emprendimiento) {
           const normalized = normalizeEmprendimiento(
             profileData.emprendimiento,
@@ -376,7 +429,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             profile: {
               ...profileData,
               emprendimiento: profileData.emprendimiento || {},
-              productos: productos,
             },
           };
           localStorage.setItem("user", JSON.stringify(updatedUser));
@@ -392,59 +444,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     };
 
     initializeProfile();
-  }, []);
-
-  const refreshData = useCallback(async () => {
-    const userId = currentUserIdRef.current;
-    if (!userId || loadingRef.current) return;
-
-    loadingRef.current = true;
-    setLoading(true);
-
-    try {
-      const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
-        headers: { ...getAuthHeaders(currentUserRef.current) },
-      });
-
-      if (!response.ok) throw new Error("No se pudo actualizar los datos");
-
-      const payload = await response.json();
-      const profileData = payload.profile || payload;
-
-      // Actualizar emprendimiento
-      if (profileData?.emprendimiento) {
-        const normalized = normalizeEmprendimiento(profileData.emprendimiento);
-        setEmprendimiento(normalized);
-        saveCachedEmprendimiento(userId, normalized);
-
-        if (normalized.id_emprendimiento) {
-          await fetchProductos(normalized.id_emprendimiento);
-        }
-      } else {
-        setEmprendimiento({});
-        setProductos([]);
-      }
-
-      if (!isAdminMode) {
-        const updatedUser = {
-          ...currentUserRef.current,
-          profile: {
-            ...profileData,
-            emprendimiento: profileData?.emprendimiento || {},
-            productos: productos,
-          },
-        };
-        localStorage.setItem("user", JSON.stringify(updatedUser));
-        setCurrentUser(updatedUser);
-      }
-    } catch (error) {
-      console.error("Error actualizando datos:", error);
-      setError("Error al actualizar los datos");
-    } finally {
-      setLoading(false);
-      loadingRef.current = false;
-    }
-  }, [fetchProductos, isAdminMode, productos]);
+  }, [fetchProductos, fetchEmprendimientoById, isAdminMode, navigate, user]);
 
   useEffect(() => {
     if (currentUser && onProfileLoaded) {
@@ -540,7 +540,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setShowSuccessDialog(true);
       closeProductForm();
 
-      // Solo refrescar después de la operación exitosa
       await refreshData();
       return true;
     } catch (err) {
@@ -665,7 +664,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setSavingProfile(true);
       setError("");
 
-      // 1. Petición para guardar los datos personales (Usuario)
       const responseUser = await fetch(
         `${API_BASE_URL}/user/profile/${userId}`,
         {
@@ -696,8 +694,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         );
       }
 
-      // 2. Petición para guardar los datos de envío (Emprendimiento)
-      // NUEVO: Verificamos que realmente haya llenado los campos de Boxful antes de enviar la petición
       const configuroEnvios =
         datos.boxful_city_id && datos.direccion_recoleccion?.trim();
 
@@ -707,7 +703,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           boxful_state_id: datos.boxful_state_id,
           direccion_recoleccion: datos.direccion_recoleccion.trim(),
           referencia_recoleccion: datos.referencia_recoleccion?.trim() || "",
-          telefono: datos.telefono?.trim(), // Para que el controlador lo tome al crear la dirección en Boxful
+          telefono: datos.telefono?.trim(),
         };
 
         try {
@@ -779,6 +775,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   };
 
   const handleEntrepreneurshipDeleteSuccess = () => {
+    resetEntrepreneurshipData();
     setSuccessMessage("Emprendimiento eliminado correctamente");
     setShowSuccessDialog(true);
     refreshData();
@@ -791,7 +788,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     setShowSuccessDialog(true);
   };
 
-  // --- RENDER ---
   if (loading && !initializedRef.current) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white font-montserrat">
@@ -828,7 +824,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     <>
       <div className="min-h-screen bg-white font-montserrat">
         <div className="max-w-4xl mx-auto px-4 py-8">
-          {/* Banner modo administrador */}
           {isAdminMode && (
             <div className="mb-6 bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-md">
               <div className="flex items-center gap-2">
@@ -858,7 +853,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             </div>
           )}
 
-          {/* Versión Desktop */}
           <div className="hidden md:flex md:items-center md:gap-20 mb-11">
             <div className="flex-shrink-0">
               <img
@@ -923,7 +917,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             </div>
           </div>
 
-          {/* Versión Mobile */}
           <div className="md:hidden">
             <div className="flex items-center gap-4 mb-4 px-4">
               <img
@@ -983,7 +976,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             </div>
           </div>
 
-          {/* Botón agregar producto */}
           <div className="relative mt-11 mb-2 flex items-center">
             <div className="flex-1 border-t border-gray-300" />
             <button
@@ -1011,7 +1003,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             </p>
           </div>
 
-          {/* Lista de productos */}
           {productos.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-20">
               <h2 className="text-3xl font-light mb-2">
