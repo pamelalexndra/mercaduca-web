@@ -7,6 +7,7 @@ import SuccessDialog from "../SuccessDialog";
 import { API_BASE_URL } from "../../utils/api";
 import ShippingCheckoutModal from "../ShippingCheckoutModal";
 import { Truck } from "lucide-react";
+import ProductCoupon from "./ProductCoupon";
 
 export default function ProductDetailPage() {
   const { id } = useParams();
@@ -326,6 +327,7 @@ export default function ProductDetailPage() {
                   {product.categoria || "Sin categoría"}
                 </span>
               </div>
+              <ProductCoupon />
 
               {product.descripcion && (
                 <div className="mb-6">
