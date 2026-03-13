@@ -139,7 +139,6 @@ export const createCupon = async (req, res) => {
       nombre,
       descripcion,
       descuento,
-      precio_original,
       disponible,
       fecha_limite,
     } = req.body;
@@ -205,8 +204,8 @@ export const createCupon = async (req, res) => {
     const { rows } = await pool.query(
       `INSERT INTO Cupon
         (id_emprendimiento, id_categoria, id_producto, nombre, descripcion,
-         imagen_url, descuento, precio_original, disponible, fecha_limite)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+         imagen_url, descuento, disponible, fecha_limite)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
        RETURNING *`,
       [
         id_emprendimiento || null,
@@ -216,7 +215,6 @@ export const createCupon = async (req, res) => {
         descripcion,
         imagen_url,
         descuento,
-        precio_original || null,
         disponible !== undefined ? disponible : true,
         fecha_limite,
       ],
@@ -256,7 +254,6 @@ export const updateCupon = async (req, res) => {
       nombre,
       descripcion,
       descuento,
-      precio_original,
       disponible,
       fecha_limite,
     } = req.body;
@@ -313,7 +310,6 @@ export const updateCupon = async (req, res) => {
         descripcion       = COALESCE($5, descripcion),
         imagen_url        = $6,
         descuento         = COALESCE($7, descuento),
-        precio_original   = COALESCE($8, precio_original),
         disponible        = COALESCE($9, disponible),
         fecha_limite      = COALESCE($10, fecha_limite)
        WHERE id_cupon = $11
@@ -326,7 +322,6 @@ export const updateCupon = async (req, res) => {
         descripcion || null,
         imagen_url,
         descuento !== undefined ? descuento : null,
-        precio_original || null,
         disponible !== undefined ? disponible : null,
         fecha_limite || null,
         id,

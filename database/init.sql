@@ -90,7 +90,6 @@ CREATE TABLE Cupon(
   Descripcion TEXT,
   Imagen_URL TEXT,
   Descuento DECIMAL(18,2) NOT NULL,
-  Precio_original DECIMAL(18,2),
   Disponible BOOLEAN DEFAULT TRUE,
   Fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   Fecha_limite TIMESTAMP,
