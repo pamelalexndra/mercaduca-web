@@ -20,14 +20,26 @@ const uploadToCloudinary = (buffer) =>
 
 /**
  * Valida que el alcance sea coherente:
- * - Producto específico: id_producto presente, id_categoria nulo
- * - Categoría completa:  id_categoria presente, id_producto nulo
- * - Todo el emprendimiento: ambos nulos
+ * - Producto específico: id_producto presente, id_categoria e id_emprendimiento nulos
+ * - Categoría completa: id_categoria presente, id_emprendimiento e id_producto nulos
+ * - Emprendimiento completo: id_emprendimiento presente, id_categoria e id_producto nulos
  */
-const validarAlcance = (id_producto, id_categoria) => {
-  if (id_producto && id_categoria) {
-    return "Un cupón no puede aplicar a un producto y a una categoría al mismo tiempo.";
+const validarAlcance = (id_emprendimiento, id_categoria, id_producto) => {
+  // Contar cuántos IDs están presentes
+  const idsPresentes = [
+    id_emprendimiento ? 1 : 0,
+    id_categoria ? 1 : 0,
+    id_producto ? 1 : 0,
+  ].reduce((a, b) => a + b, 0);
+
+  if (idsPresentes === 0) {
+    return "Debe seleccionar al menos un emprendimiento, categoría o producto para el cupón.";
   }
+
+  if (idsPresentes > 1) {
+    return "El cupón solo puede aplicarse a una opción: emprendimiento completo, categoría específica o producto específico.";
+  }
+
   return null;
 };
 
@@ -101,7 +113,7 @@ export const getCuponById = async (req, res) => {
        FROM Cupon c
        LEFT JOIN Emprendimiento e  ON c.id_emprendimiento = e.id_emprendimiento
        LEFT JOIN Categorias    cat ON c.id_categoria      = cat.id_categoria
-       LEFT JOIN Productos      p  ON c.id_producto       = p.id_producto
+       LEFT JOIN Producto      p  ON c.id_producto       = p.id_producto
        WHERE c.id_cupon = $1`,
       [id],
     );
@@ -120,7 +132,7 @@ export const getCuponById = async (req, res) => {
 // ─── POST /cupones ─── Solo admin
 export const createCupon = async (req, res) => {
   try {
-    const {
+    let {
       id_emprendimiento,
       id_categoria,
       id_producto,
@@ -132,24 +144,62 @@ export const createCupon = async (req, res) => {
       fecha_limite,
     } = req.body;
 
-    if (!id_emprendimiento) {
-      return res
-        .status(400)
-        .json({ message: "El cupón debe pertenecer a un emprendimiento." });
+    // Validar campos obligatorios
+    if (!id_emprendimiento && !id_categoria && !id_producto) {
+      return res.status(400).json({
+        message:
+          "Debe seleccionar al menos un emprendimiento, categoría o producto para el cupón.",
+      });
     }
     if (!nombre || descuento === undefined || descuento === null) {
       return res
         .status(400)
         .json({ message: "Nombre y descuento son obligatorios." });
     }
+    if (!descripcion) {
+      return res
+        .status(400)
+        .json({ message: "La descripción es obligatoria." });
+    }
+    if (!fecha_limite) {
+      return res
+        .status(400)
+        .json({ message: "La fecha límite es obligatoria." });
+    }
 
-    const alcanceError = validarAlcance(id_producto, id_categoria);
+    // Validar alcance (solo una opción debe estar presente)
+    const alcanceError = validarAlcance(
+      id_emprendimiento,
+      id_categoria,
+      id_producto,
+    );
     if (alcanceError) return res.status(400).json({ message: alcanceError });
 
+    // Procesar imagen si se subió un archivo
     let imagen_url = null;
     if (req.file) {
       const result = await uploadToCloudinary(req.file.buffer);
       imagen_url = result.secure_url;
+    } else if (req.body.imagen_url) {
+      imagen_url = req.body.imagen_url;
+    } else {
+      return res.status(400).json({ message: "La imagen es obligatoria." });
+    }
+
+    // Si se seleccionó emprendimiento -> categoría y producto a null
+    if (id_emprendimiento) {
+      id_categoria = null;
+      id_producto = null;
+    }
+    // Si se seleccionó categoría -> emprendimiento y producto a null
+    else if (id_categoria) {
+      id_emprendimiento = null;
+      id_producto = null;
+    }
+    // Si se seleccionó producto -> emprendimiento y categoría a null
+    else if (id_producto) {
+      id_emprendimiento = null;
+      id_categoria = null;
     }
 
     const { rows } = await pool.query(
@@ -159,16 +209,16 @@ export const createCupon = async (req, res) => {
        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
        RETURNING *`,
       [
-        id_emprendimiento,
+        id_emprendimiento || null,
         id_categoria || null,
         id_producto || null,
         nombre,
-        descripcion || null,
+        descripcion,
         imagen_url,
         descuento,
         precio_original || null,
         disponible !== undefined ? disponible : true,
-        fecha_limite || null,
+        fecha_limite,
       ],
     );
 
@@ -199,7 +249,8 @@ export const updateCupon = async (req, res) => {
     }
 
     const current = existing.rows[0];
-    const {
+    let {
+      id_emprendimiento,
       id_categoria,
       id_producto,
       nombre,
@@ -210,37 +261,67 @@ export const updateCupon = async (req, res) => {
       fecha_limite,
     } = req.body;
 
-    // Calcular alcance resultante combinando lo recibido con lo existente
-    const nuevo_id_producto =
-      id_producto !== undefined ? id_producto || null : current.id_producto;
+    // Determinar qué valores usar (los nuevos o los existentes)
+    const nuevo_id_emprendimiento =
+      id_emprendimiento !== undefined
+        ? id_emprendimiento
+        : current.id_emprendimiento;
     const nuevo_id_categoria =
-      id_categoria !== undefined ? id_categoria || null : current.id_categoria;
+      id_categoria !== undefined ? id_categoria : current.id_categoria;
+    const nuevo_id_producto =
+      id_producto !== undefined ? id_producto : current.id_producto;
 
-    const alcanceError = validarAlcance(nuevo_id_producto, nuevo_id_categoria);
+    // Validar alcance (solo una opción debe estar presente)
+    const alcanceError = validarAlcance(
+      nuevo_id_emprendimiento,
+      nuevo_id_categoria,
+      nuevo_id_producto,
+    );
     if (alcanceError) return res.status(400).json({ message: alcanceError });
 
+    // Procesar imagen si se subió un archivo nuevo
     let imagen_url = current.imagen_url;
     if (req.file) {
       const result = await uploadToCloudinary(req.file.buffer);
       imagen_url = result.secure_url;
+    } else if (req.body.imagen_url !== undefined) {
+      imagen_url = req.body.imagen_url;
+    }
+
+    // Normalizar según el alcance seleccionado
+    let final_id_emprendimiento = nuevo_id_emprendimiento;
+    let final_id_categoria = nuevo_id_categoria;
+    let final_id_producto = nuevo_id_producto;
+
+    if (nuevo_id_emprendimiento) {
+      final_id_categoria = null;
+      final_id_producto = null;
+    } else if (nuevo_id_categoria) {
+      final_id_emprendimiento = null;
+      final_id_producto = null;
+    } else if (nuevo_id_producto) {
+      final_id_emprendimiento = null;
+      final_id_categoria = null;
     }
 
     const { rows } = await pool.query(
       `UPDATE Cupon SET
-        id_categoria    = $1,
-        id_producto     = $2,
-        nombre          = COALESCE($3, nombre),
-        descripcion     = COALESCE($4, descripcion),
-        imagen_url      = $5,
-        descuento       = COALESCE($6, descuento),
-        precio_original = COALESCE($7, precio_original),
-        disponible      = COALESCE($8, disponible),
-        fecha_limite    = COALESCE($9, fecha_limite)
-       WHERE id_cupon = $10
+        id_emprendimiento = $1,
+        id_categoria      = $2,
+        id_producto       = $3,
+        nombre            = COALESCE($4, nombre),
+        descripcion       = COALESCE($5, descripcion),
+        imagen_url        = $6,
+        descuento         = COALESCE($7, descuento),
+        precio_original   = COALESCE($8, precio_original),
+        disponible        = COALESCE($9, disponible),
+        fecha_limite      = COALESCE($10, fecha_limite)
+       WHERE id_cupon = $11
        RETURNING *`,
       [
-        nuevo_id_categoria,
-        nuevo_id_producto,
+        final_id_emprendimiento,
+        final_id_categoria,
+        final_id_producto,
         nombre || null,
         descripcion || null,
         imagen_url,

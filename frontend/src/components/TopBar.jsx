@@ -59,8 +59,8 @@ export default function TopBar({ currentUser, onLogout, onUpdateUser }) {
   };
 
   const clearSession = () => {
-    ["token", "user", "isAuthenticated"].forEach(key =>
-      localStorage.removeItem(key)
+    ["token", "user", "isAuthenticated"].forEach((key) =>
+      localStorage.removeItem(key),
     );
   };
 
@@ -153,6 +153,10 @@ export default function TopBar({ currentUser, onLogout, onUpdateUser }) {
                 Emprendimientos
               </Link>
 
+              <Link to="/cupones" className="hover:text-zinc-700">
+                Cupones
+              </Link>
+
               <Link to="/sobreNosotros" className="hover:text-zinc-700">
                 Sobre nosotros
               </Link>
@@ -239,6 +243,10 @@ export default function TopBar({ currentUser, onLogout, onUpdateUser }) {
 
               <Link to="/emprendimientos" onClick={() => setMenuOpen(false)}>
                 Emprendimientos
+              </Link>
+
+              <Link to="/cupones" onClick={() => setMenuOpen(false)}>
+                Cupones
               </Link>
 
               <Link to="/sobreNosotros" onClick={() => setMenuOpen(false)}>

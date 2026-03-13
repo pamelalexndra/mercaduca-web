@@ -16,6 +16,8 @@ import ProductDetailPage from "./components/ProductDetail/ProductDetailPage";
 import PublicProfile from "./components/PublicProfile";
 import Login from "./components/Login";
 import Register from "./components/Register";
+import CouponDetailPage from "./components/Admin/Coupons/CouponDetailPage.jsx";
+import PublicCoupons from "./components/PublicCoupons.jsx";
 
 // Páginas Privadas (Usuario)
 import Profile from "./components/Profile";
@@ -26,7 +28,7 @@ import ActivityManagement from "./components/Admin/Activities/ActivityManagement
 import CategoryManagement from "./components/Admin/Categories/CategoryManagement.jsx";
 import AdministratorsManagement from "./components/Admin/Administrators/AdministratorsManagement.jsx";
 import EntrepreneursManagement from "./components/Admin/Entrepreneurs/EntrepreneusManagement.jsx";
-import CouponsPage from "./components/Admin/Coupons/CouponsPage.jsx";
+import CouponManagement from "./components/Admin/Coupons/CouponManagement.jsx";
 
 // Páginas de Error
 import NotFound from "./components/ErrorPages/NotFound";
@@ -69,7 +71,6 @@ export default function App() {
     updateCurrentUser(null);
   }, [updateCurrentUser]);
 
-// App.jsx - Busca este bloque y reemplázalo
 useEffect(() => {
   const handleStorageChange = () => {
     const storedUser = localStorage.getItem("user");
@@ -110,6 +111,8 @@ useEffect(() => {
         <Route path="/detalle/:id" element={<ProductDetailPage />} />
         <Route path="/registrar" element={<Register />} />
         <Route path="/vender" element={<Login onLoginSuccess={updateCurrentUser} />} />
+        <Route path="/cupones" element={<PublicCoupons />} />
+        <Route path="/cupones/detalle/:id" element={<CouponDetailPage />} />
 
         {/* --- RUTAS PROTEGIDAS (USUARIO) --- */}
         <Route 
@@ -147,7 +150,7 @@ useEffect(() => {
           <Route path="categories" element={<CategoryManagement/>} />
           <Route path="administrators" element={<AdministratorsManagement/>} />
           <Route path="entrepreneurs" element={<EntrepreneursManagement/>} />
-          <Route path="coupons" element={<CouponsPage />} />
+          <Route path="coupons" element={<CouponManagement />} />
         </Route>
 
         {/* --- RUTAS DE ERROR --- */}

@@ -83,7 +83,7 @@ CREATE TABLE Solicitudes (
 
 CREATE TABLE Cupon(
   id_cupon SERIAL PRIMARY KEY NOT NULL,
-  id_emprendimiento INT NOT NULL, -- Todo cupón le pertenece a un emprendimiento
+  id_emprendimiento INT, -- Todo cupón le pertenece a un emprendimiento
   id_categoria INT,
   id_producto INT UNIQUE, -- Garantiza máximo 1 cupón activo/creado por producto
   Nombre VARCHAR(200) NOT NULL,
