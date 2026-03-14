@@ -1,6 +1,45 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, forwardRef } from "react";
 import { X } from "lucide-react";
 import { API_BASE_URL } from "../../../utils/api.js";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
+
+// Configuración en español para el DatePicker
+import { registerLocale } from "react-datepicker";
+import es from "date-fns/locale/es";
+registerLocale("es", es);
+
+// Componente personalizado para el input del DatePicker
+const CustomDateInput = forwardRef(({ value, onClick, isInvalid }, ref) => (
+  <div className="relative w-full" ref={ref}>
+    <input
+      type="text"
+      value={value}
+      onClick={onClick}
+      readOnly
+      className={`w-full border ${
+        isInvalid ? "border-red-500" : "border-gray-200"
+      } rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#557051] cursor-pointer bg-white`}
+      placeholder="Seleccionar fecha"
+    />
+    <svg
+      className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+    >
+      <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+      <line x1="16" y1="2" x2="16" y2="6"></line>
+      <line x1="8" y1="2" x2="8" y2="6"></line>
+      <line x1="3" y1="10" x2="21" y2="10"></line>
+    </svg>
+  </div>
+));
+
+CustomDateInput.displayName = "CustomDateInput";
 
 export default function CouponForm({ cupon, onClose, onSuccess }) {
   const [form, setForm] = useState({
@@ -8,7 +47,7 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     descuento: "",
     descripcion: "",
     imagen_url: "",
-    fecha_limite: "",
+    fecha_limite: null,
     id_emprendimiento: "",
     id_categoria: "",
     id_producto: "",
@@ -21,13 +60,60 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitError, setSubmitError] = useState("");
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
 
+  // Calcular fechas mínimas y máximas
   const hoy = new Date();
-  const añoSiguiente = new Date();
-  añoSiguiente.setFullYear(hoy.getFullYear() + 1);
+  hoy.setHours(0, 0, 0, 0);
 
-  const fechaMinima = hoy.toISOString().split("T")[0];
-  const fechaMaxima = añoSiguiente.toISOString().split("T")[0];
+  // La fecha mínima es mañana
+  const manana = new Date(hoy);
+  manana.setDate(hoy.getDate() + 1);
+
+  const unAñoDespues = new Date(hoy);
+  unAñoDespues.setFullYear(hoy.getFullYear() + 1);
+  unAñoDespues.setHours(23, 59, 59, 999);
+
+  // Generar años para el date picker
+  const añoActual = hoy.getFullYear();
+  const añosPermitidos = [añoActual, añoActual + 1];
+
+  // Función para verificar si una fecha está habilitada
+  const isDateEnabled = (date) => {
+    const year = date.getFullYear();
+    const month = date.getMonth();
+    const day = date.getDate();
+
+    // No permitir fechas anteriores a mañana
+    if (date <= hoy) {
+      return false;
+    }
+
+    // Verificar que la fecha esté dentro del rango permitido (mañana hasta un año)
+    if (date < manana || date > unAñoDespues) {
+      return false;
+    }
+
+    // Verificar que el año sea válido
+    if (!añosPermitidos.includes(year)) {
+      return false;
+    }
+
+    // Para el año actual, validar mes y día
+    if (year === añoActual) {
+      // Si el mes es menor al mes actual, deshabilitar
+      if (month < hoy.getMonth()) {
+        return false;
+      }
+
+      // Si es el mismo mes, verificar que el día sea mayor a hoy
+      if (month === hoy.getMonth() && day <= hoy.getDate()) {
+        return false;
+      }
+    }
+
+    return true;
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -87,10 +173,10 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
 
   useEffect(() => {
     if (cupon) {
-      let fechaFormateada = "";
+      let fechaDate = null;
       if (cupon.fecha_limite) {
-        const fecha = new Date(cupon.fecha_limite);
-        fechaFormateada = fecha.toISOString().split("T")[0];
+        fechaDate = new Date(cupon.fecha_limite);
+        fechaDate.setHours(0, 0, 0, 0);
       }
 
       setForm({
@@ -98,7 +184,7 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
         descuento: cupon.descuento || "",
         descripcion: cupon.descripcion || "",
         imagen_url: cupon.imagen_url || "",
-        fecha_limite: fechaFormateada,
+        fecha_limite: fechaDate,
         id_emprendimiento: cupon.id_emprendimiento
           ? String(cupon.id_emprendimiento)
           : "",
@@ -112,14 +198,17 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     const { name, value } = e.target;
 
     if (name === "descuento") {
-      if (
-        value === "" ||
-        (parseFloat(value) >= 1 && parseFloat(value) <= 100)
-      ) {
-        setForm({
-          ...form,
-          [name]: value,
-        });
+      const regex = /^\d*\.?\d*$/;
+      if (value === "" || regex.test(value)) {
+        if (
+          value === "" ||
+          (parseFloat(value) >= 1 && parseFloat(value) <= 100)
+        ) {
+          setForm({
+            ...form,
+            [name]: value,
+          });
+        }
       }
     } else {
       if (name === "id_emprendimiento") {
@@ -170,6 +259,31 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     }
   };
 
+  const handleDateChange = (date) => {
+    setForm({
+      ...form,
+      fecha_limite: date,
+    });
+
+    if (errors.fecha_limite) {
+      setErrors({
+        ...errors,
+        fecha_limite: null,
+      });
+    }
+
+    setDatePickerOpen(false);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.target.name === "descuento") {
+      const invalidChars = ["e", "E", "+", "-", " ", ","];
+      if (invalidChars.includes(e.key)) {
+        e.preventDefault();
+      }
+    }
+  };
+
   const handleBlur = (e) => {
     const { name } = e.target;
     setTouched({
@@ -203,18 +317,40 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
       newErrors.fecha_limite = "La fecha límite es obligatoria";
     } else {
       const fechaLimite = new Date(form.fecha_limite);
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
+      fechaLimite.setHours(0, 0, 0, 0);
 
+      // Validar que no sea hoy
+      if (fechaLimite.getTime() === hoy.getTime()) {
+        newErrors.fecha_limite = "La fecha límite no puede ser hoy";
+      }
+
+      // Validar que no sea en el pasado
       if (fechaLimite < hoy) {
         newErrors.fecha_limite = "La fecha límite no puede ser en el pasado";
       }
 
-      const unAñoDespues = new Date(hoy);
-      unAñoDespues.setFullYear(hoy.getFullYear() + 1);
+      // Validar que sea al menos mañana
+      if (fechaLimite <= hoy) {
+        newErrors.fecha_limite = "La fecha límite debe ser a partir de mañana";
+      }
 
       if (fechaLimite > unAñoDespues) {
         newErrors.fecha_limite = "La fecha límite no puede ser mayor a un año";
+      }
+
+      const añoFechaLimite = fechaLimite.getFullYear();
+      if (!añosPermitidos.includes(añoFechaLimite)) {
+        newErrors.fecha_limite =
+          "La fecha debe ser del año actual o próximo año";
+      }
+
+      // Validar que el mes no sea anterior al mes actual
+      if (
+        añoFechaLimite === añoActual &&
+        fechaLimite.getMonth() < hoy.getMonth()
+      ) {
+        newErrors.fecha_limite =
+          "No puedes seleccionar meses anteriores al actual";
       }
     }
 
@@ -250,15 +386,22 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     if (!form.fecha_limite) return false;
 
     const fechaLimite = new Date(form.fecha_limite);
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
+    fechaLimite.setHours(0, 0, 0, 0);
 
-    if (fechaLimite < hoy) return false;
-
-    const unAñoDespues = new Date(hoy);
-    unAñoDespues.setFullYear(hoy.getFullYear() + 1);
-
+    // Validar que no sea hoy y sea a partir de mañana
+    if (fechaLimite <= hoy) return false;
     if (fechaLimite > unAñoDespues) return false;
+
+    const añoFechaLimite = fechaLimite.getFullYear();
+    if (!añosPermitidos.includes(añoFechaLimite)) return false;
+
+    // Validar que el mes no sea anterior al mes actual
+    if (
+      añoFechaLimite === añoActual &&
+      fechaLimite.getMonth() < hoy.getMonth()
+    ) {
+      return false;
+    }
 
     if (!hasAlcanceSelected()) return false;
 
@@ -285,12 +428,16 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     try {
       const token = localStorage.getItem("token");
 
+      const fechaFormateada = form.fecha_limite
+        ? form.fecha_limite.toISOString().split("T")[0]
+        : null;
+
       const cuponData = {
         nombre: form.nombre,
         descuento: parseFloat(form.descuento),
         descripcion: form.descripcion,
         imagen_url: form.imagen_url,
-        fecha_limite: form.fecha_limite,
+        fecha_limite: fechaFormateada,
         id_emprendimiento: form.id_emprendimiento
           ? parseInt(form.id_emprendimiento)
           : null,
@@ -328,6 +475,15 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // Formatear fecha para mostrar
+  const formatDateForDisplay = (date) => {
+    if (!date) return "";
+    const day = date.getDate().toString().padStart(2, "0");
+    const month = (date.getMonth() + 1).toString().padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
   };
 
   return (
@@ -370,14 +526,14 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
             </label>
             <div className="relative">
               <input
-                type="number"
+                type="text"
                 name="descuento"
                 value={form.descuento}
                 onChange={handleChange}
+                onKeyDown={handleKeyDown}
                 onBlur={handleBlur}
-                step="1"
-                min="1"
-                max="100"
+                inputMode="numeric"
+                pattern="\d*\.?\d*"
                 className={`w-full border ${errors.descuento && touched.descuento ? "border-red-500" : "border-gray-200"} rounded-xl px-4 py-2 pr-8 focus:outline-none focus:ring-2 focus:ring-[#557051]`}
                 placeholder="0"
               />
@@ -461,15 +617,29 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Fecha límite *
             </label>
-            <input
-              type="date"
-              name="fecha_limite"
-              value={form.fecha_limite}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              min={fechaMinima}
-              max={fechaMaxima}
-              className={`w-full border ${errors.fecha_limite && touched.fecha_limite ? "border-red-500" : "border-gray-200"} rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#557051]`}
+            <DatePicker
+              selected={form.fecha_limite}
+              onChange={handleDateChange}
+              minDate={manana}
+              maxDate={unAñoDespues}
+              filterDate={isDateEnabled}
+              dateFormat="dd/MM/yyyy"
+              placeholderText="Seleccionar fecha"
+              locale="es"
+              customInput={
+                <CustomDateInput
+                  isInvalid={errors.fecha_limite && touched.fecha_limite}
+                />
+              }
+              showYearDropdown
+              showMonthDropdown
+              dropdownMode="select"
+              yearDropdownItemNumber={2}
+              scrollableYearDropdown
+              open={datePickerOpen}
+              onClickOutside={() => setDatePickerOpen(false)}
+              onInputClick={() => setDatePickerOpen(true)}
+              excludeDates={[hoy]}
             />
             {errors.fecha_limite && touched.fecha_limite && (
               <p className="text-red-500 text-xs mt-1">{errors.fecha_limite}</p>
@@ -481,7 +651,6 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
               Tipo de cupón (selecciona una opción):
             </p>
 
-            {/* Caja de Emprendimiento */}
             <div className="border rounded-lg p-4 mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Emprendimiento
@@ -509,7 +678,6 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
               </p>
             </div>
 
-            {/* Caja de Categoría */}
             <div className="border rounded-lg p-4 mb-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Categoría
@@ -537,7 +705,6 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
               </p>
             </div>
 
-            {/* Caja de Producto */}
             <div className="border rounded-lg p-4">
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Producto
@@ -565,14 +732,12 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
             </div>
           </div>
 
-          {/* Mensaje de error general */}
           {submitError && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
               {submitError}
             </div>
           )}
 
-          {/* Botones */}
           <div className="flex flex-col sm:flex-row justify-end gap-3 pt-6">
             <button
               type="button"

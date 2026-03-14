@@ -310,9 +310,9 @@ export const updateCupon = async (req, res) => {
         descripcion       = COALESCE($5, descripcion),
         imagen_url        = $6,
         descuento         = COALESCE($7, descuento),
-        disponible        = COALESCE($9, disponible),
-        fecha_limite      = COALESCE($10, fecha_limite)
-       WHERE id_cupon = $11
+        disponible        = COALESCE($8, disponible),
+        fecha_limite      = COALESCE($9, fecha_limite)
+       WHERE id_cupon = $10
        RETURNING *`,
       [
         final_id_emprendimiento,

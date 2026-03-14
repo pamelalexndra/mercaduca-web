@@ -72,7 +72,7 @@ export default function CouponCard({ cupon }) {
           <button
             onClick={(e) => {
               e.preventDefault();
-              window.location.href = `/cupon/detalle/${cupon.id_cupon}`;
+              window.location.href = `/cupones/detalle/${cupon.id_cupon}`;
             }}
             className="mt-3 w-full bg-[#557051] text-white py-2.5 rounded-lg hover:bg-[#455a42] transition-colors font-semibold text-sm"
           >
