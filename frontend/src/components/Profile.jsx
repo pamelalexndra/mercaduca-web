@@ -214,9 +214,35 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     return stored ? JSON.parse(stored) : null;
   });
 
+  // Obtener el ID del vendedor de la URL
+  const getVendorIdFromUrl = useCallback(() => {
+    const pathParts = location.pathname.split("/");
+    const profileIndex = pathParts.indexOf("perfil");
+    if (profileIndex !== -1 && pathParts[profileIndex + 1]) {
+      return pathParts[profileIndex + 1];
+    }
+    return null;
+  }, [location.pathname]);
+
+  const vendorIdFromUrl = getVendorIdFromUrl();
+
+  // Determinar qué ID de usuario usar
+  const targetUserId = useMemo(() => {
+    // Si es admin mode y hay un ID en la URL, usar ese
+    if (isAdminMode && vendorIdFromUrl) {
+      return vendorIdFromUrl;
+    }
+    // Si no, usar el ID del usuario actual
+    return getUserId(currentUser);
+  }, [isAdminMode, vendorIdFromUrl, currentUser]);
+
   useEffect(() => {
     currentUserRef.current = currentUser;
   }, [currentUser]);
+
+  useEffect(() => {
+    currentUserIdRef.current = targetUserId;
+  }, [targetUserId]);
 
   useEffect(() => {
     if (isAdminMode && !adminSessionSavedRef.current) {
@@ -225,83 +251,101 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   }, [isAdminMode]);
 
-  const fetchProductos = useCallback(async (emprendimientoId) => {
-    if (!emprendimientoId) {
-      setProductos([]);
-      return [];
-    }
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/products?emprendimiento_id=${emprendimientoId}`,
-        {
-          headers: { ...getAuthHeaders(currentUserRef.current) },
-        },
-      );
-
-      if (response.status === 404 || response.status === 204) {
+  const fetchProductos = useCallback(
+    async (emprendimientoId) => {
+      if (!emprendimientoId) {
         setProductos([]);
         return [];
       }
 
-      if (!response.ok) {
-        throw new Error("No se pudieron obtener los productos");
+      try {
+        const headers = isAdminMode
+          ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          : getAuthHeaders(currentUserRef.current);
+
+        const response = await fetch(
+          `${API_BASE_URL}/products?emprendimiento_id=${emprendimientoId}`,
+          {
+            headers: headers,
+          },
+        );
+
+        if (response.status === 404 || response.status === 204) {
+          setProductos([]);
+          return [];
+        }
+
+        if (!response.ok) {
+          throw new Error("No se pudieron obtener los productos");
+        }
+
+        const data = await response.json();
+        const productosNormalizados = (data.productos || data.data || []).map(
+          normalizeProducto,
+        );
+        setProductos(productosNormalizados);
+        return productosNormalizados;
+      } catch (fetchError) {
+        console.error("Error cargando productos:", fetchError);
+        if (!fetchError.message.includes("404")) {
+          setError("Error al cargar los productos");
+        }
+        return [];
       }
+    },
+    [isAdminMode],
+  );
 
-      const data = await response.json();
-      const productosNormalizados = (data.productos || data.data || []).map(
-        normalizeProducto,
-      );
-      setProductos(productosNormalizados);
-      return productosNormalizados;
-    } catch (fetchError) {
-      console.error("Error cargando productos:", fetchError);
-      if (!fetchError.message.includes("404")) {
-        setError("Error al cargar los productos");
+  const fetchEmprendimientoById = useCallback(
+    async (emprendimientoId) => {
+      if (!emprendimientoId) return null;
+
+      try {
+        const headers = isAdminMode
+          ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          : getAuthHeaders(currentUserRef.current);
+
+        const response = await fetch(
+          `${API_BASE_URL}/entrepreneurship/${emprendimientoId}`,
+          {
+            headers: headers,
+          },
+        );
+
+        if (!response.ok) {
+          if (response.status === 404) return null;
+          throw new Error("No se pudo obtener el emprendimiento");
+        }
+
+        const data = await response.json();
+        const normalized = normalizeEmprendimiento(data);
+        setEmprendimiento(normalized);
+        return normalized;
+      } catch (fetchError) {
+        console.error("Error obteniendo emprendimiento:", fetchError);
+        if (!fetchError.message.includes("404")) {
+          setError("Error al cargar el emprendimiento");
+        }
+        return null;
       }
-      return [];
-    }
-  }, []);
-
-  const fetchEmprendimientoById = useCallback(async (emprendimientoId) => {
-    if (!emprendimientoId) return null;
-
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/entrepreneurship/${emprendimientoId}`,
-        {
-          headers: { ...getAuthHeaders(currentUserRef.current) },
-        },
-      );
-
-      if (!response.ok) {
-        if (response.status === 404) return null;
-        throw new Error("No se pudo obtener el emprendimiento");
-      }
-
-      const data = await response.json();
-      const normalized = normalizeEmprendimiento(data);
-      setEmprendimiento(normalized);
-      return normalized;
-    } catch (fetchError) {
-      console.error("Error obteniendo emprendimiento:", fetchError);
-      if (!fetchError.message.includes("404")) {
-        setError("Error al cargar el emprendimiento");
-      }
-      return null;
-    }
-  }, []);
+    },
+    [isAdminMode],
+  );
 
   const refreshData = useCallback(async () => {
-    const userId = currentUserIdRef.current;
+    const userId = targetUserId;
     if (!userId || loadingRef.current) return;
 
     loadingRef.current = true;
     setLoading(true);
 
     try {
+      const headers = isAdminMode
+        ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+        : getAuthHeaders(currentUserRef.current);
+
       const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
-        headers: { ...getAuthHeaders(currentUserRef.current) },
+        headers: headers,
       });
 
       if (!response.ok) throw new Error("No se pudo actualizar los datos");
@@ -350,19 +394,19 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setLoading(false);
       loadingRef.current = false;
     }
-  }, [fetchProductos, fetchEmprendimientoById, isAdminMode]);
+  }, [fetchProductos, fetchEmprendimientoById, isAdminMode, targetUserId]);
 
   const resetEntrepreneurshipData = useCallback(() => {
     setEmprendimiento({});
     setProductos([]);
 
-    const userId = currentUserIdRef.current;
+    const userId = targetUserId;
     if (userId) {
       const cache = readCachedEmprendimientos();
       delete cache[userId];
       localStorage.setItem(EMPRENDIMIENTO_CACHE_KEY, JSON.stringify(cache));
     }
-  }, []);
+  }, [targetUserId]);
 
   useEffect(() => {
     if (initializedRef.current) return;
@@ -374,7 +418,9 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       try {
         const storedUser =
           user || JSON.parse(localStorage.getItem("user") || "null");
-        const userId = getUserId(storedUser);
+
+        // Usar targetUserId para obtener el perfil correcto
+        const userId = targetUserId;
 
         if (!userId) {
           if (!isAdminMode) navigate("/vender");
@@ -382,16 +428,14 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           return;
         }
 
-        currentUserIdRef.current = userId;
+        // Para modo admin, usar el token del admin pero consultar el perfil del vendedor
+        const headers = isAdminMode
+          ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          : getAuthHeaders(storedUser);
 
-        const cachedEmprendimiento = getCachedEmprendimiento(userId);
-        if (cachedEmprendimiento) {
-          setEmprendimiento(normalizeEmprendimiento(cachedEmprendimiento));
-        }
-
-        // Cargar perfil completo
+        // Cargar perfil del vendedor usando el userId correcto
         const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
-          headers: { ...getAuthHeaders(storedUser) },
+          headers: headers,
         });
 
         if (!response.ok) {
@@ -420,9 +464,23 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           const normalized = await fetchEmprendimientoById(
             profileData.id_emprendimiento,
           );
-          if (normalized) saveCachedEmprendimiento(userId, normalized);
+          if (normalized) {
+            setEmprendimiento(normalized);
+            saveCachedEmprendimiento(userId, normalized);
+            await fetchProductos(normalized.id_emprendimiento);
+          }
+        } else {
+          // Intentar cargar desde caché si existe
+          const cachedEmprendimiento = getCachedEmprendimiento(userId);
+          if (cachedEmprendimiento) {
+            setEmprendimiento(normalizeEmprendimiento(cachedEmprendimiento));
+            if (cachedEmprendimiento.id_emprendimiento) {
+              await fetchProductos(cachedEmprendimiento.id_emprendimiento);
+            }
+          }
         }
 
+        // Solo actualizar el usuario actual si NO estamos en modo admin
         if (!isAdminMode) {
           const updatedUser = {
             ...storedUser,
@@ -436,6 +494,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         }
       } catch (error) {
         console.error("Error en carga inicial:", error);
+        setError("Error al cargar el perfil");
       } finally {
         setLoading(false);
         initializedRef.current = true;
@@ -444,7 +503,14 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     };
 
     initializeProfile();
-  }, [fetchProductos, fetchEmprendimientoById, isAdminMode, navigate, user]);
+  }, [
+    fetchProductos,
+    fetchEmprendimientoById,
+    isAdminMode,
+    navigate,
+    user,
+    targetUserId,
+  ]);
 
   useEffect(() => {
     if (currentUser && onProfileLoaded) {
@@ -486,6 +552,11 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const handleSubmit = async (data) => {
     if (!emprendimiento?.id_emprendimiento) {
       setError("Debes tener un emprendimiento para publicar productos.");
+      return false;
+    }
+
+    if (isAdminMode) {
+      setError("Los administradores no pueden crear/modificar productos.");
       return false;
     }
 
@@ -552,6 +623,11 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const handleEliminarProducto = async (producto) => {
     if (!producto?.id) return false;
 
+    if (isAdminMode) {
+      setError("Los administradores no pueden eliminar productos.");
+      return false;
+    }
+
     try {
       setError("");
       const response = await fetch(`${API_BASE_URL}/products/${producto.id}`, {
@@ -589,7 +665,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       return false;
     }
 
-    const userId = getUserId(currentUser);
+    const userId = targetUserId;
 
     try {
       setSavingEntrepreneurship(true);
@@ -626,6 +702,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       );
 
       setEmprendimiento(normalized);
+      saveCachedEmprendimiento(userId, normalized);
       setSuccessMessage(
         emprendimiento?.id_emprendimiento
           ? "Emprendimiento actualizado correctamente"
@@ -646,7 +723,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   };
 
   const handleSaveProfile = async (datos) => {
-    const userId = getUserId(currentUser);
+    const userId = targetUserId;
     if (!userId) {
       setError("No se encontró el usuario para actualizar el perfil.");
       return false;
@@ -838,11 +915,13 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                     clipRule="evenodd"
                   />
                 </svg>
-                <span className="font-medium">Modo vista de administrador</span>
+                <span className="font-medium">Modo administrador</span>
               </div>
               <p className="text-sm mt-1">
-                Todos los cambios realizados se aplicarán en el perfil del
-                emprendedor.
+                Estás viendo y editando el perfil de{" "}
+                {emprendimientoNombre || "este vendedor"}.
+                {!hasEmprendimiento &&
+                  " Este usuario aún no tiene un emprendimiento."}
               </p>
             </div>
           )}
@@ -990,7 +1069,9 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
               title={
                 isAdminMode
                   ? "Los administradores no pueden agregar productos"
-                  : "Agregar producto"
+                  : !hasEmprendimiento
+                    ? "Primero debes crear un emprendimiento"
+                    : "Agregar producto"
               }
             >
               +
@@ -1033,7 +1114,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             <div className="grid grid-cols-3 gap-1 md:gap-7 mt-4">
               {productos.map((p) => (
                 <div key={p.id} className="aspect-square">
-                  <ProductCard p={p} allowEdit={true} />
+                  <ProductCard p={p} allowEdit={!isAdminMode} />
                 </div>
               ))}
             </div>

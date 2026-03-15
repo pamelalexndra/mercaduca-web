@@ -287,7 +287,7 @@ export default function ProductForm({
                   />
                 </svg>
                 <span>
-                  Para generar el enlace de tu imagen se recomienda usar{" "}
+                  Para generar el enlace de tu imagen se recomienda iniciar sesion en{" "}
                   <a
                     href="https://imgbb.com"
                     target="_blank"
