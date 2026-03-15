@@ -252,3 +252,87 @@ CREATE TRIGGER trigger_nueva_solicitud
 AFTER INSERT ON solicitudes
 FOR EACH ROW
 EXECUTE FUNCTION notificar_nueva_solicitud();
+
+-- Función que notifica cuando se modifican datos de usuario/emprendedor
+CREATE OR REPLACE FUNCTION NOTIFICAR_MODIFICACION_PERFIL() 
+RETURNS TRIGGER AS $$
+DECLARE
+    usuario_info JSONB;
+    correo_destino TEXT;
+    id_usuario_afectado INT;
+    datos_actualizados JSONB;
+BEGIN
+    -- Determinar qué usuario fue afectado
+    IF TG_TABLE_NAME = 'usuarios' THEN
+        id_usuario_afectado := NEW.id_usuario;
+        
+        -- Obtener todos los datos del usuario afectado
+        SELECT jsonb_build_object(
+            'id_usuario', u.id_usuario,
+            'nombres', e.nombres,
+            'apellidos', e.apellidos,
+            'correo', e.correo,
+            'telefono', e.telefono,
+            'usuario', u.usuario,
+            'contraseña_original', TG_OP = 'UPDATE' AND OLD.contraseña != NEW.contraseña -- Indicar si cambió la contraseña
+        ) INTO datos_actualizados
+        FROM Usuarios u
+        LEFT JOIN Emprendedor e ON u.id_emprendedor = e.id_emprendedor
+        WHERE u.id_usuario = NEW.id_usuario;
+        
+        correo_destino := (datos_actualizados->>'correo');
+        
+    ELSIF TG_TABLE_NAME = 'emprendedor' THEN
+        -- Obtener el usuario relacionado con este emprendedor
+        SELECT u.id_usuario INTO id_usuario_afectado
+        FROM Usuarios u
+        WHERE u.id_emprendedor = NEW.id_emprendedor;
+        
+        -- Obtener todos los datos del usuario afectado
+        SELECT jsonb_build_object(
+            'id_usuario', u.id_usuario,
+            'nombres', e.nombres,
+            'apellidos', e.apellidos,
+            'correo', e.correo,
+            'telefono', e.telefono,
+            'usuario', u.usuario,
+            'contraseña_original', false
+        ) INTO datos_actualizados
+        FROM Emprendedor e
+        LEFT JOIN Usuarios u ON e.id_emprendedor = u.id_emprendedor
+        WHERE e.id_emprendedor = NEW.id_emprendedor;
+        
+        correo_destino := NEW.correo;
+    END IF;
+
+    -- Solo proceder si tenemos correo y datos
+    IF correo_destino IS NOT NULL AND id_usuario_afectado IS NOT NULL THEN
+        -- Enviar notificación a través de pg_notify
+        PERFORM pg_notify(
+            'modificacion_perfil',
+            jsonb_build_object(
+                'correo_destino', correo_destino,
+                'datos_usuario', datos_actualizados,
+                'operacion', TG_OP,
+                'tabla', TG_TABLE_NAME,
+                'id_usuario', id_usuario_afectado,
+                'fecha', CURRENT_TIMESTAMP
+            )::text
+        );
+    END IF;
+    
+    RETURN NEW;
+END;
+$$ LANGUAGE PLPGSQL;
+
+-- Trigger para la tabla Usuarios (solo para UPDATE)
+CREATE TRIGGER TRIGGER_NOTIFICACION_MODIFICACION_USUARIOS
+AFTER UPDATE ON USUARIOS 
+FOR EACH ROW
+EXECUTE FUNCTION NOTIFICAR_MODIFICACION_PERFIL();
+
+-- Trigger para la tabla Emprendedor (solo para UPDATE)
+CREATE TRIGGER TRIGGER_NOTIFICACION_MODIFICACION_EMPRENDEDOR
+AFTER UPDATE ON EMPRENDEDOR 
+FOR EACH ROW
+EXECUTE FUNCTION NOTIFICAR_MODIFICACION_PERFIL();

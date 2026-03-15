@@ -265,3 +265,127 @@ export const generateRejectionEmailText = (solicitud, razon = "") => {
   © ${new Date().getFullYear()} MercadUCA - Universidad Centroamericana José Simeon Cañas
     `;
 };
+
+export const generateModificationEmailHTML = (datosUsuario, cambios) => {
+  const fecha = new Date().toLocaleString("es-SV");
+
+  return `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="UTF-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100">
+      <div class="max-w-lg mx-auto bg-white rounded-lg shadow-lg mt-8">
+        <div class="bg-yellow-600 text-white p-6 rounded-t-lg">
+          <h1 class="text-2xl font-bold">MercadUCA</h1>
+          <p class="text-yellow-100">Tus datos han sido modificados</p>
+        </div>
+        
+        <div class="p-6">
+          <div class="bg-yellow-50 border-l-4 border-yellow-500 p-4 mb-6">
+            <p class="text-yellow-800 font-semibold">
+              Se ha detectado una modificación en tu perfil
+            </p>
+            <p class="text-yellow-600 mt-1">Fecha: ${fecha}</p>
+          </div>
+          
+          <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800 mb-3">Datos actualizados:</h2>
+            
+            <div class="space-y-2">              
+              <div class="flex border-b border-gray-200 pb-2">
+                <span class="text-gray-600 font-medium w-32">${cambios.nombres ? "¡Nuevo! Nombres:" : "Nombres:"}</span>
+                <span class="text-gray-800 ${cambios.nombres ? "font-bold text-green-600" : ""}">${datosUsuario.nombres || "No especificado"}</span>
+              </div>
+              
+              <div class="flex border-b border-gray-200 pb-2">
+                <span class="text-gray-600 font-medium w-32">${cambios.apellidos ? "¡Nuevo! Apellidos:" : "Apellidos:"}</span>
+                <span class="text-gray-800 ${cambios.apellidos ? "font-bold text-green-600" : ""}">${datosUsuario.apellidos || "No especificado"}</span>
+              </div>
+              
+              <div class="flex border-b border-gray-200 pb-2">
+                <span class="text-gray-600 font-medium w-32">${cambios.telefono ? "¡Nuevo! Teléfono:" : "Teléfono:"}</span>
+                <span class="text-gray-800 ${cambios.telefono ? "font-bold text-green-600" : ""}">${datosUsuario.telefono || "No especificado"}</span>
+              </div>
+              
+              <div class="flex border-b border-gray-200 pb-2">
+                <span class="text-gray-600 font-medium w-32">${cambios.correo ? "¡Nuevo! Correo:" : "Correo:"}</span>
+                <span class="text-gray-800 ${cambios.correo ? "font-bold text-green-600" : ""}">${datosUsuario.correo || "No especificado"}</span>
+              </div>
+              
+              <div class="flex border-b border-gray-200 pb-2">
+                <span class="text-gray-600 font-medium w-32">${cambios.usuario ? "¡Nuevo! Usuario:" : "Usuario:"}</span>
+                <span class="text-gray-800 ${cambios.usuario ? "font-bold text-green-600" : ""}">${datosUsuario.usuario || "No especificado"}</span>
+              </div>
+              
+              ${
+                datosUsuario.contraseña
+                  ? `
+              <div class="flex border-b border-gray-200 pb-2">
+                <span class="text-gray-600 font-medium w-32">¡Nuevo! Contraseña:</span>
+                <span class="text-gray-800 font-bold text-green-600">${datosUsuario.contraseña}</span>
+              </div>
+              `
+                  : ""
+              }
+            </div>
+          </div>
+          
+          <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+            <h3 class="font-semibold text-blue-800 mb-2">¿No reconoces estos cambios?</h3>
+            <p class="text-blue-700">Si no realizaste estas modificaciones, por favor contacta inmediatamente al equipo de MercadUCA.</p>
+          </div>
+          
+          <div class="mt-8 text-center text-gray-500 text-sm">
+            <p>Este es un mensaje automático, por favor no responder.</p>
+            <p class="mt-1">© ${new Date().getFullYear()} MercadUCA - Universidad Centroamericana José Simeon Cañas</p>
+          </div>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+};
+
+export const generateModificationEmailText = (datosUsuario, cambios) => {
+  let texto = `
+  Tus datos han sido modificados en MercadUCA
+  
+  Fecha: ${new Date().toLocaleString("es-SV")}
+  
+  Datos actualizados:
+  ---------------------------`;
+
+  texto += cambios.nombres
+    ? `¡Nuevo! Nombres: ${datosUsuario.nombres || "No especificado"}\n`
+    : `Nombres: ${datosUsuario.nombres || "No especificado"}\n`;
+  texto += cambios.apellidos
+    ? `¡Nuevo! Apellidos: ${datosUsuario.apellidos || "No especificado"}\n`
+    : `Apellidos: ${datosUsuario.apellidos || "No especificado"}\n`;
+  texto += cambios.telefono
+    ? `¡Nuevo! Teléfono: ${datosUsuario.telefono || "No especificado"}\n`
+    : `Teléfono: ${datosUsuario.telefono || "No especificado"}\n`;
+  texto += cambios.correo
+    ? `¡Nuevo! Correo: ${datosUsuario.correo || "No especificado"}\n`
+    : `Correo: ${datosUsuario.correo || "No especificado"}\n`;
+  texto += cambios.usuario
+    ? `¡Nuevo! Usuario: ${datosUsuario.usuario || "No especificado"}\n`
+    : `Usuario: ${datosUsuario.usuario || "No especificado"}\n`;
+
+  if (datosUsuario.contraseña) {
+    texto += `¡Nuevo! Contraseña: ${datosUsuario.contraseña}\n`;
+  }
+
+  texto += `
+  ¿No reconoces estos cambios?
+  Si no realizaste estas modificaciones, por favor contacta inmediatamente al equipo de MercadUCA.
+  
+  Este es un mensaje automático, por favor no responder.
+  © ${new Date().getFullYear()} MercadUCA - Universidad Centroamericana José Simeon Cañas
+  `;
+
+  return texto;
+};

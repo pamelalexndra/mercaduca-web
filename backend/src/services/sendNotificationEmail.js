@@ -7,6 +7,8 @@ import {
   generateAcceptanceEmailText,
   generateRejectionEmailHTML,
   generateRejectionEmailText,
+  generateModificationEmailHTML,
+  generateModificationEmailText
 } from "./generateEmailContent.js";
 import { getAllAdminRecipients } from "./emailToAdmins.js";
 
@@ -99,6 +101,36 @@ export const sendRejectionEmail = async (solicitud, razon = "") => {
       destinatario: solicitud.correo,
     };
   } catch (error) {
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+export const sendProfileModificationEmail = async (
+  correoDestino,
+  datosUsuario,
+  cambios,
+) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: correoDestino,
+      subject: `Tus datos han sido modificados - MercadUCA`,
+      html: generateModificationEmailHTML(datosUsuario, cambios),
+      text: generateModificationEmailText(datosUsuario, cambios),
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+      destinatario: correoDestino,
+    };
+  } catch (error) {
+    console.error("Error enviando correo de modificación:", error);
     return {
       success: false,
       error: error.message,
