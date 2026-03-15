@@ -18,8 +18,9 @@ export default function ProductDetailPage() {
   const [error, setError] = useState(null);
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
-  
+
   const [activeCoupon, setActiveCoupon] = useState(null);
+  const [couponApplied, setCouponApplied] = useState(false);
 
   const [showModal, setShowModal] = useState(false);
   const [updateError, setUpdateError] = useState("");
@@ -78,6 +79,8 @@ export default function ProductDetailPage() {
   }, []);
 
   useEffect(() => {
+    setCouponApplied(false);
+
     const fetchData = async () => {
       try {
         setLoading(true);
@@ -97,34 +100,38 @@ export default function ProductDetailPage() {
             setEmprendimiento(emprendimientoData);
           }
 
-          // NUEVO: Fetch de cupones activos del emprendimiento
+          // Fetch de cupones aplicables al producto
           try {
-            const cuponesRes = await fetch(
-              `${API_BASE_URL}/cupones?id_emprendimiento=${producto.id_emprendimiento}&solo_disponibles=true`
+            const [cuponesEmp, cuponescat, cuponesProd] = await Promise.all([
+              fetch(
+                `${API_BASE_URL}/cupones?id_emprendimiento=${producto.id_emprendimiento}&solo_disponibles=true`,
+              ).then((r) => (r.ok ? r.json() : { cupones: [] })),
+              producto.id_categoria
+                ? fetch(
+                    `${API_BASE_URL}/cupones?id_categoria=${producto.id_categoria}&solo_disponibles=true`,
+                  ).then((r) => (r.ok ? r.json() : { cupones: [] }))
+                : Promise.resolve({ cupones: [] }),
+              fetch(
+                `${API_BASE_URL}/cupones?id_producto=${producto.id || producto.id_producto}&solo_disponibles=true`,
+              ).then((r) => (r.ok ? r.json() : { cupones: [] })),
+            ]);
+
+            // Jerarquía: Producto > Categoría > Emprendimiento
+            const porProducto = (cuponesProd.cupones || []).find(
+              (c) =>
+                String(c.id_producto) ===
+                String(producto.id || producto.id_producto),
             );
-            if (cuponesRes.ok) {
-              const cuponesData = await cuponesRes.json();
-              const cupones = cuponesData.cupones || [];
+            const porCategoria = (cuponescat.cupones || []).find(
+              (c) => String(c.id_categoria) === String(producto.id_categoria),
+            );
+            const porEmprendimiento = (cuponesEmp.cupones || []).find(
+              (c) => !c.id_producto && !c.id_categoria,
+            );
 
-              // Evaluamos la jerarquía del cupón (Producto > Categoría > Emprendimiento)
-              let applicable = cupones.find(
-                (c) => String(c.id_producto) === String(producto.id || producto.id_producto)
-              );
-              
-              if (!applicable) {
-                applicable = cupones.find(
-                  (c) => String(c.id_categoria) === String(producto.id_categoria)
-                );
-              }
-              
-              if (!applicable) {
-                applicable = cupones.find(
-                  (c) => !c.id_producto && !c.id_categoria
-                );
-              }
-
-              setActiveCoupon(applicable);
-            }
+            setActiveCoupon(
+              porProducto || porCategoria || porEmprendimiento || null,
+            );
           } catch (err) {
             console.error("Error obteniendo cupones:", err);
           }
@@ -147,7 +154,6 @@ export default function ProductDetailPage() {
   const canEdit = esDueno || isAdmin;
 
   const handleUpdateProduct = async (formData) => {
-    // ... tu lógica original de handleUpdateProduct ...
     setUpdateError("");
     try {
       const payload = {
@@ -216,7 +222,6 @@ export default function ProductDetailPage() {
   };
 
   const handleDeleteProduct = async () => {
-    // ... tu lógica original de handleDeleteProduct ...
     try {
       const authToken = isAdmin
         ? token
@@ -259,32 +264,42 @@ export default function ProductDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="text-gray-600 mt-4">Cargando...</p>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <img
+          src="/assets/loaders/owl-loader-mercaduca.svg"
+          alt="Cargando producto"
+          className="w-36"
+        />
+        <p className="text-[#557051] font-medium text-sm">
+          Cargando producto...
+        </p>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-red-600">Error</h2>
-          <p className="text-gray-600 mt-2">{error}</p>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <img
+          src="/assets/loaders/owl-empty-state.svg"
+          alt="Error"
+          className="w-32 opacity-70"
+        />
+        <h2 className="text-xl font-bold text-red-600">Error</h2>
+        <p className="text-gray-600">{error}</p>
       </div>
     );
   }
 
   if (!product) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold">Producto no encontrado</h2>
-        </div>
+      <div className="min-h-screen flex flex-col items-center justify-center gap-4">
+        <img
+          src="/assets/loaders/owl-empty-state.svg"
+          alt="No encontrado"
+          className="w-32 opacity-70"
+        />
+        <h2 className="text-2xl font-bold">Producto no encontrado</h2>
       </div>
     );
   }
@@ -345,15 +360,18 @@ export default function ProductDetailPage() {
                 {product.nombre}
               </h1>
 
-              {/* RENDERIZADO CONDICIONAL DEL PRECIO */}
-              {activeCoupon ? (
+              {activeCoupon && (isAdmin || couponApplied) ? (
                 <div className="mb-4 flex items-center gap-3">
                   <p className="text-xl text-gray-400 line-through font-medium">
                     ${product.precio}
                   </p>
                   <div className="flex flex-col">
                     <p className="text-3xl font-bold text-red-600">
-                      ${Math.max(0, product.precio - activeCoupon.descuento).toFixed(2)}
+                      $
+                      {(
+                        product.precio *
+                        (1 - activeCoupon.descuento / 100)
+                      ).toFixed(2)}
                     </p>
                     <span className="text-xs font-semibold text-red-600 uppercase tracking-wide">
                       Descuento aplicado
@@ -371,7 +389,13 @@ export default function ProductDetailPage() {
                   {product.categoria || "Sin categoría"}
                 </span>
               </div>
-              <ProductCoupon categoria={product.categoria} />
+
+              <ProductCoupon
+                cupon={activeCoupon}
+                isAdmin={isAdmin}
+                applied={couponApplied}
+                onApply={() => setCouponApplied(true)}
+              />
 
               {product.descripcion && (
                 <div className="mb-6">
@@ -404,7 +428,7 @@ export default function ProductDetailPage() {
                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
                       />
                     </svg>
-                    {isAdmin ? "Editar producto" : "Editar producto"}
+                    Editar producto
                   </button>
                 ) : (
                   <>

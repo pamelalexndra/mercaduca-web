@@ -3,6 +3,25 @@ import ProductCard from "./Card";
 import ArrowButton from "./ArrowButton";
 import { API_BASE_URL } from "../utils/api";
 
+function SkeletonCards({ count = 5 }) {
+  return (
+    <>
+      {Array(count)
+        .fill(null)
+        .map((_, i) => (
+          <div key={i} className="snap-start shrink-0 w-44 sm:w-48 md:w-52">
+            <img
+              src="/assets/loaders/skeleton-card.svg"
+              alt=""
+              className="w-full rounded-xl"
+              aria-hidden="true"
+            />
+          </div>
+        ))}
+    </>
+  );
+}
+
 export default function Carousel({
   title,
   subtitle,
@@ -12,6 +31,7 @@ export default function Carousel({
 }) {
   const scrollerRef = useRef(null);
   const [items, setItems] = useState(staticItems || []);
+  const [loading, setLoading] = useState(!!endpoint);
   const [error, setError] = useState(null);
   const [activeIndex, setActiveIndex] = useState(0);
   const isAnimatingRef = useRef(false);
@@ -22,15 +42,13 @@ export default function Carousel({
 
     const fetchItems = async () => {
       try {
+        setLoading(true);
         setError(null);
         const url = `${API_BASE_URL}${endpoint}`;
-        console.log("URL:", url);
-
         const res = await fetch(url);
         if (!res.ok) throw new Error("No se pudieron cargar los elementos");
 
         const data = await res.json();
-
         const itemsData =
           data.productos || data.emprendimientos || data.items || [];
 
@@ -41,6 +59,8 @@ export default function Carousel({
         setItems(itemsData);
       } catch (err) {
         setError(err.message);
+      } finally {
+        setLoading(false);
       }
     };
 
@@ -70,7 +90,6 @@ export default function Carousel({
       const t = Math.min((time - startTime) / duration, 1);
       const eased = t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
       el.scrollLeft = start + (end - start) * eased;
-
       if (t < 1) {
         requestAnimationFrame(animate);
       } else {
@@ -94,9 +113,23 @@ export default function Carousel({
     goToIndex(newIndex);
   };
 
-  if (error) return <div>Error: {error}</div>;
-  if (!items.length)
-    return <div className="text-center text-zinc-500">Cargando...</div>;
+  // Error state
+  if (error) {
+    return (
+      <section className="mb-14">
+        <div className="mx-auto max-w-6xl px-6 text-center py-10">
+          <img
+            src="/assets/loaders/owl-empty-state.svg"
+            alt="Sin resultados"
+            className="w-24 mx-auto mb-3 opacity-60"
+          />
+          <p className="text-sm text-zinc-400">{error}</p>
+        </div>
+      </section>
+    );
+  }
+
+  // Carrusel con endpoint (productos/emprendimientos)
   if (endpoint) {
     return (
       <section className="mb-14">
@@ -111,14 +144,18 @@ export default function Carousel({
               ref={scrollerRef}
               className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar"
             >
-              {items.map((p) => (
-                <div
-                  key={p.id}
-                  className="snap-start shrink-0 w-44 sm:w-48 md:w-52"
-                >
-                  <ProductCard p={p} />
-                </div>
-              ))}
+              {loading ? (
+                <SkeletonCards count={5} />
+              ) : (
+                items.map((p) => (
+                  <div
+                    key={p.id}
+                    className="snap-start shrink-0 w-44 sm:w-48 md:w-52"
+                  >
+                    <ProductCard p={p} />
+                  </div>
+                ))
+              )}
             </div>
             <div className="absolute -bottom-[10px] right-[8px] flex gap-3 items-center">
               <ArrowButton onClick={() => scrollBy(-300)} dir="prev" />
@@ -130,6 +167,7 @@ export default function Carousel({
     );
   }
 
+  // Carrusel estático (banner/actividades)
   const containerClasses =
     variant === "activities"
       ? "text-white rounded-3xl py-6 sm:py-8 px-3 sm:px-8"
@@ -139,6 +177,7 @@ export default function Carousel({
     variant === "activities"
       ? "aspect-[5/4] sm:aspect-[16/10] lg:aspect-[16/9]"
       : "aspect-[16/9]";
+
   useEffect(() => {
     if (!staticItems) return;
     let timeoutId;
@@ -179,8 +218,7 @@ export default function Carousel({
             className="snap-start shrink-0 w-full flex flex-col justify-center items-center text-center px-2 sm:px-4"
           >
             <div
-              className={`relative flex items-center justify-center 
-              w-full rounded-xl overflow-hidden ${imageContainerClasses}`}
+              className={`relative flex items-center justify-center w-full rounded-xl overflow-hidden ${imageContainerClasses}`}
               style={{
                 height: "clamp(250px, 28vw, 420px)",
                 boxShadow: "0 4px 15px rgba(0,0,0,0.25)",
@@ -196,7 +234,6 @@ export default function Carousel({
                 style={{ borderRadius: "1rem" }}
               />
             </div>
-
             {item.text && (
               <p className="mt-4 text-sm sm:text-base lg:text-lg font-montserrat p-2 text-center text-white/90">
                 {item.text}
@@ -205,11 +242,10 @@ export default function Carousel({
           </div>
         ))}
       </div>
+
       <button
         onClick={handlePrev}
-        className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-10
-        flex items-center justify-center bg-white border border-[#2b201b]/20
-        w-10 h-10 rounded-full transform transition-transform duration-200 hover:scale-110"
+        className="absolute left-3 sm:left-5 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center bg-white border border-[#2b201b]/20 w-10 h-10 rounded-full transform transition-transform duration-200 hover:scale-110"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -228,9 +264,7 @@ export default function Carousel({
 
       <button
         onClick={handleNext}
-        className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-10
-        flex items-center justify-center bg-white border border-[#2b201b]/20
-        w-10 h-10 rounded-full transform transition-transform duration-200 hover:scale-110"
+        className="absolute right-3 sm:right-5 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center bg-white border border-[#2b201b]/20 w-10 h-10 rounded-full transform transition-transform duration-200 hover:scale-110"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"

@@ -21,7 +21,9 @@ export default function Landing({ currentUser }) {
   const currentPositionRef = useRef("50% 50%");
 
   const [actividadesParaCarrusel, setActividadesParaCarrusel] = useState([]);
-  const [bannerImg, setBannerImg] = useState(bgLandingGato);
+  const [loadingActividades, setLoadingActividades] = useState(true);
+  const [bannerImg, setBannerImg] = useState(null);
+  const [loadingBanner, setLoadingBanner] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [bannerPosition, setBannerPosition] = useState("50% 50%");
   const [isRepositioning, setIsRepositioning] = useState(false);
@@ -37,7 +39,9 @@ export default function Landing({ currentUser }) {
 
         if (bannerRes.ok) {
           const bannerData = await bannerRes.json();
-          if (bannerData.valor) setBannerImg(bannerData.valor);
+          setBannerImg(bannerData.valor || bgLandingGato);
+        } else {
+          setBannerImg(bgLandingGato);
         }
 
         if (posRes.ok) {
@@ -45,7 +49,9 @@ export default function Landing({ currentUser }) {
           if (posData.valor) setBannerPosition(posData.valor);
         }
       } catch {
-        // Usando banner por defecto
+        setBannerImg(bgLandingGato);
+      } finally {
+        setLoadingBanner(false);
       }
     };
 
@@ -59,6 +65,7 @@ export default function Landing({ currentUser }) {
   useEffect(() => {
     const loadActivities = async () => {
       try {
+        setLoadingActividades(true);
         const response = await activityService.getAll();
         const activities = response.data || response;
 
@@ -68,8 +75,10 @@ export default function Landing({ currentUser }) {
         }));
 
         setActividadesParaCarrusel(formatted);
-      } catch (err) {
+      } catch {
         // Error cargando actividades
+      } finally {
+        setLoadingActividades(false);
       }
     };
 
@@ -77,7 +86,6 @@ export default function Landing({ currentUser }) {
   }, []);
 
   const userRole = currentUser?.role || currentUser?.Rol || currentUser?.rol;
-
   const isAdmin = userRole?.toLowerCase() === "administrador";
 
   const handleImageChange = async (e) => {
@@ -102,23 +110,18 @@ export default function Landing({ currentUser }) {
       });
 
       const data = await response.json();
-      if (response.ok) {
-        setBannerImg(data.newUrl);
-      } else {
-        // Error al subir banner
-      }
-    } catch (error) {
+      if (response.ok) setBannerImg(data.newUrl);
+    } catch {
       // Error subiendo el banner
     } finally {
       setUploading(false);
     }
   };
 
-  // Guardar posicion en backend
   const savePosition = async (position) => {
     const token = localStorage.getItem("token");
     try {
-      const res = await fetch(`${API_BASE_URL}/admin/update-config-text`, {
+      await fetch(`${API_BASE_URL}/admin/update-config-text`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -129,35 +132,25 @@ export default function Landing({ currentUser }) {
           valor: position,
         }),
       });
-
-      await res.json();
-    } catch (error) {
+    } catch {
       // Error guardando posicion
     }
   };
 
-  // Drag handlers
   const handleMouseDown = (e) => {
     if (!isRepositioning) return;
     setIsDragging(true);
-    dragStart.current = {
-      x: e.clientX,
-      y: e.clientY,
-      pos: bannerPosition,
-    };
+    dragStart.current = { x: e.clientX, y: e.clientY, pos: bannerPosition };
   };
 
   const handleMouseMove = (e) => {
     if (!isDragging || !dragStart.current || !bannerRef.current) return;
-
     const rect = bannerRef.current.getBoundingClientRect();
     const dx = ((e.clientX - dragStart.current.x) / rect.width) * 100;
     const dy = ((e.clientY - dragStart.current.y) / rect.height) * 100;
-
     const [px, py] = dragStart.current.pos.split(" ").map(parseFloat);
     const newX = Math.min(100, Math.max(0, px - dx));
     const newY = Math.min(100, Math.max(0, py - dy));
-
     const newPos = `${newX.toFixed(1)}% ${newY.toFixed(1)}%`;
     currentPositionRef.current = newPos;
     setBannerPosition(newPos);
@@ -184,83 +177,87 @@ export default function Landing({ currentUser }) {
   return (
     <>
       <section className="relative flex flex-col items-center text-center px-2 w-full">
-        <motion.div
-          ref={bannerRef}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          onMouseDown={handleMouseDown}
-          onMouseMove={handleMouseMove}
-          onMouseUp={handleMouseUp}
-          onMouseLeave={handleMouseUp}
-          className={`relative w-full rounded-3xl overflow-hidden shadow-md bg-cover bg-no-repeat
-            ${isRepositioning ? "cursor-grab active:cursor-grabbing" : ""}`}
-          style={{
-            backgroundImage: `url(${bannerImg})`,
-            backgroundPosition: bannerPosition,
-          }}
-        >
-          <div className="absolute inset-0 bg-zinc-400/50" />
+        {/* Banner: skeleton mientras carga, luego la imagen real */}
+        {loadingBanner ? (
           <img
-            src={mercaducaBlanco}
-            alt="MercadUCA"
-            className="relative mx-auto w-50 h-30 object-contain my-6 md:w-80 md:h-60 lg:w-92 lg:h-60"
+            src="/assets/loaders/skeleton-banner.svg"
+            alt=""
+            className="w-full rounded-3xl"
+            aria-hidden="true"
           />
+        ) : (
+          <motion.div
+            ref={bannerRef}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1 }}
+            onMouseDown={handleMouseDown}
+            onMouseMove={handleMouseMove}
+            onMouseUp={handleMouseUp}
+            onMouseLeave={handleMouseUp}
+            className={`relative w-full rounded-3xl overflow-hidden shadow-md bg-cover bg-no-repeat
+              ${isRepositioning ? "cursor-grab active:cursor-grabbing" : ""}`}
+            style={{
+              backgroundImage: `url(${bannerImg})`,
+              backgroundPosition: bannerPosition,
+            }}
+          >
+            <div className="absolute inset-0 bg-zinc-400/50" />
+            <img
+              src={mercaducaBlanco}
+              alt="MercadUCA"
+              className="relative mx-auto w-50 h-30 object-contain my-6 md:w-80 md:h-60 lg:w-92 lg:h-60"
+            />
 
-          {/* Controles de admin */}
-          {isAdmin && (
-            <div className="absolute top-3 right-3 z-10 flex gap-2">
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleImageChange}
-              />
+            {isAdmin && (
+              <div className="absolute top-3 right-3 z-10 flex gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageChange}
+                />
+                <button
+                  onClick={() => fileInputRef.current.click()}
+                  disabled={uploading}
+                  className="bg-white/80 hover:bg-white text-zinc-700 rounded-full p-2 shadow-md transition-all"
+                  title="Cambiar imagen del banner"
+                >
+                  {uploading ? (
+                    <span className="text-xs px-1">...</span>
+                  ) : (
+                    <Pencil size={18} />
+                  )}
+                </button>
+                <button
+                  onClick={async () => {
+                    if (isRepositioning)
+                      await savePosition(currentPositionRef.current);
+                    setIsRepositioning(!isRepositioning);
+                  }}
+                  className={`rounded-full p-2 shadow-md transition-all text-xs font-semibold px-3
+                    ${
+                      isRepositioning
+                        ? "bg-green-500 text-white hover:bg-green-600"
+                        : "bg-white/80 text-zinc-700 hover:bg-white"
+                    }`}
+                  title="Reposicionar imagen"
+                >
+                  {isRepositioning ? "Guardar" : "Mover"}
+                </button>
+              </div>
+            )}
 
-              {/* Boton cambiar imagen */}
-              <button
-                onClick={() => fileInputRef.current.click()}
-                disabled={uploading}
-                className="bg-white/80 hover:bg-white text-zinc-700 rounded-full p-2 shadow-md transition-all"
-                title="Cambiar imagen del banner"
-              >
-                {uploading ? (
-                  <span className="text-xs px-1">...</span>
-                ) : (
-                  <Pencil size={18} />
-                )}
-              </button>
-
-              {/* Boton reposicionar */}
-              <button
-                onClick={async () => {
-                  if (isRepositioning) {
-                    await savePosition(currentPositionRef.current);
-                  }
-                  setIsRepositioning(!isRepositioning);
-                }}
-                className={`rounded-full p-2 shadow-md transition-all text-xs font-semibold px-3
-                  ${
-                    isRepositioning
-                      ? "bg-green-500 text-white hover:bg-green-600"
-                      : "bg-white/80 text-zinc-700 hover:bg-white"
-                  }`}
-                title="Reposicionar imagen"
-              >
-                {isRepositioning ? "Guardar" : "Mover"}
-              </button>
-            </div>
-          )}
-
-          {isRepositioning && (
-            <div className="absolute inset-0 border-4 border-dashed border-white/70 rounded-3xl pointer-events-none flex items-center justify-center">
-              <span className="bg-black/40 text-white text-sm px-3 py-1 rounded-full">
-                Arrastra para reposicionar
-              </span>
-            </div>
-          )}
-        </motion.div>
+            {isRepositioning && (
+              <div className="absolute inset-0 border-4 border-dashed border-white/70 rounded-3xl pointer-events-none flex items-center justify-center">
+                <span className="bg-black/40 text-white text-sm px-3 py-1 rounded-full">
+                  Arrastra para reposicionar
+                </span>
+              </div>
+            )}
+          </motion.div>
+        )}
 
         <div className="-mt-5 w-full flex justify-center pb-12">
           <div className="w-[75%]">
@@ -285,7 +282,16 @@ export default function Landing({ currentUser }) {
 
           <div className="relative mt-6 pb-12 font-montserrat">
             <div className="flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory no-scrollbar">
-              {actividadesParaCarrusel.length > 0 ? (
+              {loadingActividades ? (
+                /* Spinner owl mientras cargan actividades */
+                <div className="w-full flex justify-center py-10">
+                  <img
+                    src="/assets/loaders/owl-spinner-circle.svg"
+                    alt="Cargando actividades"
+                    className="w-20"
+                  />
+                </div>
+              ) : actividadesParaCarrusel.length > 0 ? (
                 actividadesParaCarrusel.map((act, i) => (
                   <div
                     key={i}
@@ -306,8 +312,15 @@ export default function Landing({ currentUser }) {
                   </div>
                 ))
               ) : (
-                <div className="py-10 text-zinc-400 w-full text-center">
-                  Cargando actividades...
+                <div className="w-full flex flex-col items-center py-10 gap-3">
+                  <img
+                    src="/assets/loaders/owl-empty-state.svg"
+                    alt="Sin actividades"
+                    className="w-20 opacity-60"
+                  />
+                  <p className="text-sm text-zinc-400">
+                    No hay actividades disponibles
+                  </p>
                 </div>
               )}
             </div>

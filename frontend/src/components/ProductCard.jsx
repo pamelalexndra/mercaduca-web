@@ -3,25 +3,18 @@ import { Link } from "react-router-dom";
 import productPlaceholder from "../images/productPlaceholder.jpg";
 
 export default function ProductCard({ p, activeCoupon }) {
-  // Verificamos si hay un cupón válido con un descuento mayor a 0
   const hasDiscount = activeCoupon && activeCoupon.descuento > 0;
-  
+
   const originalPrice = parseFloat(p.precio) || 0;
-  const discountAmount = hasDiscount ? parseFloat(activeCoupon.descuento) : 0;
-  
-  // Calculamos el precio final (asegurándonos de que no baje de $0)
-  const finalPrice = Math.max(0, originalPrice - discountAmount).toFixed(2);
+  const finalPrice = hasDiscount
+    ? (originalPrice * (1 - parseFloat(activeCoupon.descuento) / 100)).toFixed(
+        2,
+      )
+    : originalPrice.toFixed(2);
 
   return (
     <Link to={`/detalle/${p.id || p.id_producto}`}>
-      <div
-        className="
-        group relative rounded-xl border border-zinc-200 
-        bg-white shadow-sm overflow-hidden font-montserrat 
-        hover:shadow-md transition
-      "
-      >
-        {/* Badge flotante de Oferta */}
+      <div className="group relative rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden font-montserrat hover:shadow-md transition">
         {hasDiscount && (
           <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-10 shadow-sm uppercase tracking-wide">
             Oferta
@@ -40,7 +33,7 @@ export default function ProductCard({ p, activeCoupon }) {
           <h3 className="font-semibold text-zinc-900 text-[13px] leading-tight line-clamp-2">
             {p.nombre || "Nombre del producto"}
           </h3>
-          
+
           <div className="mt-1 flex items-center">
             {hasDiscount ? (
               <div className="flex items-baseline gap-2">
