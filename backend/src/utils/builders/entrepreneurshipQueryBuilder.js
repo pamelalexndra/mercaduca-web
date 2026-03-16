@@ -16,6 +16,7 @@ export const buildEntrepreneurshipQuery = (filtros) => {
         c.Categoria AS categoria_nombre,
         e.boxful_city_id,
         e.boxful_address_id,
+        e.boxful_state_id, 
         e.direccion_recoleccion,
         e.referencia_recoleccion
     FROM Emprendimiento e

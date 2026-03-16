@@ -173,6 +173,10 @@ const normalizeEmprendimiento = (data = {}) => ({
     data.idCategoria ||
     data.emprendimiento_id_categoria ||
     null,
+  boxful_city_id: data.boxful_city_id || null,
+  boxful_address_id: data.boxful_address_id || null,
+  direccion_recoleccion: data.direccion_recoleccion || "",
+  referencia_recoleccion: data.referencia_recoleccion || "",
 });
 
 export default function Profile({ user, onProfileLoaded, disableActions }) {
@@ -1060,11 +1064,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             <button
               onClick={handleAgregar}
               disabled={!canAddProducts}
-              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${
-                canAddProducts
+              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${canAddProducts
                   ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
                   : "bg-gray-300 cursor-not-allowed"
-              }`}
+                }`}
               aria-label="Agregar producto"
               title={
                 isAdminMode
@@ -1100,11 +1103,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                 <button
                   onClick={handleAgregar}
                   disabled={!hasEmprendimiento}
-                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${
-                    hasEmprendimiento
+                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento
                       ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
                       : "bg-gray-300 cursor-not-allowed shadow-none"
-                  }`}
+                    }`}
                 >
                   Comparte tu primer producto
                 </button>

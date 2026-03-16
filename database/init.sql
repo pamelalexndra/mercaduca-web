@@ -11,6 +11,7 @@ CREATE TABLE Emprendimiento (
   Disponible BOOLEAN DEFAULT TRUE,
   Imagen_URL TEXT,
   boxful_city_id VARCHAR(50),
+  boxful_state_id VARCHAR(50),
   boxful_address_id VARCHAR(100),
   direccion_recoleccion TEXT,
   referencia_recoleccion TEXT,

@@ -1,13 +1,7 @@
-// src/controllers/entrepreneurship.controller.js
 import pool from "../../database/connection.js";
 import { buildEntrepreneurshipQueryUpdate } from "../../utils/builders/entrepreneurshipQueryBuilder.js";
 import { createAddress } from "../../services/boxful.service.js";
-import axios from "axios";
 
-/**
- * Actualiza parcialmente un emprendimiento.
- * Si hay dirección de recolección, geocodifica con Google Maps antes de enviar a Boxful.
- */
 export const updateEntrepreneurshipPartial = async (req, res) => {
   try {
     const { id } = req.params;
@@ -21,27 +15,28 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
       return res.status(400).json({ error: "No se proporcionaron campos para actualizar" });
     }
 
-    // --- Geocodificar si hay dirección ---
+    // --- Geocodificar con Nominatim  ---
     let latitude = null;
     let longitude = null;
 
     if (updates.direccion_recoleccion?.trim()) {
       try {
-        const apiKey = process.env.GOOGLE_MAPS_API_KEY;
-        const addressText = `${updates.direccion_recoleccion}, ${updates.boxful_city_id || ""}`;
-        const geoUrl = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addressText)}&key=${apiKey}`;
+        const addressText = `${updates.direccion_recoleccion}, El Salvador`;
+        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressText)}&format=json&limit=1`;
 
-        const geoResp = await axios.get(geoUrl);
-        const geoData = geoResp.data;
+        const geoResp = await fetch(geoUrl, {
+          headers: { "User-Agent": "MercaCuca/1.0" },
+        });
+        const geoData = await geoResp.json();
 
-        if (geoData.status === "OK" && geoData.results.length > 0) {
-          latitude = geoData.results[0].geometry.location.lat;
-          longitude = geoData.results[0].geometry.location.lng;
+        if (geoData.length > 0) {
+          latitude = parseFloat(geoData[0].lat);
+          longitude = parseFloat(geoData[0].lon);
         } else {
-          console.warn("Geocoding no devolvió resultados:", geoData.status);
+          console.warn("Nominatim no encontró la dirección, usando coordenadas default");
         }
       } catch (geoError) {
-        console.error("Error geocoding Google Maps:", geoError.message);
+        console.error("Error geocoding Nominatim:", geoError.message);
       }
     }
 
@@ -52,10 +47,11 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
           address: updates.direccion_recoleccion.trim(),
           referencePoint: updates.referencia_recoleccion?.trim() || updates.direccion_recoleccion.trim(),
           cityId: updates.boxful_city_id,
+          stateId: updates.boxful_state_id,  
           addressPhone: updates.telefono || "",
           addressAreaCode: "503",
-          latitude: latitude ?? undefined,
-          longitude: longitude ?? undefined,
+          latitude: latitude ?? 13.6929,     // fallback
+          longitude: longitude ?? -89.2182,
         });
 
         if (!addressData?.id) {
@@ -69,7 +65,7 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
       }
     }
 
-    // --- Construir query de update ---
+    // --- Construir query de update  ---
     const { query, params, count } = buildEntrepreneurshipQueryUpdate(id, updates);
 
     if (count === 0) {
@@ -88,14 +84,8 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
     });
   } catch (error) {
     console.error("Error actualizando emprendimiento:", error);
-
-    if (error.code === "23503") {
-      return res.status(400).json({ error: "Categoría no válida" });
-    }
-    if (error.code === "23505") {
-      return res.status(400).json({ error: "Ya existe un emprendimiento con ese nombre" });
-    }
-
+    if (error.code === "23503") return res.status(400).json({ error: "Categoría no válida" });
+    if (error.code === "23505") return res.status(400).json({ error: "Ya existe un emprendimiento con ese nombre" });
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };

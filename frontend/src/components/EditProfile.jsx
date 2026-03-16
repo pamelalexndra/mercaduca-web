@@ -52,7 +52,7 @@ export default function EditProfile({
       fetch(`${API_BASE_URL}/boxful/states`)
         .then((r) => r.json())
         .then((data) => setStates(data.states || []))
-        .catch(() => {});
+        .catch(() => { });
     }
   }, [visible]);
 
@@ -261,11 +261,13 @@ export default function EditProfile({
 
     const dataToSend = {
       ...formData,
+      boxful_state_id: selectedStateId,  
       ...(formData.password ? { nuevaContraseña: formData.password } : {}),
     };
     delete dataToSend.password;
     delete dataToSend.confirmPassword;
 
+    console.log("DATASEND COMPLETO:", JSON.stringify(dataToSend));
     const success = await onSave?.(dataToSend);
     if (success) onSuccess?.("Perfil actualizado correctamente");
   };
