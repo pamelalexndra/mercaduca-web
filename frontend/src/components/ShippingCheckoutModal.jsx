@@ -55,18 +55,29 @@ export default function ShippingCheckoutModal({
     }
   }, [visible]);
 
-  const fetchStates = async () => {
-    try {
-      setLoadingStates(true);
-      const res = await fetch(`${API_BASE_URL}/boxful/states`);
-      const data = await res.json();
-      setStates(data.states || []);
-    } catch {
-      setError("No se pudieron cargar los departamentos.");
-    } finally {
-      setLoadingStates(false);
-    }
-  };
+const fetchStates = async () => {
+  try {
+    setLoadingStates(true);
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 8000); 
+
+    const res = await fetch(`${API_BASE_URL}/boxful/states`, {
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+
+    const data = await res.json();
+    setStates(data.states || []);
+  } catch (err) {
+    setError(
+      err.name === "AbortError"
+        ? "Tiempo de espera agotado. Intenta de nuevo."
+        : "No se pudieron cargar los departamentos."
+    );
+  } finally {
+    setLoadingStates(false); // siempre desbloquea el select
+  }
+};
 
   const handleChange = (e) => {
     const { name, value } = e.target;
