@@ -1,0 +1,268 @@
+# docker-compose.backup.yml
+version: "3.8"
+
+services:
+  # SERVICIO DE BACKUPS AUTOMÁTICOS
+  backup-scheduler:
+    image: postgres:15
+    container_name: mercaduca_backup_scheduler
+    restart: unless-stopped
+    volumes:
+      # Usando la ruta C:\backups\mercaduca\ en Windows
+      - C:\\backups\\mercaduca:/backups
+      - ./backup-scripts:/scripts
+    environment:
+      - DB_USER=${DB_USER}
+      - DB_NAME=${DB_NAME}
+      - DB_HOST=mercaduca_database
+      - DB_PORT=5432
+      - PGPASSWORD=${DB_PASSWORD}
+      - BACKEND_URL=http://mercaduca_backend:5000
+      - TZ=America/Mexico_City
+    entrypoint: |
+      bash -c "
+      # Crear directorio de backups si no existe
+      mkdir -p /backups
+
+      # Instalar herramientas necesarias
+      apt-get update && apt-get install -y cron curl postgresql-client && apt-get clean
+
+      # === SCRIPT DE BACKUP AUTOMÁTICO ===
+      cat > /scripts/backup.sh <<'EOF'
+      #!/bin/bash
+      set -e
+
+      BACKUP_DIR=/backups
+      DATE=\$(date +%Y%m%d_%H%M%S)
+      BACKUP_FILE=\"\${BACKUP_DIR}/backup_\${DATE}.sql\"
+      LOG_FILE=\"\${BACKUP_DIR}/backup_history.log\"
+
+      echo \"========================================\" >> \${LOG_FILE}
+      echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Iniciando backup...\" >> \${LOG_FILE}
+
+      # Verificar que la base de datos está accesible
+      if ! pg_isready -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} > /dev/null 2>&1; then
+        echo \"\$(date '+%Y-%m-%d %H:%M:%S'): ERROR: Base de datos no accesible\" >> \${LOG_FILE}
+        exit 1
+      fi
+
+      # Backup normal
+      if pg_dump -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} \${DB_NAME} --clean > \${BACKUP_FILE}; then
+        gzip \${BACKUP_FILE}
+        echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Backup completado: backup_\${DATE}.sql.gz\" >> \${LOG_FILE}
+        echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Tamaño: \$(du -h \${BACKUP_FILE}.gz | cut -f1)\" >> \${LOG_FILE}
+        
+        # Limpiar backups antiguos (guardar últimos 30 días)
+        find \${BACKUP_DIR} -name \"backup_*.sql.gz\" -type f -mtime +30 -delete
+        echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Limpieza completada\" >> \${LOG_FILE}
+      else
+        echo \"\$(date '+%Y-%m-%d %H:%M:%S'): ERROR en backup\" >> \${LOG_FILE}
+        exit 1
+      fi
+
+      echo \"========================================\" >> \${LOG_FILE}
+      EOF
+
+      # === SCRIPT DE RESTAURACIÓN AUTOMÁTICA ===
+      cat > /scripts/auto_restore.sh <<'EOF'
+      #!/bin/bash
+      set -e
+
+      BACKUP_DIR=/backups
+      LOG_FILE=\"\${BACKUP_DIR}/restore_history.log\"
+
+      echo \"========================================\" >> \${LOG_FILE}
+      echo \"\$(date '+%Y-%m-%d %H:%M:%S'): VERIFICANDO ESTADO DE LA BASE DE DATOS\" >> \${LOG_FILE}
+
+      # Función para activar modo mantenimiento en backend
+      enable_maintenance() {
+        echo \"Activando modo mantenimiento en backend...\"
+        curl -s -X POST \${BACKEND_URL}/api/maintenance/mode \
+          -H \"Content-Type: application/json\" \
+          -d {\"mode\":true,\"message\":\"Sistema en restauración por backup\"} > /dev/null 2>&1 || {
+            echo \"No se pudo activar modo mantenimiento, continuando de todas formas...\"
+          }
+        sleep 5
+      }
+
+      # Función para desactivar modo mantenimiento
+      disable_maintenance() {
+        echo \"Desactivando modo mantenimiento...\"
+        curl -s -X POST \${BACKEND_URL}/api/maintenance/mode \
+          -H \"Content-Type: application/json\" \
+          -d {\"mode\":false} > /dev/null 2>&1 || true
+      }
+
+      # Función para restaurar el último backup bueno
+      restore_latest_backup() {
+        local latest_backup=\$(ls -t \${BACKUP_DIR}/backup_*.sql.gz 2>/dev/null | head -n1)
+        
+        if [ -z \"\$latest_backup\" ]; then
+          echo \"\$(date '+%Y-%m-%d %H:%M:%S'): No hay backups disponibles para restaurar\" >> \${LOG_FILE}
+          return 1
+        fi
+        
+        echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Intentando restaurar: \$(basename \$latest_backup)\" >> \${LOG_FILE}
+        
+        # Activar modo mantenimiento
+        enable_maintenance
+        
+        # Probar integridad del backup
+        if gunzip -c \"\$latest_backup\" | head -n 10 > /dev/null 2>&1; then
+          # Intentar restaurar
+          if gunzip -c \"\$latest_backup\" | psql -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} -d \${DB_NAME} 2>/dev/null; then
+            echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Restauración automática exitosa\" >> \${LOG_FILE}
+            disable_maintenance
+            return 0
+          else
+            echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Error en restauración\" >> \${LOG_FILE}
+            disable_maintenance
+            return 1
+          fi
+        else
+          echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Backup corrupto: \$(basename \$latest_backup)\" >> \${LOG_FILE}
+          disable_maintenance
+          return 1
+        fi
+      }
+
+      # Verificar salud de la BD cada 5 minutos
+      while true; do
+        if ! pg_isready -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} > /dev/null 2>&1; then
+          echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Base de datos no responde\" >> \${LOG_FILE}
+          
+          # Intentar reconectar varias veces
+          for i in {1..5}; do
+            echo \"Intento \$i de reconexión...\" >> \${LOG_FILE}
+            sleep 10
+            
+            if pg_isready -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} > /dev/null 2>&1; then
+              echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Conexión restablecida\" >> \${LOG_FILE}
+              break
+            fi
+            
+            if [ \$i -eq 5 ]; then
+              echo \"\$(date '+%Y-%m-%d %H:%M:%S'): INICIANDO RESTAURACIÓN AUTOMÁTICA\" >> \${LOG_FILE}
+              restore_latest_backup
+            fi
+          done
+        fi
+        
+        # Verificar integridad de la BD (consulta simple)
+        if ! psql -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} -d \${DB_NAME} -c \"SELECT 1\" > /dev/null 2>&1; then
+          echo \"\$(date '+%Y-%m-%d %H:%M:%S'): Posible corrupción detectada\" >> \${LOG_FILE}
+          echo \"\$(date '+%Y-%m-%d %H:%M:%S'): INICIANDO RESTAURACIÓN PREVENTIVA\" >> \${LOG_FILE}
+          restore_latest_backup
+        fi
+        
+        sleep 300  # Esperar 5 minutos
+      done
+      EOF
+
+      # === SCRIPT DE RESTAURACIÓN MANUAL ===
+      cat > /scripts/manual_restore.sh <<'EOF'
+      #!/bin/bash
+      if [ -z \"\$1\" ]; then
+        echo \"USO: /scripts/manual_restore.sh [fecha] [--force]\"
+        echo \"Ejemplos:\"
+        echo \"  /scripts/manual_restore.sh latest           # Restaura el último backup\"
+        echo \"  /scripts/manual_restore.sh 20240318        # Restaura backup del 2024-03-18\"
+        echo \"  /scripts/manual_restore.sh --force         # Fuerza restauración sin confirmar\"
+        echo \"\"
+        echo \"Backups disponibles:\"
+        ls -la /backups/backup_*.sql.gz 2>/dev/null | sed 's/.*backup_//' | sed 's/.sql.gz//' || echo \"No hay backups\"
+        exit 1
+      fi
+
+      BACKUP_FILE=\"\"
+      FORCE=0
+
+      # Parsear argumentos
+      for arg in \"\$@\"; do
+        if [ \"\$arg\" == \"--force\" ]; then
+          FORCE=1
+        elif [ \"\$arg\" == \"latest\" ]; then
+          BACKUP_FILE=\$(ls -t /backups/backup_*.sql.gz 2>/dev/null | head -n1)
+        else
+          BACKUP_FILE=\$(ls /backups/backup_\${arg}*.sql.gz 2>/dev/null | head -n1)
+        fi
+      done
+
+      if [ -z \"\$BACKUP_FILE\" ] || [ ! -f \"\$BACKUP_FILE\" ]; then
+        echo \"ERROR: Backup no encontrado\"
+        exit 1
+      fi
+
+      echo \"Archivo a restaurar: \$(basename \$BACKUP_FILE)\"
+      echo \"Tamaño: \$(du -h \$BACKUP_FILE | cut -f1)\"
+
+      if [ \$FORCE -eq 0 ]; then
+        echo \"ADVERTENCIA: Esto SOBRESCRIBIRÁ la base de datos actual\"
+        read -p \"Continuar? (s/N): \" confirm
+        if [ \"\$confirm\" != \"s\" ] && [ \"\$confirm\" != \"S\" ]; then
+          echo \"Restauración cancelada\"
+          exit 0
+        fi
+      fi
+
+      # Activar modo mantenimiento en backend
+      echo \"Activando modo mantenimiento...\"
+      curl -s -X POST \${BACKEND_URL}/api/maintenance/mode \
+        -H \"Content-Type: application/json\" \
+        -d '{\"mode\":true,\"message\":\"Sistema en restauración por backup\"}' > /dev/null 2>&1 || {
+        echo \"No se pudo activar modo mantenimiento, continuando de todas formas...\"
+      }
+
+      sleep 5
+
+      # Recrear base de datos
+      echo \"Recreando base de datos...\"
+      psql -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} -d postgres -c \"DROP DATABASE IF EXISTS \${DB_NAME};\" 2>/dev/null
+      psql -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} -d postgres -c \"CREATE DATABASE \${DB_NAME};\" 2>/dev/null
+
+      # Restaurar
+      echo \"Restaurando datos...\"
+      gunzip -c \"\$BACKUP_FILE\" | psql -h \${DB_HOST} -p \${DB_PORT} -U \${DB_USER} -d \${DB_NAME}
+
+      # Desactivar modo mantenimiento
+      echo \"Desactivando modo mantenimiento...\"
+      curl -s -X POST \${BACKEND_URL}/api/maintenance/mode \
+        -H \"Content-Type: application/json\" \
+        -d '{\"mode\":false}' > /dev/null 2>&1 || true
+
+      echo \"Restauración completada exitosamente\"
+      EOF
+
+      # Dar permisos de ejecución
+      chmod +x /scripts/*.sh
+
+      # Configurar cron para backups (todos los días a las 2 AM)
+      echo \"0 2 * * * /scripts/backup.sh\" > /etc/cron.d/backup-cron
+      chmod 0644 /etc/cron.d/backup-cron
+      crontab /etc/cron.d/backup-cron
+
+      echo \"========================================\"
+      echo \"SISTEMA DE BACKUPS INICIADO\"
+      echo \"========================================\"
+      echo \"Ruta de backups: C:\\backups\\mercaduca\"
+      echo \"Backups automáticos: Todos los días a las 2:00 AM\"
+      echo \"Restauración automática: Activada\"
+      echo \"Logs: /backups/backup_history.log\"
+      echo \"========================================\"
+
+      # Iniciar cron y monitor de restauración automática
+      cron
+      /scripts/auto_restore.sh &
+
+      # Mantener contenedor vivo
+      tail -f /dev/null
+      "
+    networks:
+      - mercaduca_network
+    depends_on:
+      database:
+        condition: service_healthy
+
+networks:
+  mercaduca_network:
+    external: true
