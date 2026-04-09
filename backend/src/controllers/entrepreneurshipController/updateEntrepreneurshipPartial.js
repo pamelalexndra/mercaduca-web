@@ -1,6 +1,5 @@
 import pool from "../../database/connection.js";
 import { buildEntrepreneurshipQueryUpdate } from "../../utils/builders/entrepreneurshipQueryBuilder.js";
-import { createAddress } from "../../services/boxful.service.js";
 
 export const updateEntrepreneurshipPartial = async (req, res) => {
   try {
@@ -15,57 +14,6 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
       return res.status(400).json({ error: "No se proporcionaron campos para actualizar" });
     }
 
-    // --- Geocodificar con Nominatim  ---
-    let latitude = null;
-    let longitude = null;
-
-    if (updates.direccion_recoleccion?.trim()) {
-      try {
-        const addressText = `${updates.direccion_recoleccion}, El Salvador`;
-        const geoUrl = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(addressText)}&format=json&limit=1`;
-
-        const geoResp = await fetch(geoUrl, {
-          headers: { "User-Agent": "MercaCuca/1.0" },
-        });
-        const geoData = await geoResp.json();
-
-        if (geoData.length > 0) {
-          latitude = parseFloat(geoData[0].lat);
-          longitude = parseFloat(geoData[0].lon);
-        } else {
-          console.warn("Nominatim no encontró la dirección, usando coordenadas default");
-        }
-      } catch (geoError) {
-        console.error("Error geocoding Nominatim:", geoError.message);
-      }
-    }
-
-    // --- Registrar en Boxful si hay ciudad y dirección ---
-    if (updates.boxful_city_id && updates.direccion_recoleccion?.trim()) {
-      try {
-        const addressData = await createAddress({
-          address: updates.direccion_recoleccion.trim(),
-          referencePoint: updates.referencia_recoleccion?.trim() || updates.direccion_recoleccion.trim(),
-          cityId: updates.boxful_city_id,
-          stateId: updates.boxful_state_id,  
-          addressPhone: updates.telefono || "",
-          addressAreaCode: "503",
-          latitude: latitude ?? 13.6929,     // fallback
-          longitude: longitude ?? -89.2182,
-        });
-
-        if (!addressData?.id) {
-          return res.status(400).json({ error: "No se pudo registrar la dirección en Boxful para envíos" });
-        }
-
-        updates.boxful_address_id = addressData.id;
-      } catch (boxfulError) {
-        console.error("Error al registrar dirección en Boxful:", boxfulError.message);
-        return res.status(400).json({ error: "Error al registrar la dirección en Boxful" });
-      }
-    }
-
-    // --- Construir query de update  ---
     const { query, params, count } = buildEntrepreneurshipQueryUpdate(id, updates);
 
     if (count === 0) {

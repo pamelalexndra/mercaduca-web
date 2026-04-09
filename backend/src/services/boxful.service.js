@@ -44,51 +44,6 @@ export const getStates = async () => {
   return data.states;
 };
 
-export const getQuote = async (recollectionCityId, customerCityId) => {
-  const token = await getBoxfulToken();
-  const data = await boxfulFetch("/quoter", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ recollectionCityId, customerCityId }),
-  });
-  return data.couriers;
-};
-
-export const createOrder = async (orderData) => {
-  const token = await getBoxfulToken();
-  const data = await boxfulFetch("/shiphero/orders", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      cityId: orderData.customerCityId,
-      completeName: orderData.completeName,
-      email: orderData.email || "",
-      customerAreaCode: "503",
-      customerPhone: orderData.customerPhone,
-      customerAddress: orderData.customerAddress,
-      customerReferencePoint: orderData.customerReferencePoint,
-      cod: true,
-      courierId: orderData.courierId,
-      totalTax: 0,
-      subtotal: orderData.productPrice,
-      totalDiscounts: 0,
-      totalPrice: orderData.productPrice,
-      shippingCost: orderData.shippingCost,
-      isFragile: false,
-      makeCustomerFavorite: false,
-      isFavoriteCustomerSelected: false,
-      favoriteCustomerId: null,
-      products: [{
-        sku: String(orderData.productId),
-        quantity: 1,
-        price: orderData.productPrice,
-        productName: orderData.productName,
-      }],
-    }),
-  });
-  return data.shipmentData;
-};
-
 export const createAddress = async (addressData) => {
   const token = await getBoxfulToken();
   const data = await boxfulFetch("/addresses", {
@@ -106,4 +61,30 @@ export const createAddress = async (addressData) => {
     }),
   });
   return data.address;
+};
+
+export const createShipByLink = async (emprendimiento, emprendedor, parcels) => {
+  const token = await getBoxfulToken();
+
+  const payload = {
+    recollectionAddress: emprendimiento.direccion_recoleccion,
+    recollectionAddressReferencePoint: emprendimiento.referencia_recoleccion || "",
+    recollectionState: emprendimiento.boxful_state_id,
+    recollectionCity: emprendimiento.boxful_city_id,
+    recollectionPhoneAreaCode: emprendimiento.boxful_phone_area_code || "503",
+    recollectionPhone: emprendedor.telefono,
+    requiresPayment: true,
+    allowsCardPayment: emprendimiento.boxful_allows_card_payment ?? true,
+    isPaidByFinalClient: false,
+    ...(emprendimiento.boxful_courier_id && { courierId: emprendimiento.boxful_courier_id }),
+    parcels,
+  };
+
+  const data = await boxfulFetch("/ship-by-link", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+
+  return data; 
 };

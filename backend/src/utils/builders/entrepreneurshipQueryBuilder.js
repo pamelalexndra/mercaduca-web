@@ -1,5 +1,4 @@
 // utils/builders/entrepreneurshipQueryBuilder.js
-
 export const buildEntrepreneurshipQuery = (filtros) => {
   const { ids, ordenar, search, limit } = filtros;
 
@@ -18,7 +17,9 @@ export const buildEntrepreneurshipQuery = (filtros) => {
         e.boxful_address_id,
         e.boxful_state_id, 
         e.direccion_recoleccion,
-        e.referencia_recoleccion
+        e.referencia_recoleccion,
+        boxful_allows_card_payment,
+        boxful_courier_id
     FROM Emprendimiento e
     JOIN Categorias c ON e.id_categoria = c.id_categoria
     WHERE e.Disponible = true`,
@@ -99,36 +100,33 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
     disponible: "Disponible",
     id_categoria: "id_categoria",
 
-    // NUEVOS CAMPOS BOXFUL
+    // CAMPOS BOXFUL
     boxful_city_id: "boxful_city_id",
+    boxful_state_id: "boxful_state_id",
     boxful_address_id: "boxful_address_id",
     direccion_recoleccion: "direccion_recoleccion",
-    referencia_recoleccion: "referencia_recoleccion"
+    referencia_recoleccion: "referencia_recoleccion",
+    boxful_allows_card_payment: "boxful_allows_card_payment",
+    boxful_courier_id: "boxful_courier_id",
   };
 
   const setParts = [];
   const params = [];
   let paramCount = 1;
 
-  for (const [key, value] of Object.entries(updates)) {
-
+  for(const [key, value] of Object.entries(updates)) {
     if (dbMap[key]) {
-
       setParts.push(`${dbMap[key]} = $${paramCount}`);
 
       if (key === "id_categoria") {
         params.push(value ? parseInt(value) : null);
-      }
-
-      else if (key === "disponible") {
+      } else if (key === "disponible") {
         params.push(Boolean(value));
-      }
-
-      else if (key === "boxful_city_id" || key === "boxful_address_id") {
+      } else if (key === "boxful_allows_card_payment") {
+        params.push(value === true || value === "true" ? true : false);  // ← nuevo
+      } else if (key === "boxful_city_id" || key === "boxful_address_id" || key === "boxful_state_id") {
         params.push(value ? value.toString() : null);
-      }
-
-      else {
+      } else {
         params.push(value?.toString().trim() || null);
       }
 

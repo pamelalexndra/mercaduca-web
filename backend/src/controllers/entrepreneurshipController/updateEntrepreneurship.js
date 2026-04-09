@@ -10,11 +10,12 @@ export const updateEntrepreneurship = async (req, res) => {
       instagram,
       disponible,
       id_categoria,
-      // Campos de envíos
       boxful_city_id,
+      boxful_state_id,
       direccion_recoleccion,
       referencia_recoleccion,
-      telefono, // teléfono del perfil del emprendedor
+      boxful_allows_card_payment,
+      boxful_courier_id,
     } = req.body;
 
     if (!id || isNaN(id)) {
@@ -22,7 +23,7 @@ export const updateEntrepreneurship = async (req, res) => {
     }
 
     const emprendimientoCheck = await pool.query(
-      "SELECT id_emprendimiento, boxful_address_id FROM Emprendimiento WHERE id_emprendimiento = $1",
+      "SELECT id_emprendimiento FROM Emprendimiento WHERE id_emprendimiento = $1",
       [parseInt(id)]
     );
 
@@ -30,42 +31,22 @@ export const updateEntrepreneurship = async (req, res) => {
       return res.status(404).json({ error: "Emprendimiento no encontrado" });
     }
 
-    // Registrar o actualizar dirección en Boxful si vienen los datos necesarios
-    let boxful_address_id = emprendimientoCheck.rows[0].boxful_address_id || null;
-
-    if (boxful_city_id && direccion_recoleccion?.trim()) {
-      try {
-        const addressData = await createAddress({
-          address: direccion_recoleccion.trim(),
-          referencePoint: referencia_recoleccion?.trim() || direccion_recoleccion.trim(),
-          cityId: boxful_city_id,
-          addressPhone: telefono || "",
-          addressAreaCode: "503",
-          // Coordenadas de El Salvador como fallback genérico
-          latitude: 13.6929,
-          longitude: -89.2182,
-        });
-        boxful_address_id = addressData?.id || boxful_address_id;
-      } catch (boxfulError) {
-        // Si falla Boxful, no bloqueamos el guardado — solo logueamos
-        console.error("No se pudo registrar dirección en Boxful:", boxfulError.message);
-      }
-    }
-
     const result = await pool.query(
       `UPDATE Emprendimiento 
        SET 
-         Nombre                 = $1,
-         Descripcion            = $2,
-         Imagen_URL             = $3,
-         Instagram              = $4,
-         Disponible             = $5,
-         id_categoria           = $6,
-         boxful_city_id         = $7,
-         boxful_address_id      = $8,
-         direccion_recoleccion  = $9,
-         referencia_recoleccion = $10
-       WHERE id_emprendimiento  = $11
+         Nombre                    = $1,
+         Descripcion               = $2,
+         Imagen_URL                = $3,
+         Instagram                 = $4,
+         Disponible                = $5,
+         id_categoria              = $6,
+         boxful_city_id            = $7,
+         boxful_state_id           = $8,
+         direccion_recoleccion     = $9,
+         referencia_recoleccion    = $10,
+         boxful_allows_card_payment = $11,
+         boxful_courier_id         = $12
+       WHERE id_emprendimiento     = $13
        RETURNING *`,
       [
         nombre?.trim(),
@@ -75,9 +56,11 @@ export const updateEntrepreneurship = async (req, res) => {
         disponible !== undefined ? disponible : true,
         id_categoria ? parseInt(id_categoria) : null,
         boxful_city_id || null,
-        boxful_address_id,
+        boxful_state_id || null,
         direccion_recoleccion?.trim() || null,
         referencia_recoleccion?.trim() || null,
+        boxful_allows_card_payment ?? true,
+        boxful_courier_id?.trim() || null,
         parseInt(id),
       ]
     );
@@ -90,6 +73,7 @@ export const updateEntrepreneurship = async (req, res) => {
     console.error("Error actualizando emprendimiento:", error);
     if (error.code === "23503") return res.status(400).json({ error: "Categoría no válida" });
     if (error.code === "23505") return res.status(400).json({ error: "Ya existe un emprendimiento con ese nombre" });
+    console.error("ERROR: ", error);
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };

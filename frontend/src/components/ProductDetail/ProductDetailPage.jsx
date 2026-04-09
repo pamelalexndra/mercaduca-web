@@ -5,8 +5,6 @@ import ProductHeader from "./ProductHeader";
 import ProductForm from "../ProductForm";
 import SuccessDialog from "../SuccessDialog";
 import { API_BASE_URL } from "../../utils/api";
-import ShippingCheckoutModal from "../ShippingCheckoutModal";
-import { Truck } from "lucide-react";
 import ProductCoupon from "./ProductCoupon";
 
 export default function ProductDetailPage() {
@@ -108,15 +106,15 @@ export default function ProductDetailPage() {
               ).then((r) => (r.ok ? r.json() : { cupones: [] })),
               producto.id_categoria
                 ? fetch(
-                    `${API_BASE_URL}/cupones?id_categoria=${producto.id_categoria}&solo_disponibles=true`,
-                  ).then((r) => (r.ok ? r.json() : { cupones: [] }))
+                  `${API_BASE_URL}/cupones?id_categoria=${producto.id_categoria}&solo_disponibles=true`,
+                ).then((r) => (r.ok ? r.json() : { cupones: [] }))
                 : Promise.resolve({ cupones: [] }),
               fetch(
                 `${API_BASE_URL}/cupones?id_producto=${producto.id || producto.id_producto}&solo_disponibles=true`,
               ).then((r) => (r.ok ? r.json() : { cupones: [] })),
             ]);
 
-            // Jerarquía: Producto > Categoría > Emprendimiento
+            // Producto > Categoría > Emprendimiento
             const porProducto = (cuponesProd.cupones || []).find(
               (c) =>
                 String(c.id_producto) ===
@@ -304,6 +302,38 @@ export default function ProductDetailPage() {
     );
   }
 
+  const handleComprarPorBoxful = async () => {
+    setBoxfulError("");
+    setLoadingLink(true);
+    try {
+      const res = await fetch(`${API_BASE_URL}/boxful/ship-by-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id_emprendimiento: product.id_emprendimiento,
+          producto: {
+            nombre: product.nombre,
+            precio_dolares: product.precio,
+            peso: 1,
+            es_fragil: false,
+          },
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.link) {
+        window.open(data.link, "_blank");
+      } else {
+        setBoxfulError(data.error || "No se pudo generar el link de envío.");
+      }
+    } catch {
+      setBoxfulError("Error al conectar con el servicio de envíos.");
+    } finally {
+      setLoadingLink(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-4xl mx-auto px-4 md:px-6">
@@ -444,11 +474,16 @@ export default function ProductDetailPage() {
                     )}
 
                     <button
-                      onClick={() => setShowBoxful(true)}
-                      className="w-full bg-orange-500 hover:bg-orange-600 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium shadow-sm"
+                      onClick={handleComprarPorBoxful}
+                      disabled={loadingLink}
+                      className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white py-3 px-4 rounded-xl transition-colors text-center block font-medium shadow-sm"
                     >
-                      📦 Comprar por Boxful
+                      {loadingLink ? "Generando link..." : "📦 Comprar por Boxful"}
                     </button>
+
+                    {boxfulError && (
+                      <p className="text-xs text-red-500 text-center mt-1">{boxfulError}</p>
+                    )}
                   </>
                 )}
               </div>
@@ -480,13 +515,6 @@ export default function ProductDetailPage() {
         show={showSuccess}
         message={successMessage}
         onConfirm={handleSuccessClose}
-      />
-
-      <ShippingCheckoutModal
-        visible={showBoxful}
-        onClose={() => setShowBoxful(false)}
-        product={product}
-        emprendimiento={emprendimiento}
       />
     </div>
   );
