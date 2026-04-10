@@ -70,8 +70,22 @@ services:
       - mercaduca_network
     command: sh -c "npm run dev -- --host 0.0.0.0 --force --clearScreen false"
 
+  backup:
+    build: ./backups
+    container_name: mercaduca_backup
+    depends_on:
+      - database
+    volumes:
+      - backups_data:/backups
+    environment:
+      POSTGRES_HOST: database
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      
 volumes:
   database_data:
+  backups_data:
 
 networks:
   mercaduca_network:
