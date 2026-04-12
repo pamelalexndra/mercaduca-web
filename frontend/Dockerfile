@@ -2,6 +2,8 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache tzdata
+
 COPY package*.json ./
 
 RUN addgroup -g 1001 -S nodejs && \
