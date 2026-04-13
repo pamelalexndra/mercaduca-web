@@ -33,6 +33,8 @@ export default function EditProfile({
     boxful_courier_id: "",
   });
 
+  const [couriers, setCouriers] = useState([]);
+
   const [selectedStateId, setSelectedStateId] = useState("");
   const [loadingLink, setLoadingLink] = useState(false);
   const [boxfulError, setBoxfulError] = useState("");
@@ -50,6 +52,18 @@ export default function EditProfile({
 
   const inputClass =
     "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
+
+  useEffect(() => {
+    const cityId = formData.boxful_city_id;
+    if (!cityId) {
+      setCouriers([]);
+      return;
+    }
+    fetch(`${API_BASE_URL}/boxful/couriers/${cityId}`)
+      .then(r => r.json())
+      .then(data => setCouriers(data.couriers || data || []))
+      .catch(() => setCouriers([]));
+  }, [formData.boxful_city_id]);
 
   // Cargar departamentos de Boxful
   useEffect(() => {
@@ -70,7 +84,7 @@ export default function EditProfile({
 
       if (profileData || emprendimientoData) {
         setFormData({
-          // 👤 DATOS PERSONALES (vienen de profileData)
+          // DATOS PERSONALES (vienen de profileData)
           nombres: profileData?.nombres || "",
           apellidos: profileData?.apellidos || "",
           correo: profileData?.correo || "",

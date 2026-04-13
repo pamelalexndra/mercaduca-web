@@ -42,7 +42,7 @@ export const handleShipByLink = async (req, res) => {
         error: "Este emprendedor aún no ha configurado su dirección de recolección. Debe completar su perfil primero.",
       });
     }
-
+    
     if (!emp.telefono) {
       return res.status(400).json({
         error: "El emprendedor no tiene un teléfono registrado.",
@@ -80,6 +80,8 @@ export const handleShipByLink = async (req, res) => {
 
     if (!link) {
       console.error("Respuesta inesperada de Boxful:", JSON.stringify(data));
+      console.log("Payload enviado a Boxful:", emprendimientoPayload, parcels);
+      console.log("Respuesta completa de Boxful:", data);
       return res.status(502).json({
         error: "Boxful no devolvió un link válido.",
         detalle: data,
@@ -88,7 +90,7 @@ export const handleShipByLink = async (req, res) => {
 
     return res.json({ link });
   } catch (err) {
-    console.error("Error en handleShipByLink:", err.message);
+    console.error("Error en handleShipByLink:", err.responde?.data || err);
     return res.status(500).json({
       error: "No se pudo generar el link de envío.",
     });

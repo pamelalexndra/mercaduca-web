@@ -17,6 +17,9 @@ export default function ProductDetailPage() {
   const [loading, setLoading] = useState(true);
   const [categories, setCategories] = useState([]);
 
+  const [loadingLink, setLoadingLink] = useState(false);
+  const [boxfulError, setBoxfulError] = useState("");
+
   const [activeCoupon, setActiveCoupon] = useState(null);
   const [couponApplied, setCouponApplied] = useState(false);
 
