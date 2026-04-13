@@ -13,13 +13,12 @@ export const buildEntrepreneurshipQuery = (filtros) => {
         e.Fecha_registro,
         c.id_categoria AS categoria_id,
         c.Categoria AS categoria_nombre,
-        e.boxful_city_id,
+        
+        -- NUEVOS CAMPOS DE BOXFUL (Se eliminaron los viejos)
+        e.boxful_email,
         e.boxful_address_id,
-        e.boxful_state_id, 
-        e.direccion_recoleccion,
-        e.referencia_recoleccion,
-        boxful_allows_card_payment,
-        boxful_courier_id
+        e.boxful_allows_card_payment,
+        e.boxful_courier_id
     FROM Emprendimiento e
     JOIN Categorias c ON e.id_categoria = c.id_categoria
     WHERE e.Disponible = true`,
@@ -86,12 +85,10 @@ export const buildEntrepreneurshipQuery = (filtros) => {
   };
 };
 
-
 /**
  * UPDATE parcial de emprendimientos
  */
 export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
-
   const dbMap = {
     nombre: "Nombre",
     descripcion: "Descripcion",
@@ -100,12 +97,9 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
     disponible: "Disponible",
     id_categoria: "id_categoria",
 
-    // CAMPOS BOXFUL
-    boxful_city_id: "boxful_city_id",
-    boxful_state_id: "boxful_state_id",
+    boxful_email: "boxful_email",
+    boxful_password: "boxful_password", 
     boxful_address_id: "boxful_address_id",
-    direccion_recoleccion: "direccion_recoleccion",
-    referencia_recoleccion: "referencia_recoleccion",
     boxful_allows_card_payment: "boxful_allows_card_payment",
     boxful_courier_id: "boxful_courier_id",
   };
@@ -114,7 +108,7 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
   const params = [];
   let paramCount = 1;
 
-  for(const [key, value] of Object.entries(updates)) {
+  for (const [key, value] of Object.entries(updates)) {
     if (dbMap[key]) {
       setParts.push(`${dbMap[key]} = $${paramCount}`);
 
@@ -123,8 +117,8 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
       } else if (key === "disponible") {
         params.push(Boolean(value));
       } else if (key === "boxful_allows_card_payment") {
-        params.push(value === true || value === "true" ? true : false);  // ← nuevo
-      } else if (key === "boxful_city_id" || key === "boxful_address_id" || key === "boxful_state_id") {
+        params.push(value === true || value === "true" ? true : false);
+      } else if (key === "boxful_address_id" || key === "boxful_courier_id") {
         params.push(value ? value.toString() : null);
       } else {
         params.push(value?.toString().trim() || null);
@@ -150,6 +144,6 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
   return {
     query,
     params,
-    count: setParts.length
+    count: setParts.length,
   };
 };

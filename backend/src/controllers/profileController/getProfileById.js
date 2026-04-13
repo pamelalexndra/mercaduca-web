@@ -20,14 +20,13 @@ export const getProfileById = async (req, res) => {
           e.Instagram AS emprendimiento_instagram,
           e.id_categoria AS emprendimiento_id_categoria,
        
-          e.boxful_state_id,
-          e.boxful_city_id,
-          e.direccion_recoleccion,
-          e.referencia_recoleccion,
+          -- NUEVAS COLUMNAS DE BOXFUL
+          e.boxful_email,
+          e.boxful_address_id,
           e.boxful_allows_card_payment,
           e.boxful_courier_id
 
-          FROM Usuarios u
+        FROM Usuarios u
         INNER JOIN Emprendedor ed ON u.id_emprendedor = ed.id_emprendedor
         LEFT JOIN Emprendimiento e ON ed.id_emprendimiento = e.id_emprendimiento
         WHERE u.id_usuario = $1
@@ -61,10 +60,8 @@ export const getProfileById = async (req, res) => {
         instagram: profileRow.emprendimiento_instagram,
         id_categoria: profileRow.emprendimiento_id_categoria,
 
-        boxful_state_id: profileRow.boxful_state_id,
-        boxful_city_id: profileRow.boxful_city_id,
-        direccion_recoleccion: profileRow.direccion_recoleccion,
-        referencia_recoleccion: profileRow.referencia_recoleccion,
+        boxful_email: profileRow.boxful_email,
+        boxful_address_id: profileRow.boxful_address_id,
         boxful_allows_card_payment: profileRow.boxful_allows_card_payment,
         boxful_courier_id: profileRow.boxful_courier_id,
       };

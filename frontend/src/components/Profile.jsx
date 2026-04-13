@@ -202,7 +202,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     return stored ? JSON.parse(stored) : null;
   });
 
-  // Obtener el ID del vendedor de la URL
   const getVendorIdFromUrl = useCallback(() => {
     const pathParts = location.pathname.split("/");
     const profileIndex = pathParts.indexOf("perfil");
@@ -214,13 +213,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
   const vendorIdFromUrl = getVendorIdFromUrl();
 
-  // Determinar qué ID de usuario usar
   const targetUserId = useMemo(() => {
-    // Si es admin mode y hay un ID en la URL, usar ese
     if (isAdminMode && vendorIdFromUrl) {
       return vendorIdFromUrl;
     }
-    // Si no, usar el ID del usuario actual
     return getUserId(currentUser);
   }, [isAdminMode, vendorIdFromUrl, currentUser]);
 
@@ -407,7 +403,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         const storedUser =
           user || JSON.parse(localStorage.getItem("user") || "null");
 
-        // Usar targetUserId para obtener el perfil correcto
         const userId = targetUserId;
 
         if (!userId) {
@@ -416,12 +411,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           return;
         }
 
-        // Para modo admin, usar el token del admin pero consultar el perfil del vendedor
         const headers = isAdminMode
           ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
           : getAuthHeaders(storedUser);
 
-        // Cargar perfil del vendedor usando el userId correcto
         const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
           headers: headers,
         });
@@ -458,7 +451,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             await fetchProductos(normalized.id_emprendimiento);
           }
         } else {
-          // Intentar cargar desde caché si existe
           const cachedEmprendimiento = getCachedEmprendimiento(userId);
           if (cachedEmprendimiento) {
             setEmprendimiento(normalizeEmprendimiento(cachedEmprendimiento));
@@ -468,7 +460,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           }
         }
 
-        // Solo actualizar el usuario actual si NO estamos en modo admin
         if (!isAdminMode) {
           const updatedUser = {
             ...storedUser,
@@ -726,7 +717,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setSavingProfile(true);
       setError("");
 
-      // 1. Actualizar datos personales del usuario
       const responseUser = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
         method: "PUT",
         headers: {
@@ -749,13 +739,12 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         throw new Error(resultUser.error || "No se pudo actualizar el perfil personal");
       }
 
-      // 2. Actualizar configuración Boxful del emprendimiento (siempre que tenga emprendimiento)
       if (emprendimiento?.id_emprendimiento) {
         const boxfulPayload = {
-          boxful_city_id: datos.boxful_city_id || null,
-          boxful_state_id: datos.boxful_state_id || null,
-          direccion_recoleccion: datos.direccion_recoleccion?.trim() || null,
-          referencia_recoleccion: datos.referencia_recoleccion?.trim() || null,
+          // Mapeo de los campos nuevos
+          boxful_email: datos.boxful_email?.trim() || null,
+          boxful_password: datos.boxful_password || undefined, // undefined para que no se envíe si no se modificó
+          boxful_address_id: datos.boxful_address_id || null,
           boxful_allows_card_payment: datos.boxful_allows_card_payment ?? true,
           boxful_courier_id: datos.boxful_courier_id?.trim() || null,
         };
@@ -772,17 +761,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
               body: JSON.stringify(boxfulPayload),
             }
           );
-
-          if (!responseEmp.ok) {
-            const errorEmp = await responseEmp.json();
-            console.error("Error actualizando emprendimiento:", errorEmp);
-            // No bloqueamos el flujo — el perfil personal sí se guardó
-            setError("Perfil guardado, pero hubo un problema configurando los envíos. Intenta de nuevo.");
-          }
-        } catch (empError) {
-          console.error("Fallo de red al guardar emprendimiento:", empError);
-        }
-      }
 
       setSuccessMessage("Perfil actualizado correctamente");
       setShowSuccessDialog(true);

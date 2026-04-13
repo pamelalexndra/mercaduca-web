@@ -1,8 +1,7 @@
 // src/services/boxful.service.js
 const BOXFUL_API = process.env.BOXFUL_API_URL || "https://devapi.goboxful.com";
-let cachedToken = null;
-let tokenExpiry = null;
 
+// Función base que hace las peticiones (se mantiene igual)
 export const boxfulFetch = async (path, options = {}) => {
   const res = await fetch(`${BOXFUL_API}${path}`, {
     ...options,
@@ -11,6 +10,7 @@ export const boxfulFetch = async (path, options = {}) => {
       ...options.headers,
     },
   });
+  
   if (!res.ok) {
     const err = await res.json().catch(() => ({}));
     throw new Error(err.message || `Boxful error ${res.status}`);
@@ -18,70 +18,50 @@ export const boxfulFetch = async (path, options = {}) => {
   return res.json();
 };
 
-export const getBoxfulToken = async () => {
-  const now = Date.now();
-  if (cachedToken && tokenExpiry && now < tokenExpiry - 5 * 60 * 1000) {
-    return cachedToken;
-  }
-
-  console.log("EMAIL:", process.env.BOXFUL_EMAIL);
-  console.log("PASSWORD:", process.env.BOXFUL_PASSWORD);
-  console.log("API URL:", process.env.BOXFUL_API_URL);
-
+/**
+ * Obtiene el token de Boxful usando las credenciales dinámicas de un usuario
+ */
+export const getUserBoxfulToken = async (email, password) => {
   const data = await boxfulFetch("/auth/client", {
     method: "POST",
-    body: JSON.stringify({
-      email: process.env.BOXFUL_EMAIL,
-      password: process.env.BOXFUL_PASSWORD,
-    }),
+    body: JSON.stringify({ email, password }),
   });
-
-  cachedToken = data.accessToken;
-  tokenExpiry = now + 60 * 60 * 1000;
-  return cachedToken;
+  
+  return data.accessToken;
 };
 
-export const getStates = async () => {
-  const token = await getBoxfulToken();
-  const data = await boxfulFetch("/states", {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  return data.states;
-};
-
-export const createAddress = async (addressData) => {
-  const token = await getBoxfulToken();
+/**
+ * Valida las credenciales y trae las direcciones de la cuenta
+ * Función que usará el endpoint /validate-credentials de tu frontend
+ */
+export const getUserAddresses = async (email, password) => {
+  // 1. Validamos que las credenciales sirvan (si falla, tira un error)
+  const token = await getUserBoxfulToken(email, password);
+  
+  // 2. Traemos las direcciones del cliente usando su token
   const data = await boxfulFetch("/addresses", {
-    method: "POST",
+    method: "GET",
     headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      address: addressData.address,
-      referencePoint: addressData.referencePoint,
-      latitude: addressData.latitude || 13.6929,
-      longitude: addressData.longitude || -89.2182,
-      stateId: addressData.stateId,
-      cityId: addressData.cityId,
-      addressPhone: addressData.addressPhone,
-      addressAreaCode: addressData.addressAreaCode || "503",
-    }),
   });
-  return data.address;
+  
+  // Dependiendo de cómo devuelva Boxful la data, puede venir en un array directo o en data.addresses
+  return data.addresses || data || []; 
 };
 
-export const createShipByLink = async (emprendimiento, emprendedor, parcels) => {
-  const token = await getBoxfulToken();
+/**
+ * Crea el link de envío usando el token del emprendedor y su dirección guardada
+ */
+export const createShipByLink = async (emprendimiento, emprendedor, parcels, userEmail, userPassword) => {
+  // Obtenemos el token del emprendedor en ese momento
+  const token = await getUserBoxfulToken(userEmail, userPassword);
 
   const generalAmount = parcels.reduce(
     (sum, p) => sum + (p.unitPrice * p.quantity), 0
   );
 
-  console.log("COURIER ID:", process.env.BOXFUL_DEFAULT_COURIER_ID);
-
   const payload = {
-    recollectionAddress: emprendimiento.direccion_recoleccion,
-    recollectionAddressReferencePoint: emprendimiento.referencia_recoleccion || "",
-    recollectionState: emprendimiento.boxful_state_id,
-    recollectionCity: emprendimiento.boxful_city_id,
+    // Como ahora seleccionan la dirección de Boxful, pasamos el ID directamente
+    recollectionAddressId: emprendimiento.boxful_address_id, 
     recollectionPhoneAreaCode: emprendimiento.boxful_phone_area_code || "503",
     recollectionPhone: emprendedor.telefono,
     requiresPayment: true,
@@ -89,7 +69,7 @@ export const createShipByLink = async (emprendimiento, emprendedor, parcels) => 
     allowsCodPayment: true,
     generalAmount: generalAmount,
     isPaidByFinalClient: false,
-    courierId: process.env.BOXFUL_DEFAULT_COURIER_ID,
+    courierId: emprendimiento.boxful_courier_id || process.env.BOXFUL_DEFAULT_COURIER_ID,
     parcels,
   };
 
@@ -101,12 +81,14 @@ export const createShipByLink = async (emprendimiento, emprendedor, parcels) => 
     body: JSON.stringify(payload),
   });
 
-  console.log("RESPONSE: ", data);
   return data;
 };
 
-export const getAvailableCouriers = async () => {
-  const token = await getBoxfulToken();
+/**
+ * Para ver los couriers, se le pasan las credenciales
+ */
+export const getAvailableCouriers = async (userEmail, userPassword) => {
+  const token = await getUserBoxfulToken(userEmail, userPassword);
 
   const data = await boxfulFetch("/courier/available", {
     method: "GET",

@@ -1,12 +1,10 @@
 import express from "express";
-import { handleGetStates } from "../controllers/boxfulController/handleGetStates.js";
 import { handleShipByLink } from "../controllers/boxfulController/handleShipByLink.js";
-import { handleGetCouriers } from "../controllers/boxfulController/handleGetCouriers.js";
+import { validateBoxfulCredentials } from "../controllers/boxfulController/validateBoxfulCredentials.js";
 
 const router = express.Router();
 
-router.get("/states", handleGetStates);
 router.post("/ship-by-link", handleShipByLink); 
-router.get("/couriers/:cityId", handleGetCouriers);
+router.post("/validate-credentials", validateBoxfulCredentials);
 
 export default router;

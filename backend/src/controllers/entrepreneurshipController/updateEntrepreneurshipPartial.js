@@ -1,10 +1,11 @@
 import pool from "../../database/connection.js";
 import { buildEntrepreneurshipQueryUpdate } from "../../utils/builders/entrepreneurshipQueryBuilder.js";
+import { encrypt } from "../../utils/security/crypto.js"; 
 
 export const updateEntrepreneurshipPartial = async (req, res) => {
   try {
     const { id } = req.params;
-    const updates = req.body;
+    const updates = { ...req.body }; 
 
     if (!id || isNaN(id)) {
       return res.status(400).json({ error: "ID de emprendimiento inválido" });
@@ -12,6 +13,10 @@ export const updateEntrepreneurshipPartial = async (req, res) => {
 
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: "No se proporcionaron campos para actualizar" });
+    }
+
+    if (updates.boxful_password) {
+      updates.boxful_password = encrypt(updates.boxful_password);
     }
 
     const { query, params, count } = buildEntrepreneurshipQueryUpdate(id, updates);

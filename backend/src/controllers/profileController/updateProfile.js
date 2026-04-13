@@ -1,6 +1,7 @@
 import pool from "../../database/connection.js";
 import { generateHash } from "../../utils/security/generateHash.js";
 import { notifyProfileModification } from "../../services/notifyProfileModification.js";
+import { encrypt } from "../../utils/security/crypto.js"; 
 
 export const updateProfile = async (req, res) => {
   const client = await pool.connect();
@@ -13,12 +14,11 @@ export const updateProfile = async (req, res) => {
       telefono,
       username,
       nuevaContraseña,
-      boxful_city_id,
-      boxful_state_id,
-      direccion_recoleccion,
-      referencia_recoleccion,
+      
+      boxful_email,
+      boxful_password, 
+      boxful_address_id,
       boxful_allows_card_payment,
-      boxful_courier_id,
     } = req.body;
 
     const { userId } = req.params;
@@ -93,26 +93,30 @@ export const updateProfile = async (req, res) => {
 
     // ── Actualizar Emprendimiento (datos Boxful) ─────────────────────────
     if (idEmprendimiento) {
-      await client.query(
-        `UPDATE Emprendimiento
-         SET
-           boxful_city_id             = $1,
-           boxful_state_id            = $2,
-           direccion_recoleccion      = $3,
-           referencia_recoleccion     = $4,
-           boxful_allows_card_payment = $5,
-           boxful_courier_id          = $6
-         WHERE id_emprendimiento      = $7`,
-        [
-          boxful_city_id || null,                   
-          boxful_state_id || null,                   
-          direccion_recoleccion?.trim() || null,     
-          referencia_recoleccion?.trim() || null,    
-          boxful_allows_card_payment ?? true,
-          boxful_courier_id?.trim() || null,         
-          idEmprendimiento,                          
-        ],
-      );
+      let boxfulQuery = `
+        UPDATE Emprendimiento
+        SET
+          boxful_email = $1,
+          boxful_address_id = $2,
+          boxful_allows_card_payment = $3
+      `;
+      
+      let boxfulParams = [
+        boxful_email?.trim() || null,
+        boxful_address_id || null,
+        boxful_allows_card_payment ?? true
+      ];
+
+      if (boxful_password) {
+        const encryptedPassword = encrypt(boxful_password);
+        boxfulQuery += `, boxful_password = $4 WHERE id_emprendimiento = $5`;
+        boxfulParams.push(encryptedPassword, idEmprendimiento);
+      } else {
+        boxfulQuery += ` WHERE id_emprendimiento = $4`;
+        boxfulParams.push(idEmprendimiento);
+      }
+
+      await client.query(boxfulQuery, boxfulParams);
     }
 
     await client.query("COMMIT");

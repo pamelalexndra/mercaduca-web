@@ -1,5 +1,7 @@
+// src/controllers/handleShipByLink.js (o la ruta donde lo tengas)
 import { createShipByLink } from "../../services/boxful.service.js";
 import pool from "../../database/connection.js";
+import { decrypt } from "../../utils/security/crypto.js"; 
 
 export const handleShipByLink = async (req, res) => {
   const { id_emprendimiento, producto } = req.body;
@@ -13,10 +15,9 @@ export const handleShipByLink = async (req, res) => {
   try {
     const result = await pool.query(
       `SELECT 
-         e.boxful_city_id,
-         e.boxful_state_id,
-         e.direccion_recoleccion,
-         e.referencia_recoleccion,
+         e.boxful_email,
+         e.boxful_password,
+         e.boxful_address_id,
          e.boxful_allows_card_payment,
          e.boxful_courier_id,
          emp.Telefono AS telefono
@@ -36,10 +37,10 @@ export const handleShipByLink = async (req, res) => {
 
     const emp = result.rows[0];
 
-    // Validar que tenga dirección configurada antes de llamar a Boxful
-    if (!emp.direccion_recoleccion || !emp.boxful_city_id) {
+    // 2. Validar que tenga su cuenta de Boxful vinculada
+    if (!emp.boxful_email || !emp.boxful_password || !emp.boxful_address_id) {
       return res.status(400).json({
-        error: "Este emprendedor aún no ha configurado su dirección de recolección. Debe completar su perfil primero.",
+        error: "Este emprendedor aún no ha vinculado su cuenta de Boxful o no ha seleccionado una dirección de recolección.",
       });
     }
     
@@ -47,6 +48,14 @@ export const handleShipByLink = async (req, res) => {
       return res.status(400).json({
         error: "El emprendedor no tiene un teléfono registrado.",
       });
+    }
+
+    const plainPassword = decrypt(emp.boxful_password);
+    
+    if (!plainPassword) {
+       return res.status(500).json({ 
+         error: "Error interno al procesar las credenciales de envío del emprendedor." 
+       });
     }
 
     const parcels = [
@@ -60,11 +69,8 @@ export const handleShipByLink = async (req, res) => {
     ];
 
     const emprendimientoPayload = {
-      direccion_recoleccion: emp.direccion_recoleccion,
-      referencia_recoleccion: emp.referencia_recoleccion || "",
-      boxful_state_id: emp.boxful_state_id,
-      boxful_city_id: emp.boxful_city_id,
-      boxful_phone_area_code: "503", // El Salvador
+      boxful_address_id: emp.boxful_address_id,
+      boxful_phone_area_code: "503", 
       boxful_allows_card_payment: emp.boxful_allows_card_payment ?? true,
       boxful_courier_id: emp.boxful_courier_id || null,
     };
@@ -72,16 +78,15 @@ export const handleShipByLink = async (req, res) => {
     const data = await createShipByLink(
       emprendimientoPayload,
       { telefono: emp.telefono },
-      parcels
+      parcels,
+      emp.boxful_email,
+      plainPassword
     );
 
-    // Boxful puede devolver el link en distintas propiedades según su respuesta
     const link = data?.link || data?.url || data?.shipByLink || data?.shipmentLink;
 
     if (!link) {
       console.error("Respuesta inesperada de Boxful:", JSON.stringify(data));
-      console.log("Payload enviado a Boxful:", emprendimientoPayload, parcels);
-      console.log("Respuesta completa de Boxful:", data);
       return res.status(502).json({
         error: "Boxful no devolvió un link válido.",
         detalle: data,
@@ -90,9 +95,9 @@ export const handleShipByLink = async (req, res) => {
 
     return res.json({ link });
   } catch (err) {
-    console.error("Error en handleShipByLink:", err.responde?.data || err);
+    console.error("Error en handleShipByLink:", err.response?.data || err);
     return res.status(500).json({
-      error: "No se pudo generar el link de envío.",
+      error: "No se pudo generar el link de envío. Verifica si las credenciales de Boxful del emprendedor siguen siendo válidas.",
     });
   }
 };
