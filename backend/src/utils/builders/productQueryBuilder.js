@@ -24,7 +24,6 @@ export const buildProductQuery = (filtros) => {
         c.Categoria AS categoria,
         p.Descripcion AS descripcion,
         p.Imagen_URL AS imagen,
-        p.Existencias AS stock,
         e.Nombre AS nombre_emprendimiento,
         e.id_emprendimiento AS emprendimiento_id
       FROM Producto AS p
@@ -133,7 +132,6 @@ export const buildProductQueryUpdate = (id, updates) => {
     descripcion: "Descripcion",
     imagen_url: "Imagen_URL",
     precio_dolares: "Precio_dolares",
-    existencias: "Existencias",
     disponible: "Disponible",
     id_categoria: "id_categoria",
   };
