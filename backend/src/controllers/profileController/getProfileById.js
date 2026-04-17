@@ -18,7 +18,14 @@ export const getProfileById = async (req, res) => {
           e.Disponible AS emprendimiento_disponible,
           e.Imagen_URL AS emprendimiento_imagen_url,
           e.Instagram AS emprendimiento_instagram,
-          e.id_categoria AS emprendimiento_id_categoria
+          e.id_categoria AS emprendimiento_id_categoria,
+       
+          -- NUEVAS COLUMNAS DE BOXFUL
+          e.boxful_email,
+          e.boxful_address_id,
+          e.boxful_allows_card_payment,
+          e.boxful_courier_id
+
         FROM Usuarios u
         INNER JOIN Emprendedor ed ON u.id_emprendedor = ed.id_emprendedor
         LEFT JOIN Emprendimiento e ON ed.id_emprendimiento = e.id_emprendimiento
@@ -52,6 +59,11 @@ export const getProfileById = async (req, res) => {
         imagen_url: profileRow.emprendimiento_imagen_url,
         instagram: profileRow.emprendimiento_instagram,
         id_categoria: profileRow.emprendimiento_id_categoria,
+
+        boxful_email: profileRow.boxful_email,
+        boxful_address_id: profileRow.boxful_address_id,
+        boxful_allows_card_payment: profileRow.boxful_allows_card_payment,
+        boxful_courier_id: profileRow.boxful_courier_id,
       };
     }
 

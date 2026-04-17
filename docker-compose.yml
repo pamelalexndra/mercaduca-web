@@ -33,8 +33,11 @@ services:
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_NAME: ${DB_NAME}
-      BOXFUL_EMAIL: ${BOXFUL_EMAIL}
-      BOXFUL_PASSWORD: ${BOXFUL_PASSWORD}
+      ENCRIPTIOON_KEY: ${ENCRYPTION_KEY}
+
+      # Fallback para handleShipByLink
+      BOXFUL_DEFAULT_COURIER_ID: ${BOXFUL_DEFAULT_COURIER_ID}
+      BOXFUL_API_URL: ${BOXFUL_API_URL}
       TZ: America/El_Salvador
     ports:
       - "${BACKEND_PORT}:5000"
@@ -73,7 +76,7 @@ services:
       - mercaduca_network
     command: sh -c "npm run dev -- --host 0.0.0.0 --force --clearScreen false"
 
-  backup:
+backup:
     build: ./backups
     container_name: mercaduca_backup
     depends_on:
@@ -86,7 +89,7 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       TZ: America/El_Salvador
-      
+
 volumes:
   database_data:
   backups_data:

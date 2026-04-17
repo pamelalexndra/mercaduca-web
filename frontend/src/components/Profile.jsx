@@ -173,10 +173,12 @@ const normalizeEmprendimiento = (data = {}) => ({
     data.idCategoria ||
     data.emprendimiento_id_categoria ||
     null,
-  boxful_city_id: data.boxful_city_id || null,
+    
+  boxful_email: data.boxful_email || "",
   boxful_address_id: data.boxful_address_id || null,
-  direccion_recoleccion: data.direccion_recoleccion || "",
-  referencia_recoleccion: data.referencia_recoleccion || "",
+  boxful_allows_card_payment: data.boxful_allows_card_payment ?? true,
+  boxful_allows_cod_payment: data.boxful_allows_cod_payment ?? false,
+  boxful_courier_id: data.boxful_courier_id || null,
 });
 
 export default function Profile({ user, onProfileLoaded, disableActions }) {
@@ -218,7 +220,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     return stored ? JSON.parse(stored) : null;
   });
 
-  // Obtener el ID del vendedor de la URL
   const getVendorIdFromUrl = useCallback(() => {
     const pathParts = location.pathname.split("/");
     const profileIndex = pathParts.indexOf("perfil");
@@ -230,13 +231,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
   const vendorIdFromUrl = getVendorIdFromUrl();
 
-  // Determinar qué ID de usuario usar
   const targetUserId = useMemo(() => {
-    // Si es admin mode y hay un ID en la URL, usar ese
     if (isAdminMode && vendorIdFromUrl) {
       return vendorIdFromUrl;
     }
-    // Si no, usar el ID del usuario actual
     return getUserId(currentUser);
   }, [isAdminMode, vendorIdFromUrl, currentUser]);
 
@@ -423,7 +421,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         const storedUser =
           user || JSON.parse(localStorage.getItem("user") || "null");
 
-        // Usar targetUserId para obtener el perfil correcto
         const userId = targetUserId;
 
         if (!userId) {
@@ -432,12 +429,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           return;
         }
 
-        // Para modo admin, usar el token del admin pero consultar el perfil del vendedor
         const headers = isAdminMode
           ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
           : getAuthHeaders(storedUser);
 
-        // Cargar perfil del vendedor usando el userId correcto
         const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
           headers: headers,
         });
@@ -474,7 +469,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             await fetchProductos(normalized.id_emprendimiento);
           }
         } else {
-          // Intentar cargar desde caché si existe
           const cachedEmprendimiento = getCachedEmprendimiento(userId);
           if (cachedEmprendimiento) {
             setEmprendimiento(normalizeEmprendimiento(cachedEmprendimiento));
@@ -484,7 +478,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           }
         }
 
-        // Solo actualizar el usuario actual si NO estamos en modo admin
         if (!isAdminMode) {
           const updatedUser = {
             ...storedUser,
@@ -775,16 +768,14 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         );
       }
 
-      const configuroEnvios =
-        datos.boxful_city_id && datos.direccion_recoleccion?.trim();
-
-      if (emprendimiento?.id_emprendimiento && configuroEnvios) {
+      if (emprendimiento?.id_emprendimiento) {
         const boxfulPayload = {
-          boxful_city_id: datos.boxful_city_id,
-          boxful_state_id: datos.boxful_state_id,
-          direccion_recoleccion: datos.direccion_recoleccion.trim(),
-          referencia_recoleccion: datos.referencia_recoleccion?.trim() || "",
-          telefono: datos.telefono?.trim(),
+          boxful_email: datos.boxful_email?.trim() || null,
+          boxful_password: datos.boxful_password || undefined,
+          boxful_address_id: datos.boxful_address_id || null,
+          boxful_allows_card_payment: datos.boxful_allows_card_payment ?? true,
+          boxful_allows_cod_payment: datos.boxful_allows_cod_payment ?? false,
+          boxful_courier_id: datos.boxful_courier_id?.trim() || null,
         };
 
         try {
@@ -1065,8 +1056,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
               onClick={handleAgregar}
               disabled={!canAddProducts}
               className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${canAddProducts
-                  ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
-                  : "bg-gray-300 cursor-not-allowed"
+                ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
+                : "bg-gray-300 cursor-not-allowed"
                 }`}
               aria-label="Agregar producto"
               title={
@@ -1104,8 +1095,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                   onClick={handleAgregar}
                   disabled={!hasEmprendimiento}
                   className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento
-                      ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
-                      : "bg-gray-300 cursor-not-allowed shadow-none"
+                    ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
+                    : "bg-gray-300 cursor-not-allowed shadow-none"
                     }`}
                 >
                   Comparte tu primer producto
@@ -1140,12 +1131,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           setShowEditProfileModal(false);
           setError("");
         }}
-        emprendimientoData={{
-          ...(currentUser?.profile || {}),
-          ...(emprendimiento || {}),
-          username:
-            currentUser?.profile?.username || currentUser?.username || "",
-        }}
+        profileData={currentUser?.profile}
+        emprendimientoData={emprendimiento}
         onSave={handleSaveProfile}
         errorMessage={error}
         loading={savingProfile}

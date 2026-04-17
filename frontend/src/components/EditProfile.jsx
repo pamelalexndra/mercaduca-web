@@ -9,6 +9,7 @@ import CredentialsSection from "./Register/CredentialsSection";
 export default function EditProfile({
   visible,
   onClose,
+  profileData,
   emprendimientoData,
   onSave,
   errorMessage = "",
@@ -24,16 +25,20 @@ export default function EditProfile({
     username: "",
     password: "",
     confirmPassword: "",
-    boxful_state_id: "",
-    boxful_city_id: "",
-    direccion_recoleccion: "",
-    referencia_recoleccion: "",
+    boxful_email: "",
+    boxful_password: "",
+    boxful_address_id: "",
+    boxful_allows_card_payment: true,
+    boxful_allows_cod_payment: false,
   });
 
+  const [boxfulAddresses, setBoxfulAddresses] = useState([]);
+  
+  const [isValidatingBoxful, setIsValidatingBoxful] = useState(false);
+  const [boxfulConnectionStatus, setBoxfulConnectionStatus] = useState("idle");
+  const [boxfulCouriers, setBoxfulCouriers] = useState([]);
   const [localError, setLocalError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
-  const [states, setStates] = useState([]);
-  const [selectedStateId, setSelectedStateId] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
@@ -46,65 +51,87 @@ export default function EditProfile({
   const inputClass =
     "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
 
-  // Cargar departamentos de Boxful
-  useEffect(() => {
-    if (visible) {
-      fetch(`${API_BASE_URL}/boxful/states`)
-        .then((r) => r.json())
-        .then((data) => setStates(data.states || []))
-        .catch(() => { });
-    }
-  }, [visible]);
-
   // Inicializar form cuando abre
   useEffect(() => {
     if (visible) {
-      setLocalError("");
-      setShowConfirm(false);
-      setUsernameAvailable(null);
+      if (!initializedRef.current) {
+        setLocalError("");
+        setShowConfirm(false);
+        setUsernameAvailable(null);
+        setBoxfulConnectionStatus("idle");
 
-      if (emprendimientoData) {
-        setFormData({
-          nombres: emprendimientoData.nombres || "",
-          apellidos: emprendimientoData.apellidos || "",
-          correo: emprendimientoData.correo || "",
-          telefono: emprendimientoData.telefono || "",
-          username:
-            emprendimientoData.username ||
-            emprendimientoData.Usuario ||
-            emprendimientoData.usuario ||
-            "",
-          password: "",
-          confirmPassword: "",
-          boxful_city_id: emprendimientoData.boxful_city_id || "",
-          direccion_recoleccion: emprendimientoData.direccion_recoleccion || "",
-          referencia_recoleccion:
-            emprendimientoData.referencia_recoleccion || "",
-        });
+        if (profileData || emprendimientoData) {
+          setFormData({
+            nombres: profileData?.nombres || "",
+            apellidos: profileData?.apellidos || "",
+            correo: profileData?.correo || "",
+            telefono: profileData?.telefono || "",
+            username:
+              profileData?.username ||
+              emprendimientoData?.username ||
+              emprendimientoData?.Usuario ||
+              emprendimientoData?.usuario ||
+              "",
+            password: "",
+            confirmPassword: "",
+            boxful_email: emprendimientoData?.boxful_email || "",
+            boxful_password: "",
+            boxful_address_id: emprendimientoData?.boxful_address_id || "",
+            boxful_courier_id: emprendimientoData?.boxful_courier_id || "",
+            boxful_allows_card_payment:
+              emprendimientoData?.boxful_allows_card_payment ?? true,
+            boxful_allows_cod_payment: emprendimientoData?.boxful_allows_cod_payment ?? false,  
+          });
+        }
+        initializedRef.current = true;
       }
-
-      initializedRef.current = true;
     } else {
       initializedRef.current = false;
     }
-  }, [visible]);
+  }, [visible, profileData, emprendimientoData]);
 
-  // Preseleccionar departamento si ya tiene ciudad guardada
-  useEffect(() => {
-    if (states.length > 0 && emprendimientoData?.boxful_city_id) {
-      const estadoPrevio = states.find((s) =>
-        s.Cities?.some((c) => c.id === emprendimientoData.boxful_city_id),
-      );
-      if (estadoPrevio) {
-        setSelectedStateId(estadoPrevio.id);
-
-        setFormData((prev) => ({
-          ...prev,
-          boxful_state_id: estadoPrevio.id,
-        }));
-      }
+  const handleConnectBoxful = async () => {
+    if (!formData.boxful_email || !formData.boxful_password) {
+      setLocalError("Ingresa tu correo y contraseña de Boxful para conectar.");
+      return;
     }
-  }, [states, emprendimientoData]);
+
+    setIsValidatingBoxful(true);
+    setBoxfulConnectionStatus("idle");
+    setLocalError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/boxful/validate-credentials`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: formData.boxful_email,
+          password: formData.boxful_password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        const addresses = data.addresses || [];
+        setBoxfulAddresses(addresses);
+        setBoxfulCouriers(data.couriers || []);
+        setBoxfulConnectionStatus("success");
+
+        if (addresses.length === 0) {
+          setLocalError("Conexión exitosa, pero no tienes ninguna dirección registrada en Boxful. Ve a la web de Boxful, crea una dirección, y vuelve a intentarlo.");
+        }
+      } else {
+        setBoxfulConnectionStatus("error");
+        setLocalError(data.message || "Credenciales de Boxful inválidas.");
+      }
+    } catch (error) {
+      setBoxfulConnectionStatus("error");
+      setLocalError("Error de conexión con Boxful. Intenta de nuevo.");
+    } finally {
+      setIsValidatingBoxful(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -116,42 +143,28 @@ export default function EditProfile({
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
-  const handleStateChange = (e) => {
-    const stateId = e.target.value;
-
-    setSelectedStateId(stateId);
-
-    setFormData((prev) => ({
-      ...prev,
-      boxful_state_id: stateId,
-      boxful_city_id: "",
-    }));
-  };
-
   const handleUsernameCheck = async (username) => {
     if (!username || username.length < 3) {
       setUsernameAvailable(null);
-      return;
+      return null;
     }
 
-    if (
-      emprendimientoData?.username === username ||
-      emprendimientoData?.Usuario === username ||
-      emprendimientoData?.usuario === username
-    ) {
+    if (profileData?.username === username) {
       setUsernameAvailable(true);
-      return;
+      return true;
     }
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`,
+        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`
       );
       const data = await response.json();
       setUsernameAvailable(data.available);
+      return data.available;
     } catch (error) {
       console.error("Error verificando usuario:", error);
       setUsernameAvailable(null);
+      return null;
     }
   };
 
@@ -217,22 +230,21 @@ export default function EditProfile({
 
       if (formData.password && passwordStrength.score < 3) {
         setLocalError(
-          "La contraseña es demasiado débil. Usa al menos 8 caracteres, mayúsculas, números y símbolos.",
+          "La contraseña es demasiado débil. Usa al menos 8 caracteres, mayúsculas, números y símbolos."
         );
         return;
       }
     }
 
-    // Validar dirección de recolección
-    if (formData.boxful_city_id && !formData.direccion_recoleccion.trim()) {
-      setLocalError(
-        "Si seleccionas un municipio, debes ingresar la dirección de recolección.",
-      );
+    if (formData.boxful_email && !formData.boxful_address_id) {
+      setLocalError("Por favor valida tus credenciales y selecciona una dirección de Boxful.");
       return;
     }
 
-    if (!formData.username.trim()) {
-      setLocalError("El nombre de usuario es obligatorio.");
+    const available = await handleUsernameCheck(formData.username);
+
+    if (available === false) {
+      setLocalError("El nombre de usuario no está disponible.");
       return;
     }
 
@@ -256,20 +268,27 @@ export default function EditProfile({
       }
     }
 
-    console.log("Datos enviados:", formData);
     setLocalError("");
 
     const dataToSend = {
       ...formData,
-      boxful_state_id: selectedStateId,  
       ...(formData.password ? { nuevaContraseña: formData.password } : {}),
     };
+
+    if (!dataToSend.boxful_password) {
+      delete dataToSend.boxful_password;
+    }
+
     delete dataToSend.password;
     delete dataToSend.confirmPassword;
 
+    console.log("Datos enviados:", formData);
     console.log("DATASEND COMPLETO:", JSON.stringify(dataToSend));
+
     const success = await onSave?.(dataToSend);
-    if (success) onSuccess?.("Perfil actualizado correctamente");
+    if (success) {
+      onSuccess?.("Perfil actualizado correctamente");
+    }
   };
 
   const handleBackgroundClick = (e) => {
@@ -279,11 +298,6 @@ export default function EditProfile({
   if (!visible) return null;
 
   const currentError = localError || errorMessage || errorDelete;
-  const cities = states.find((s) => s.id === selectedStateId)?.Cities || [];
-
-  // Determina si la dirección de envíos está completa
-  const enviosConfigurados =
-    formData.boxful_city_id && formData.direccion_recoleccion.trim();
 
   const credentialsErrors = {};
   if (currentError) {
@@ -400,93 +414,147 @@ export default function EditProfile({
                 errors={credentialsErrors}
               />
 
-              {/* ── Sección de envíos ── */}
+              {/* ── Sección de envíos (Boxful) ── */}
               <div className="border-t border-zinc-100 pt-5 space-y-4">
                 <div>
                   <p className="text-sm font-semibold text-zinc-700">
-                    Dirección de recolección (envíos)
+                    Conexión con Boxful (Envíos)
                   </p>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    Configura desde dónde Boxful recogerá los pedidos de tus
-                    clientes. Se usará tu teléfono de perfil como contacto.
+                    Vincula tu cuenta de Boxful para que los pedidos se generen automáticamente desde tu perfil.
                   </p>
                 </div>
 
-                {/* Departamento y Municipio */}
+                {/* Credenciales de Boxful */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-zinc-500">
-                      Departamento
+                      Correo de Boxful
                     </label>
-                    <select
-                      value={selectedStateId}
-                      onChange={handleStateChange}
+                    <input
+                      type="email"
+                      name="boxful_email"
+                      value={formData.boxful_email}
+                      onChange={handleChange}
+                      placeholder="correo@ejemplo.com"
                       className={inputClass}
-                    >
-                      <option value="">Selecciona...</option>
-                      {states.map((s) => (
-                        <option key={s.id} value={s.id}>
-                          {s.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
                   </div>
 
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-zinc-500">
-                      Municipio
+                      Contraseña de Boxful
+                    </label>
+                    <input
+                      type="password"
+                      name="boxful_password"
+                      value={formData.boxful_password}
+                      onChange={handleChange}
+                      placeholder="••••••••"
+                      className={inputClass}
+                    />
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleConnectBoxful}
+                  disabled={isValidatingBoxful} // <--- ¡Le quitamos la condición de los correos aquí!
+                  className="w-full px-4 py-3 bg-zinc-800 text-white rounded-xl text-sm font-medium hover:bg-zinc-700 transition-colors disabled:opacity-50"
+                >
+                  {isValidatingBoxful ? "Validando..." : "Validar y obtener direcciones"}
+                </button>
+
+                {/* Selector de direcciones de Boxful */}
+                {boxfulAddresses && boxfulAddresses.length > 0 && (
+                  <div className="space-y-1 pt-2 animate-fade-in">
+                    <label className="block text-xs font-semibold text-[#557051]">
+                      Selecciona tu dirección de recolección *
                     </label>
                     <select
-                      name="boxful_city_id"
-                      value={formData.boxful_city_id}
+                      name="boxful_address_id"
+                      value={formData.boxful_address_id}
                       onChange={handleChange}
-                      disabled={!selectedStateId}
-                      className={`${inputClass} disabled:opacity-50 disabled:bg-zinc-100`}
+                      className={inputClass}
+                      required
                     >
-                      <option value="">Selecciona...</option>
-                      {cities.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name}
+                      <option value="">Selecciona una dirección...</option>
+                      {boxfulAddresses.map((addr) => {
+                        const textoDireccion = addr.address || addr.addressLine1 || addr.address_line_1 || "Dirección principal";
+                        const nombreCiudad = addr.city?.name || (typeof addr.city === 'string' ? addr.city : "");
+
+                        return (
+                          <option key={addr.id} value={addr.id}>
+                            {textoDireccion} {nombreCiudad ? `- ${nombreCiudad}` : ""}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </div>
+                )}
+
+                {/* ✨ NUEVO: Selector de Paquetería (Couriers) */}
+                {boxfulCouriers && boxfulCouriers.length > 0 && (
+                  <div className="space-y-1 pt-2 animate-fade-in border-t border-zinc-50 mt-2">
+                    <label className="block text-xs font-semibold text-[#557051]">
+                      Selecciona la paquetería (Courier) *
+                    </label>
+                    <select
+                      name="boxful_courier_id"
+                      value={formData.boxful_courier_id}
+                      onChange={handleChange}
+                      className={inputClass}
+                      required
+                    >
+                      <option value="">Selecciona una paquetería...</option>
+                      {boxfulCouriers.map((courier) => (
+                        <option key={courier.id || courier.name} value={courier.id || courier.name}>
+                          {courier.name || courier.nombre || "Courier estándar"}
                         </option>
                       ))}
                     </select>
                   </div>
-                </div>
+                )}
 
-                {/* Dirección exacta */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-zinc-500">
-                    Dirección exacta {formData.boxful_city_id && "*"}
-                  </label>
-                  <input
-                    type="text"
-                    name="direccion_recoleccion"
-                    value={formData.direccion_recoleccion}
-                    onChange={handleChange}
-                    placeholder="Colonia, Calle, Número de casa o local..."
-                    className={inputClass}
-                  />
-                </div>
+                {/* Toggles de Métodos de Pago */}
+                <div className="space-y-3 py-3 border-t border-zinc-50 mt-2">
+                  <p className="text-xs font-semibold text-[#557051]">Métodos de pago en el envío</p>
+                  
+                  {/* Pago con Tarjeta */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-zinc-600">Aceptar pago con tarjeta</p>
+                      <p className="text-[10px] text-zinc-400">El comprador podrá pagar con tarjeta desde el link</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, boxful_allows_card_payment: !prev.boxful_allows_card_payment }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_card_payment ? "bg-[#557051]" : "bg-gray-300"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_card_payment ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
 
-                {/* Punto de referencia */}
-                <div className="space-y-1">
-                  <label className="block text-xs font-medium text-zinc-500">
-                    Punto de referencia (opcional)
-                  </label>
-                  <input
-                    type="text"
-                    name="referencia_recoleccion"
-                    value={formData.referencia_recoleccion}
-                    onChange={handleChange}
-                    placeholder="Ej. Frente al parque central"
-                    className={inputClass}
-                  />
+                  {/* ✨ NUEVO: Pago Contra Entrega (COD) */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-zinc-600">Aceptar pago contra entrega (Efectivo)</p>
+                      <p className="text-[10px] text-zinc-400">El cliente pagará en efectivo al recibir el paquete</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, boxful_allows_cod_payment: !prev.boxful_allows_cod_payment }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_cod_payment ? "bg-[#557051]" : "bg-gray-300"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_cod_payment ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Indicador de estado */}
-                {enviosConfigurados ? (
+                {formData.boxful_address_id ? (
                   <p className="text-xs text-[#557051] flex items-center gap-1">
-                    <span>✓</span> Dirección de recolección configurada
+                    <span>✓</span> Dirección de recolección vinculada
                   </p>
                 ) : (
                   <p className="text-xs text-amber-600 flex items-center gap-1">
