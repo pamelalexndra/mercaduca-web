@@ -1,10 +1,9 @@
 // src/services/boxful.service.js
-const BOXFUL_API = "https://api.goboxful.com";
-
+const BOXFUL_API = process.env.BOXFUL_API_URL || "https://devapi.goboxful.com";
 let cachedToken = null;
 let tokenExpiry = null;
 
-const boxfulFetch = async (path, options = {}) => {
+export const boxfulFetch = async (path, options = {}) => {
   const res = await fetch(`${BOXFUL_API}${path}`, {
     ...options,
     headers: {
@@ -19,11 +18,16 @@ const boxfulFetch = async (path, options = {}) => {
   return res.json();
 };
 
-const getBoxfulToken = async () => {
+export const getBoxfulToken = async () => {
   const now = Date.now();
   if (cachedToken && tokenExpiry && now < tokenExpiry - 5 * 60 * 1000) {
     return cachedToken;
   }
+
+  console.log("EMAIL:", process.env.BOXFUL_EMAIL);
+  console.log("PASSWORD:", process.env.BOXFUL_PASSWORD);
+  console.log("API URL:", process.env.BOXFUL_API_URL);
+
   const data = await boxfulFetch("/auth/client", {
     method: "POST",
     body: JSON.stringify({
@@ -31,6 +35,7 @@ const getBoxfulToken = async () => {
       password: process.env.BOXFUL_PASSWORD,
     }),
   });
+
   cachedToken = data.accessToken;
   tokenExpiry = now + 60 * 60 * 1000;
   return cachedToken;
@@ -42,51 +47,6 @@ export const getStates = async () => {
     headers: { Authorization: `Bearer ${token}` },
   });
   return data.states;
-};
-
-export const getQuote = async (recollectionCityId, customerCityId) => {
-  const token = await getBoxfulToken();
-  const data = await boxfulFetch("/quoter", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({ recollectionCityId, customerCityId }),
-  });
-  return data.couriers;
-};
-
-export const createOrder = async (orderData) => {
-  const token = await getBoxfulToken();
-  const data = await boxfulFetch("/shiphero/orders", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify({
-      cityId: orderData.customerCityId,
-      completeName: orderData.completeName,
-      email: orderData.email || "",
-      customerAreaCode: "503",
-      customerPhone: orderData.customerPhone,
-      customerAddress: orderData.customerAddress,
-      customerReferencePoint: orderData.customerReferencePoint,
-      cod: true,
-      courierId: orderData.courierId,
-      totalTax: 0,
-      subtotal: orderData.productPrice,
-      totalDiscounts: 0,
-      totalPrice: orderData.productPrice,
-      shippingCost: orderData.shippingCost,
-      isFragile: false,
-      makeCustomerFavorite: false,
-      isFavoriteCustomerSelected: false,
-      favoriteCustomerId: null,
-      products: [{
-        sku: String(orderData.productId),
-        quantity: 1,
-        price: orderData.productPrice,
-        productName: orderData.productName,
-      }],
-    }),
-  });
-  return data.shipmentData;
 };
 
 export const createAddress = async (addressData) => {
@@ -106,4 +66,52 @@ export const createAddress = async (addressData) => {
     }),
   });
   return data.address;
+};
+
+export const createShipByLink = async (emprendimiento, emprendedor, parcels) => {
+  const token = await getBoxfulToken();
+
+  const generalAmount = parcels.reduce(
+    (sum, p) => sum + (p.unitPrice * p.quantity), 0
+  );
+
+  console.log("COURIER ID:", process.env.BOXFUL_DEFAULT_COURIER_ID);
+
+  const payload = {
+    recollectionAddress: emprendimiento.direccion_recoleccion,
+    recollectionAddressReferencePoint: emprendimiento.referencia_recoleccion || "",
+    recollectionState: emprendimiento.boxful_state_id,
+    recollectionCity: emprendimiento.boxful_city_id,
+    recollectionPhoneAreaCode: emprendimiento.boxful_phone_area_code || "503",
+    recollectionPhone: emprendedor.telefono,
+    requiresPayment: true,
+    allowsCardPayment: emprendimiento.boxful_allows_card_payment ?? true,
+    allowsCodPayment: true,
+    generalAmount: generalAmount,
+    isPaidByFinalClient: false,
+    courierId: process.env.BOXFUL_DEFAULT_COURIER_ID,
+    parcels,
+  };
+
+  console.log("Payload enviado a Boxful: ", payload);
+
+  const data = await boxfulFetch("/ship-by-link", {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(payload),
+  });
+
+  console.log("RESPONSE: ", data);
+  return data;
+};
+
+export const getAvailableCouriers = async () => {
+  const token = await getBoxfulToken();
+
+  const data = await boxfulFetch("/courier/available", {
+    method: "GET",
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  return data;
 };

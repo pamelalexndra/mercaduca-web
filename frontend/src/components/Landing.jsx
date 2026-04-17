@@ -76,7 +76,6 @@ export default function Landing({ currentUser }) {
 
         setActividadesParaCarrusel(formatted);
       } catch {
-        // Error cargando actividades
       } finally {
         setLoadingActividades(false);
       }
@@ -112,7 +111,6 @@ export default function Landing({ currentUser }) {
       const data = await response.json();
       if (response.ok) setBannerImg(data.newUrl);
     } catch {
-      // Error subiendo el banner
     } finally {
       setUploading(false);
     }
@@ -121,7 +119,7 @@ export default function Landing({ currentUser }) {
   const savePosition = async (position) => {
     const token = localStorage.getItem("token");
     try {
-      await fetch(`${API_BASE_URL}/admin/update-config-text`, {
+      await fetch(`${API_BASE_URL}/config/update-config-text`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

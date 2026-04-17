@@ -2,10 +2,11 @@ import React, { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Filter } from "lucide-react";
 import SearchBox from "./SearchBox/SearchBox.jsx";
-import ProductCard from "./Card";
+import ProductCard from "./ProductCard.jsx";
 import FilterPanel from "./FilterPanel";
 import useProducts from "../hooks/useProducts";
 import useCategories from "../hooks/useCategories";
+import { API_BASE_URL } from "../utils/api";
 
 export default function Catalog({ onGoHome }) {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -20,6 +21,12 @@ export default function Catalog({ onGoHome }) {
   const [showFilters, setShowFilters] = useState(false);
   const [visibleProductsCount, setVisibleProductsCount] = useState(20);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+  // Estados de cupones
+  const [cuponesProducto, setCuponesProducto] = useState([]);
+  const [cuponesCategoria, setCuponesCategoria] = useState([]);
+  const [cuponesEmp, setCuponesEmp] = useState([]);
+  const [cuponesLoaded, setCuponesLoaded] = useState(false);
 
   useEffect(() => {
     if (!isInitialLoad) return;
@@ -50,6 +57,65 @@ export default function Catalog({ onGoHome }) {
 
     setIsInitialLoad(false);
   }, [searchParams, isInitialLoad, fetchProducts]);
+
+  // FETCH CUPONES
+  useEffect(() => {
+    const fetchCupones = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/cupones?solo_disponibles=true`,
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const cupones = data.cupones || [];
+
+        const productos = cupones.filter((c) => c.id_producto);
+        const categorias = cupones.filter(
+          (c) => c.id_categoria && !c.id_producto,
+        );
+        const emprendimientos = cupones.filter(
+          (c) => c.id_emprendimiento && !c.id_producto && !c.id_categoria,
+        );
+
+        setCuponesProducto(productos);
+        setCuponesCategoria(categorias);
+        setCuponesEmp(emprendimientos);
+        setCuponesLoaded(true);
+      } catch (err) {
+        console.error("Error cargando cupones:", err);
+      }
+    };
+
+    fetchCupones();
+  }, []);
+
+  // FUNCION para obtener cupón de un producto
+  const getCouponForProduct = (producto) => {
+    if (!cuponesLoaded) return null;
+
+    // 1. Buscar cupón específico del producto
+    const porProducto = cuponesProducto.find(
+      (c) =>
+        String(c.id_producto) === String(producto.id || producto.id_producto),
+    );
+
+    if (porProducto) return porProducto;
+
+    // 2. Buscar cupón por categoría
+    const porCategoria = cuponesCategoria.find(
+      (c) => String(c.id_categoria) === String(producto.id_categoria),
+    );
+
+    if (porCategoria) return porCategoria;
+
+    // 3. Buscar cupón por emprendimiento
+    const porEmprendimiento = cuponesEmp.find(
+      (c) => String(c.id_emprendimiento) === String(producto.id_emprendimiento),
+    );
+
+    return porEmprendimiento || null;
+  };
 
   useEffect(() => {
     setVisibleProductsCount(20);
@@ -214,7 +280,12 @@ export default function Catalog({ onGoHome }) {
                         </div>
                       </div>
                     ))
-                : visibleProducts.map((p) => <ProductCard key={p.id} p={p} />)}
+                : visibleProducts.map((p) => {
+                    const coupon = getCouponForProduct(p);
+                    return (
+                      <ProductCard key={p.id} p={p} activeCoupon={coupon} />
+                    );
+                  })}
             </div>
 
             {filteredProducts.length === 0 && !loading && (

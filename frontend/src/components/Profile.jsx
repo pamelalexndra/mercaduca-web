@@ -147,36 +147,20 @@ const saveCachedEmprendimiento = (userId, emprendimiento) => {
 };
 
 const normalizeEmprendimiento = (data = {}) => ({
-  id_emprendimiento:
-    data.id_emprendimiento ||
-    data.id ||
-    data.idEmprendimiento ||
-    data.emprendimiento_id ||
-    null,
+  id_emprendimiento: data.id_emprendimiento || data.id || data.idEmprendimiento || data.emprendimiento_id || null,
   nombre: data.nombre || data.Nombre || data.emprendimiento_nombre || "",
-  descripcion:
-    data.descripcion ||
-    data.Descripcion ||
-    data.emprendimiento_descripcion ||
-    "",
-  imagen_url:
-    data.imagen_url ||
-    data.Imagen_URL ||
-    data.imagen ||
-    data.emprendimiento_imagen_url ||
-    "",
-  instagram:
-    data.instagram || data.Instagram || data.emprendimiento_instagram || "",
+  descripcion: data.descripcion || data.Descripcion || data.emprendimiento_descripcion || "",
+  imagen_url: data.imagen_url || data.Imagen_URL || data.imagen || data.emprendimiento_imagen_url || "",
+  instagram: data.instagram || data.Instagram || data.emprendimiento_instagram || "",
   disponible: data.disponible ?? data.Disponible ?? true,
-  id_categoria:
-    data.id_categoria ||
-    data.idCategoria ||
-    data.emprendimiento_id_categoria ||
-    null,
+  id_categoria: data.id_categoria || data.idCategoria || data.emprendimiento_id_categoria || null,
   boxful_city_id: data.boxful_city_id || null,
+  boxful_state_id: data.boxful_state_id || null,
   boxful_address_id: data.boxful_address_id || null,
   direccion_recoleccion: data.direccion_recoleccion || "",
   referencia_recoleccion: data.referencia_recoleccion || "",
+  boxful_allows_card_payment: data.boxful_allows_card_payment ?? true,
+  boxful_courier_id: data.boxful_courier_id || null,
 });
 
 export default function Profile({ user, onProfileLoaded, disableActions }) {
@@ -734,10 +718,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
 
     try {
-      if (
-        datos.nuevaContraseña &&
-        datos.nuevaContraseña !== datos.confirmarContraseña
-      ) {
+      if (datos.nuevaContraseña && datos.nuevaContraseña !== datos.confirmarContraseña) {
         setError("Las contraseñas no coinciden.");
         return false;
       }
@@ -745,46 +726,38 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setSavingProfile(true);
       setError("");
 
-      const responseUser = await fetch(
-        `${API_BASE_URL}/user/profile/${userId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            ...getAuthHeaders(currentUser),
-          },
-          body: JSON.stringify({
-            nombres: datos.nombres?.trim(),
-            apellidos: datos.apellidos?.trim(),
-            correo: datos.correo?.trim(),
-            telefono: datos.telefono?.trim(),
-            username:
-              datos.username?.trim() ||
-              currentUser?.username ||
-              currentUser?.profile?.username,
-            nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
-          }),
+      // 1. Actualizar datos personales del usuario
+      const responseUser = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          ...getAuthHeaders(currentUser),
         },
-      );
+        body: JSON.stringify({
+          nombres: datos.nombres?.trim(),
+          apellidos: datos.apellidos?.trim(),
+          correo: datos.correo?.trim(),
+          telefono: datos.telefono?.trim(),
+          username: datos.username?.trim() || currentUser?.username || currentUser?.profile?.username,
+          nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
+        }),
+      });
 
       const resultUser = await responseUser.json();
 
       if (!responseUser.ok) {
-        throw new Error(
-          resultUser.error || "No se pudo actualizar el perfil personal",
-        );
+        throw new Error(resultUser.error || "No se pudo actualizar el perfil personal");
       }
 
-      const configuroEnvios =
-        datos.boxful_city_id && datos.direccion_recoleccion?.trim();
-
-      if (emprendimiento?.id_emprendimiento && configuroEnvios) {
+      // 2. Actualizar configuración Boxful del emprendimiento (siempre que tenga emprendimiento)
+      if (emprendimiento?.id_emprendimiento) {
         const boxfulPayload = {
-          boxful_city_id: datos.boxful_city_id,
-          boxful_state_id: datos.boxful_state_id,
-          direccion_recoleccion: datos.direccion_recoleccion.trim(),
-          referencia_recoleccion: datos.referencia_recoleccion?.trim() || "",
-          telefono: datos.telefono?.trim(),
+          boxful_city_id: datos.boxful_city_id || null,
+          boxful_state_id: datos.boxful_state_id || null,
+          direccion_recoleccion: datos.direccion_recoleccion?.trim() || null,
+          referencia_recoleccion: datos.referencia_recoleccion?.trim() || null,
+          boxful_allows_card_payment: datos.boxful_allows_card_payment ?? true,
+          boxful_courier_id: datos.boxful_courier_id?.trim() || null,
         };
 
         try {
@@ -797,15 +770,17 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                 ...getAuthHeaders(currentUser),
               },
               body: JSON.stringify(boxfulPayload),
-            },
+            }
           );
 
           if (!responseEmp.ok) {
             const errorEmp = await responseEmp.json();
-            console.error("Error guardando datos de envío:", errorEmp);
+            console.error("Error actualizando emprendimiento:", errorEmp);
+            // No bloqueamos el flujo — el perfil personal sí se guardó
+            setError("Perfil guardado, pero hubo un problema configurando los envíos. Intenta de nuevo.");
           }
-        } catch (error) {
-          console.error("Fallo de red al guardar el emprendimiento:", error);
+        } catch (empError) {
+          console.error("Fallo de red al guardar emprendimiento:", empError);
         }
       }
 
@@ -1065,8 +1040,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
               onClick={handleAgregar}
               disabled={!canAddProducts}
               className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${canAddProducts
-                  ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
-                  : "bg-gray-300 cursor-not-allowed"
+                ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
+                : "bg-gray-300 cursor-not-allowed"
                 }`}
               aria-label="Agregar producto"
               title={
@@ -1104,8 +1079,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                   onClick={handleAgregar}
                   disabled={!hasEmprendimiento}
                   className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento
-                      ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
-                      : "bg-gray-300 cursor-not-allowed shadow-none"
+                    ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
+                    : "bg-gray-300 cursor-not-allowed shadow-none"
                     }`}
                 >
                   Comparte tu primer producto
@@ -1140,12 +1115,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           setShowEditProfileModal(false);
           setError("");
         }}
-        emprendimientoData={{
-          ...(currentUser?.profile || {}),
-          ...(emprendimiento || {}),
-          username:
-            currentUser?.profile?.username || currentUser?.username || "",
-        }}
+        profileData={currentUser?.profile}
+        emprendimientoData={emprendimiento}
         onSave={handleSaveProfile}
         errorMessage={error}
         loading={savingProfile}

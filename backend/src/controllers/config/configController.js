@@ -1,6 +1,6 @@
 import pool from "../../database/connection.js";
 import { uploadImage } from "../../services/cloudinary.service.js";
-import cache from "../../services/cache.service.js"; 
+import cache from "../../services/cache.service.js";
 
 export const getConfigByKey = async (req, res) => {
   try {
@@ -15,7 +15,7 @@ export const getConfigByKey = async (req, res) => {
     // Consultar base de datos
     const { rows } = await pool.query(
       "SELECT valor FROM sitio_configuracion WHERE clave = $1",
-      [clave]
+      [clave],
     );
 
     if (rows.length === 0)
@@ -50,12 +50,12 @@ export const updateConfig = async (req, res) => {
        VALUES ($1, $2)
        ON CONFLICT (clave)
        DO UPDATE SET valor = EXCLUDED.valor`,
-      [clave, secure_url]
+      [clave, secure_url],
     );
 
     cache.set(clave, secure_url);
 
-    res.json({ message: "Configuración actualizada", url: secure_url });
+    res.json({ message: "Configuración actualizada", newUrl: secure_url });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error interno del servidor" });

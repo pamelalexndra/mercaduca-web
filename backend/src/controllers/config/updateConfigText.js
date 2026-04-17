@@ -10,7 +10,7 @@ export const updateConfigText = async (req, res) => {
        VALUES ($1, $2)
        ON CONFLICT (clave)
        DO UPDATE SET valor = EXCLUDED.valor`,
-      [clave, valor]
+      [clave, valor],
     );
 
     cache.set(clave, valor);

@@ -9,6 +9,7 @@ import CredentialsSection from "./Register/CredentialsSection";
 export default function EditProfile({
   visible,
   onClose,
+  profileData,
   emprendimientoData,
   onSave,
   errorMessage = "",
@@ -28,12 +29,18 @@ export default function EditProfile({
     boxful_city_id: "",
     direccion_recoleccion: "",
     referencia_recoleccion: "",
+    boxful_allows_card_payment: true,
+    boxful_courier_id: "",
   });
 
+  const [couriers, setCouriers] = useState([]);
+
+  const [selectedStateId, setSelectedStateId] = useState("");
+  const [loadingLink, setLoadingLink] = useState(false);
+  const [boxfulError, setBoxfulError] = useState("");
   const [localError, setLocalError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [states, setStates] = useState([]);
-  const [selectedStateId, setSelectedStateId] = useState("");
   const [usernameAvailable, setUsernameAvailable] = useState(null);
   const [passwordStrength, setPasswordStrength] = useState({
     score: 0,
@@ -45,6 +52,18 @@ export default function EditProfile({
 
   const inputClass =
     "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
+
+  useEffect(() => {
+    const cityId = formData.boxful_city_id;
+    if (!cityId) {
+      setCouriers([]);
+      return;
+    }
+    fetch(`${API_BASE_URL}/boxful/couriers/${cityId}`)
+      .then(r => r.json())
+      .then(data => setCouriers(data.couriers || data || []))
+      .catch(() => setCouriers([]));
+  }, [formData.boxful_city_id]);
 
   // Cargar departamentos de Boxful
   useEffect(() => {
@@ -63,24 +82,39 @@ export default function EditProfile({
       setShowConfirm(false);
       setUsernameAvailable(null);
 
-      if (emprendimientoData) {
+      if (profileData || emprendimientoData) {
         setFormData({
-          nombres: emprendimientoData.nombres || "",
-          apellidos: emprendimientoData.apellidos || "",
-          correo: emprendimientoData.correo || "",
-          telefono: emprendimientoData.telefono || "",
+          // DATOS PERSONALES (vienen de profileData)
+          nombres: profileData?.nombres || "",
+          apellidos: profileData?.apellidos || "",
+          correo: profileData?.correo || "",
+          telefono: profileData?.telefono || "",
+
           username:
-            emprendimientoData.username ||
-            emprendimientoData.Usuario ||
-            emprendimientoData.usuario ||
+            profileData?.username ||
+            emprendimientoData?.username ||
+            emprendimientoData?.Usuario ||
+            emprendimientoData?.usuario ||
             "",
+
           password: "",
           confirmPassword: "",
-          boxful_city_id: emprendimientoData.boxful_city_id || "",
-          direccion_recoleccion: emprendimientoData.direccion_recoleccion || "",
+
+          boxful_state_id: emprendimientoData?.boxful_state_id || "",
+          boxful_city_id: emprendimientoData?.boxful_city_id || "",
+          direccion_recoleccion:
+            emprendimientoData?.direccion_recoleccion || "",
           referencia_recoleccion:
-            emprendimientoData.referencia_recoleccion || "",
+            emprendimientoData?.referencia_recoleccion || "",
+          boxful_allows_card_payment:
+            emprendimientoData?.boxful_allows_card_payment ?? true,
+          boxful_courier_id:
+            emprendimientoData?.boxful_courier_id || "",
         });
+
+        if (emprendimientoData?.boxful_state_id) {
+          setSelectedStateId(emprendimientoData.boxful_state_id);
+        }
       }
 
       initializedRef.current = true;
@@ -118,7 +152,6 @@ export default function EditProfile({
 
   const handleStateChange = (e) => {
     const stateId = e.target.value;
-
     setSelectedStateId(stateId);
 
     setFormData((prev) => ({
@@ -131,27 +164,25 @@ export default function EditProfile({
   const handleUsernameCheck = async (username) => {
     if (!username || username.length < 3) {
       setUsernameAvailable(null);
-      return;
+      return null;
     }
 
-    if (
-      emprendimientoData?.username === username ||
-      emprendimientoData?.Usuario === username ||
-      emprendimientoData?.usuario === username
-    ) {
+    if (profileData?.username === username) {
       setUsernameAvailable(true);
-      return;
+      return true;
     }
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`,
+        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`
       );
       const data = await response.json();
       setUsernameAvailable(data.available);
+      return data.available;
     } catch (error) {
       console.error("Error verificando usuario:", error);
       setUsernameAvailable(null);
+      return null;
     }
   };
 
@@ -231,8 +262,10 @@ export default function EditProfile({
       return;
     }
 
-    if (!formData.username.trim()) {
-      setLocalError("El nombre de usuario es obligatorio.");
+    const available = await handleUsernameCheck(formData.username);
+
+    if (available === false) {
+      setLocalError("El nombre de usuario no está disponible.");
       return;
     }
 
@@ -261,7 +294,6 @@ export default function EditProfile({
 
     const dataToSend = {
       ...formData,
-      boxful_state_id: selectedStateId,  
       ...(formData.password ? { nuevaContraseña: formData.password } : {}),
     };
     delete dataToSend.password;
@@ -269,7 +301,9 @@ export default function EditProfile({
 
     console.log("DATASEND COMPLETO:", JSON.stringify(dataToSend));
     const success = await onSave?.(dataToSend);
-    if (success) onSuccess?.("Perfil actualizado correctamente");
+    if (success) {
+      onSuccess?.("Perfil actualizado correctamente");
+    }
   };
 
   const handleBackgroundClick = (e) => {
@@ -481,6 +515,30 @@ export default function EditProfile({
                     placeholder="Ej. Frente al parque central"
                     className={inputClass}
                   />
+                </div>
+
+                {/* ¿Acepta pago con tarjeta? */}
+                <div className="flex items-center justify-between py-2">
+                  <div>
+                    <p className="text-xs font-medium text-zinc-500">Aceptar pago con tarjeta</p>
+                    <p className="text-xs text-zinc-400">El comprador podrá pagar con tarjeta desde el link de Boxful</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        boxful_allows_card_payment: !prev.boxful_allows_card_payment,
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_card_payment ? "bg-[#557051]" : "bg-gray-300"
+                      }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_card_payment ? "translate-x-6" : "translate-x-1"
+                        }`}
+                    />
+                  </button>
                 </div>
 
                 {/* Indicador de estado */}

@@ -43,7 +43,7 @@ export default function EntrepreneurshipForm({
       });
     }
     setError("");
-  }, [initialData?.id_emprendimiento]);
+  }, [initialData]);
 
   useEffect(() => {
     if (!visible) {

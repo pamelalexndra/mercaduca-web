@@ -1,5 +1,5 @@
 // components/SearchInput.jsx
-import React, { useEffect, useRef, useCallback } from "react";
+import React, { useCallback } from "react";
 import { Search, X, SlidersHorizontal } from "lucide-react";
 
 export default function SearchInput({
@@ -12,24 +12,14 @@ export default function SearchInput({
   isFilterOpen,
   showFilterButton = true,
 }) {
-  const timerRef = useRef(null);
-
-  useEffect(() => {
-    return () => {
-      if (timerRef.current) clearTimeout(timerRef.current);
-    };
-  }, []);
-
   const handleChange = useCallback(
     (e) => {
       const v = e.target.value;
       onChange(v);
 
-      if (!enableDebounce) return;
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
+      if (!enableDebounce) {
         onSearch && onSearch(v);
-      }, 500);
+      }
     },
     [enableDebounce, onChange, onSearch]
   );
@@ -38,7 +28,6 @@ export default function SearchInput({
     (e) => {
       if (e.key === "Enter") {
         e.preventDefault();
-        if (timerRef.current) clearTimeout(timerRef.current);
         onSearch && onSearch(value);
         e.target.blur();
       }
@@ -57,9 +46,9 @@ export default function SearchInput({
         onChange={handleChange}
         onKeyDown={handleKeyDown}
         className="
-                flex-1 bg-transparent text-sm text-zinc-700 
-                placeholder:text-zinc-400 outline-none
-                "
+          flex-1 bg-transparent text-sm text-zinc-700
+          placeholder:text-zinc-400 outline-none
+        "
       />
 
       {value && (
@@ -80,7 +69,11 @@ export default function SearchInput({
         <button
           type="button"
           onClick={onToggleFilterOpen}
-          className={`p-2 rounded-full transition-colors ${isFilterOpen ? "bg-[#557051] text-white" : "text-[#557051] hover:bg-zinc-100"}`}
+          className={`p-2 rounded-full transition-colors ${
+            isFilterOpen
+              ? "bg-[#557051] text-white"
+              : "text-[#557051] hover:bg-zinc-100"
+          }`}
           aria-expanded={isFilterOpen}
           aria-label="Abrir filtros"
         >

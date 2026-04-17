@@ -1,8 +1,9 @@
 // components/SearchBox.jsx
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import SearchInput from "./SearchInput.jsx";
 import CategoryFilterSilder from "./CategoryFilterSlider.jsx";
 import useCategories from "../../hooks/useCategories.js";
+import useDebounce from "../../hooks/useDebounce.js";
 
 export default function SearchBox({
   placeholder = "Search",
@@ -21,10 +22,18 @@ export default function SearchBox({
   );
   const [searchTerm, setSearchTerm] = useState(initialSearchTerm || "");
 
+  const debouncedSearchTerm = useDebounce(searchTerm, 300);
+  const onSearchRef = useRef(onSearch);
+
   useEffect(() => {
-    setSelectedCategories(initialSelectedCategories || []);
-    setSearchTerm(initialSearchTerm || "");
-  }, []);
+    onSearchRef.current = onSearch;
+  }, [onSearch]);
+
+  useEffect(() => {
+    if (enableDebounce) {
+      onSearchRef.current?.(debouncedSearchTerm);
+    }
+  }, [debouncedSearchTerm, enableDebounce]);
 
   const handleToggleCategory = useCallback(
     (category) => {
@@ -45,9 +54,11 @@ export default function SearchBox({
 
   const handleSearch = useCallback(
     (value) => {
-      onSearch && onSearch(value);
+      if (!enableDebounce) {
+        onSearchRef.current?.(value);
+      }
     },
-    [onSearch]
+    [enableDebounce]
   );
 
   return (

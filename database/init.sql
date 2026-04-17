@@ -15,6 +15,9 @@ CREATE TABLE Emprendimiento (
   boxful_address_id VARCHAR(100),
   direccion_recoleccion TEXT,
   referencia_recoleccion TEXT,
+  boxful_phone_area_code VARCHAR(10) DEFAULT '503',
+  boxful_allows_card_payment BOOLEAN DEFAULT true,
+  boxful_courier_id VARCHAR(100),
 	Instagram TEXT,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_Emprendimiento_Categoria FOREIGN KEY (id_categoria) 

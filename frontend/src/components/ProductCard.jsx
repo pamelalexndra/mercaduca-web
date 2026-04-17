@@ -1,24 +1,29 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import productPlaceholder from "../images/productPlaceholder.jpg";
+import DiscountBadge from "./ProductDetail/DiscountBadge";
 
 export default function ProductCard({ p, activeCoupon }) {
+  // Determinar si tiene descuento
   const hasDiscount = activeCoupon && activeCoupon.descuento > 0;
+  const discountPercent = activeCoupon?.descuento || 0;
 
   const originalPrice = parseFloat(p.precio) || 0;
   const finalPrice = hasDiscount
-    ? (originalPrice * (1 - parseFloat(activeCoupon.descuento) / 100)).toFixed(
-        2,
-      )
+    ? (originalPrice * (1 - discountPercent / 100)).toFixed(2)
     : originalPrice.toFixed(2);
 
   return (
     <Link to={`/detalle/${p.id || p.id_producto}`}>
       <div className="group relative rounded-xl border border-zinc-200 bg-white shadow-sm overflow-hidden font-montserrat hover:shadow-md transition">
+        {/* Etiqueta de descuento usando DiscountBadge */}
         {hasDiscount && (
-          <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-bold px-2.5 py-1 rounded-full z-10 shadow-sm uppercase tracking-wide">
-            Oferta
-          </div>
+          <DiscountBadge
+            percent={discountPercent}
+            position="left"
+            variant="rebaja"
+            size="md"
+          />
         )}
 
         <div className="w-full aspect-[4/3] overflow-hidden">
@@ -26,6 +31,9 @@ export default function ProductCard({ p, activeCoupon }) {
             src={p.imagen || productPlaceholder}
             alt={p.nombre || "Producto"}
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+            onError={(e) => {
+              e.target.src = productPlaceholder;
+            }}
           />
         </div>
 
@@ -36,7 +44,7 @@ export default function ProductCard({ p, activeCoupon }) {
 
           <div className="mt-1 flex items-center">
             {hasDiscount ? (
-              <div className="flex items-baseline gap-2">
+              <div className="flex items-baseline gap-2 flex-wrap">
                 <span className="text-gray-400 line-through text-[11px] font-medium">
                   ${originalPrice.toFixed(2)}
                 </span>

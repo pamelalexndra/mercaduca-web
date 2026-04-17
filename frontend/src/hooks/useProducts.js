@@ -8,9 +8,62 @@ export default function useProducts(baseUrl = `${API_BASE_URL}/products`) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
+  // Función para enriquecer un producto con sus datos completos
+  const enrichProduct = async (producto) => {
+    // Si ya tiene los campos necesarios, devolverlo directamente
+    if (
+      producto.id_categoria !== undefined &&
+      producto.id_emprendimiento !== undefined
+    ) {
+      return producto;
+    }
+
+    // Si no, hacer fetch del detalle del producto
+    try {
+      const productId = producto.id || producto.id_producto;
+      const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+
+      if (response.ok) {
+        const data = await response.json();
+        const detalle = data.producto || data;
+
+        return {
+          ...producto,
+          id_categoria: detalle.id_categoria || producto.id_categoria,
+          id_emprendimiento:
+            detalle.id_emprendimiento || producto.id_emprendimiento,
+          categoria: detalle.categoria || producto.categoria,
+          descuento: detalle.descuento || producto.descuento,
+        };
+      }
+    } catch (err) {
+      console.error(`Error enriching product ${producto.id}:`, err);
+    }
+
+    return producto;
+  };
+
+  // Función para enriquecer múltiples productos en paralelo
+  const enrichProducts = async (productos) => {
+    const productosEnriquecidos = await Promise.all(
+      productos.map(async (producto) => {
+        if (
+          producto.id_categoria === undefined ||
+          producto.id_emprendimiento === undefined
+        ) {
+          return await enrichProduct(producto);
+        }
+        return producto;
+      }),
+    );
+
+    return productosEnriquecidos;
+  };
+
   const fetchProducts = useCallback(
     async (categoryIds = [], search = "", options = {}) => {
       try {
+        setLoading(true);
         setError(null);
 
         let url = baseUrl;
@@ -27,10 +80,14 @@ export default function useProducts(baseUrl = `${API_BASE_URL}/products`) {
         if (params.length) url += `?${params.join("&")}`;
 
         const response = await fetch(url);
+
         if (!response.ok) throw new Error("Error al cargar productos");
 
         const data = await response.json();
-        const productos = data.productos || [];
+        let productos = data.productos || data.data || [];
+
+        // ENRIQUECER PRODUCTOS con categoría y emprendimiento
+        productos = await enrichProducts(productos);
 
         if (
           categoryIds.length === 0 &&
@@ -47,7 +104,7 @@ export default function useProducts(baseUrl = `${API_BASE_URL}/products`) {
         setLoading(false);
       }
     },
-    [baseUrl]
+    [baseUrl],
   );
 
   const resetOrFetchAll = useCallback(() => {
