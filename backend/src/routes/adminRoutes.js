@@ -13,6 +13,5 @@ const router = express.Router();
 router.get("/", getAdmins);
 router.get("/:id", getAdminById);
 router.post("/", verifyToken, createAdmin);
-router.post("/update-config", verifyToken, verifyAdmin, upload.single("image"), updateConfig);
-router.post("/update-config-text", verifyToken, verifyAdmin, updateConfigText);
+
 export default router;

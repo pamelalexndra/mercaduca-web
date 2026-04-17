@@ -102,7 +102,7 @@ export default function Landing({ currentUser }) {
       formData.append("clave", "landing_banner");
 
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/admin/update-config`, {
+      const response = await fetch(`${API_BASE_URL}/config/update-config`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -119,7 +119,7 @@ export default function Landing({ currentUser }) {
   const savePosition = async (position) => {
     const token = localStorage.getItem("token");
     try {
-      await fetch(`${API_BASE_URL}/admin/update-config-text`, {
+      await fetch(`${API_BASE_URL}/config/update-config-text`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
