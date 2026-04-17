@@ -147,19 +147,37 @@ const saveCachedEmprendimiento = (userId, emprendimiento) => {
 };
 
 const normalizeEmprendimiento = (data = {}) => ({
-  id_emprendimiento: data.id_emprendimiento || data.id || data.idEmprendimiento || data.emprendimiento_id || null,
+  id_emprendimiento:
+    data.id_emprendimiento ||
+    data.id ||
+    data.idEmprendimiento ||
+    data.emprendimiento_id ||
+    null,
   nombre: data.nombre || data.Nombre || data.emprendimiento_nombre || "",
-  descripcion: data.descripcion || data.Descripcion || data.emprendimiento_descripcion || "",
-  imagen_url: data.imagen_url || data.Imagen_URL || data.imagen || data.emprendimiento_imagen_url || "",
-  instagram: data.instagram || data.Instagram || data.emprendimiento_instagram || "",
+  descripcion:
+    data.descripcion ||
+    data.Descripcion ||
+    data.emprendimiento_descripcion ||
+    "",
+  imagen_url:
+    data.imagen_url ||
+    data.Imagen_URL ||
+    data.imagen ||
+    data.emprendimiento_imagen_url ||
+    "",
+  instagram:
+    data.instagram || data.Instagram || data.emprendimiento_instagram || "",
   disponible: data.disponible ?? data.Disponible ?? true,
-  id_categoria: data.id_categoria || data.idCategoria || data.emprendimiento_id_categoria || null,
-  boxful_city_id: data.boxful_city_id || null,
-  boxful_state_id: data.boxful_state_id || null,
+  id_categoria:
+    data.id_categoria ||
+    data.idCategoria ||
+    data.emprendimiento_id_categoria ||
+    null,
+    
+  boxful_email: data.boxful_email || "",
   boxful_address_id: data.boxful_address_id || null,
-  direccion_recoleccion: data.direccion_recoleccion || "",
-  referencia_recoleccion: data.referencia_recoleccion || "",
   boxful_allows_card_payment: data.boxful_allows_card_payment ?? true,
+  boxful_allows_cod_payment: data.boxful_allows_cod_payment ?? false,
   boxful_courier_id: data.boxful_courier_id || null,
 });
 
@@ -709,7 +727,10 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
 
     try {
-      if (datos.nuevaContraseña && datos.nuevaContraseña !== datos.confirmarContraseña) {
+      if (
+        datos.nuevaContraseña &&
+        datos.nuevaContraseña !== datos.confirmarContraseña
+      ) {
         setError("Las contraseñas no coinciden.");
         return false;
       }
@@ -717,35 +738,43 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setSavingProfile(true);
       setError("");
 
-      const responseUser = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(currentUser),
+      const responseUser = await fetch(
+        `${API_BASE_URL}/user/profile/${userId}`,
+        {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            ...getAuthHeaders(currentUser),
+          },
+          body: JSON.stringify({
+            nombres: datos.nombres?.trim(),
+            apellidos: datos.apellidos?.trim(),
+            correo: datos.correo?.trim(),
+            telefono: datos.telefono?.trim(),
+            username:
+              datos.username?.trim() ||
+              currentUser?.username ||
+              currentUser?.profile?.username,
+            nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
+          }),
         },
-        body: JSON.stringify({
-          nombres: datos.nombres?.trim(),
-          apellidos: datos.apellidos?.trim(),
-          correo: datos.correo?.trim(),
-          telefono: datos.telefono?.trim(),
-          username: datos.username?.trim() || currentUser?.username || currentUser?.profile?.username,
-          nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
-        }),
-      });
+      );
 
       const resultUser = await responseUser.json();
 
       if (!responseUser.ok) {
-        throw new Error(resultUser.error || "No se pudo actualizar el perfil personal");
+        throw new Error(
+          resultUser.error || "No se pudo actualizar el perfil personal",
+        );
       }
 
       if (emprendimiento?.id_emprendimiento) {
         const boxfulPayload = {
-          // Mapeo de los campos nuevos
           boxful_email: datos.boxful_email?.trim() || null,
-          boxful_password: datos.boxful_password || undefined, // undefined para que no se envíe si no se modificó
+          boxful_password: datos.boxful_password || undefined,
           boxful_address_id: datos.boxful_address_id || null,
           boxful_allows_card_payment: datos.boxful_allows_card_payment ?? true,
+          boxful_allows_cod_payment: datos.boxful_allows_cod_payment ?? false,
           boxful_courier_id: datos.boxful_courier_id?.trim() || null,
         };
 
@@ -759,8 +788,17 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                 ...getAuthHeaders(currentUser),
               },
               body: JSON.stringify(boxfulPayload),
-            }
+            },
           );
+
+          if (!responseEmp.ok) {
+            const errorEmp = await responseEmp.json();
+            console.error("Error guardando datos de envío:", errorEmp);
+          }
+        } catch (error) {
+          console.error("Fallo de red al guardar el emprendimiento:", error);
+        }
+      }
 
       setSuccessMessage("Perfil actualizado correctamente");
       setShowSuccessDialog(true);

@@ -98,9 +98,10 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
     id_categoria: "id_categoria",
 
     boxful_email: "boxful_email",
-    boxful_password: "boxful_password", 
+    boxful_password: "boxful_password",
     boxful_address_id: "boxful_address_id",
     boxful_allows_card_payment: "boxful_allows_card_payment",
+    boxful_allows_cod_payment: "boxful_allows_cod_payment",
     boxful_courier_id: "boxful_courier_id",
   };
 
@@ -120,6 +121,8 @@ export const buildEntrepreneurshipQueryUpdate = (id, updates) => {
         params.push(value === true || value === "true" ? true : false);
       } else if (key === "boxful_address_id" || key === "boxful_courier_id") {
         params.push(value ? value.toString() : null);
+      } else if (key === "disponible" || key === "boxful_allows_card_payment" || key === "boxful_allows_cod_payment") {
+        params.push(value === true || value === "true" ? true : false);
       } else {
         params.push(value?.toString().trim() || null);
       }

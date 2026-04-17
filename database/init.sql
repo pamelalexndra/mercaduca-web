@@ -14,6 +14,7 @@ CREATE TABLE Emprendimiento (
   boxful_password TEXT,
   boxful_address_id VARCHAR (100),
   boxful_allows_card_payment BOOLEAN DEFAULT TRUE,
+  boxful_allows_cod_payment BOOLEAN DEFAULT FALSE,
   boxful_courier_id VARCHAR(100),
 	Instagram TEXT,
   Fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

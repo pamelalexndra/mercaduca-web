@@ -1,4 +1,3 @@
-// src/controllers/handleShipByLink.js (o la ruta donde lo tengas)
 import { createShipByLink } from "../../services/boxful.service.js";
 import pool from "../../database/connection.js";
 import { decrypt } from "../../utils/security/crypto.js"; 
@@ -7,32 +6,26 @@ export const handleShipByLink = async (req, res) => {
   const { id_emprendimiento, producto } = req.body;
 
   if (!id_emprendimiento || !producto) {
-    return res.status(400).json({
-      error: "Faltan datos del producto o emprendimiento.",
-    });
+    return res.status(400).json({ error: "Faltan datos del producto o emprendimiento." });
   }
 
   try {
+    // 1. Consulta limpia y sin JOINs problemáticos
     const result = await pool.query(
       `SELECT 
-         e.boxful_email,
-         e.boxful_password,
-         e.boxful_address_id,
-         e.boxful_allows_card_payment,
-         e.boxful_courier_id,
-         emp.Telefono AS telefono
-       FROM Emprendimiento e
-       JOIN Emprendedor emp ON emp.id_emprendimiento = e.id_emprendimiento
-       WHERE e.id_emprendimiento = $1
-         AND emp.Activo = true
+         boxful_email,
+         boxful_password,
+         boxful_address_id,
+         boxful_allows_card_payment,
+         boxful_courier_id
+       FROM Emprendimiento
+       WHERE id_emprendimiento = $1
        LIMIT 1`,
       [id_emprendimiento]
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: "No se encontró el emprendimiento.",
-      });
+      return res.status(404).json({ error: "No se encontró el emprendimiento." });
     }
 
     const emp = result.rows[0];
@@ -41,12 +34,6 @@ export const handleShipByLink = async (req, res) => {
     if (!emp.boxful_email || !emp.boxful_password || !emp.boxful_address_id) {
       return res.status(400).json({
         error: "Este emprendedor aún no ha vinculado su cuenta de Boxful o no ha seleccionado una dirección de recolección.",
-      });
-    }
-    
-    if (!emp.telefono) {
-      return res.status(400).json({
-        error: "El emprendedor no tiene un teléfono registrado.",
       });
     }
 
@@ -58,6 +45,7 @@ export const handleShipByLink = async (req, res) => {
        });
     }
 
+    // 3. Armar los paquetes según el esquema de Boxful
     const parcels = [
       {
         content: producto.nombre,
@@ -68,20 +56,8 @@ export const handleShipByLink = async (req, res) => {
       },
     ];
 
-    const emprendimientoPayload = {
-      boxful_address_id: emp.boxful_address_id,
-      boxful_phone_area_code: "503", 
-      boxful_allows_card_payment: emp.boxful_allows_card_payment ?? true,
-      boxful_courier_id: emp.boxful_courier_id || null,
-    };
-
-    const data = await createShipByLink(
-      emprendimientoPayload,
-      { telefono: emp.telefono },
-      parcels,
-      emp.boxful_email,
-      plainPassword
-    );
+    // 4. Llamar al servicio solo con los datos necesarios
+    const data = await createShipByLink(emp, parcels, emp.boxful_email, plainPassword);
 
     const link = data?.link || data?.url || data?.shipByLink || data?.shipmentLink;
 
@@ -95,9 +71,9 @@ export const handleShipByLink = async (req, res) => {
 
     return res.json({ link });
   } catch (err) {
-    console.error("Error en handleShipByLink:", err.response?.data || err);
+    console.error("Error en handleShipByLink:", err.message);
     return res.status(500).json({
-      error: "No se pudo generar el link de envío. Verifica si las credenciales de Boxful del emprendedor siguen siendo válidas.",
+      error: "No se pudo generar el link de envío.",
     });
   }
 };

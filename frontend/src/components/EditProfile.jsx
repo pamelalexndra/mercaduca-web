@@ -29,12 +29,14 @@ export default function EditProfile({
     boxful_password: "",
     boxful_address_id: "",
     boxful_allows_card_payment: true,
+    boxful_allows_cod_payment: false,
   });
 
   const [boxfulAddresses, setBoxfulAddresses] = useState([]);
+  
   const [isValidatingBoxful, setIsValidatingBoxful] = useState(false);
   const [boxfulConnectionStatus, setBoxfulConnectionStatus] = useState("idle");
-
+  const [boxfulCouriers, setBoxfulCouriers] = useState([]);
   const [localError, setLocalError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
   const [usernameAvailable, setUsernameAvailable] = useState(null);
@@ -75,8 +77,10 @@ export default function EditProfile({
             boxful_email: emprendimientoData?.boxful_email || "",
             boxful_password: "",
             boxful_address_id: emprendimientoData?.boxful_address_id || "",
+            boxful_courier_id: emprendimientoData?.boxful_courier_id || "",
             boxful_allows_card_payment:
               emprendimientoData?.boxful_allows_card_payment ?? true,
+            boxful_allows_cod_payment: emprendimientoData?.boxful_allows_cod_payment ?? false,  
           });
         }
         initializedRef.current = true;
@@ -111,6 +115,7 @@ export default function EditProfile({
       if (response.ok) {
         const addresses = data.addresses || [];
         setBoxfulAddresses(addresses);
+        setBoxfulCouriers(data.couriers || []);
         setBoxfulConnectionStatus("success");
 
         if (addresses.length === 0) {
@@ -475,7 +480,6 @@ export default function EditProfile({
                     >
                       <option value="">Selecciona una dirección...</option>
                       {boxfulAddresses.map((addr) => {
-                        // Hacemos que sea a prueba de balas buscando la propiedad correcta
                         const textoDireccion = addr.address || addr.addressLine1 || addr.address_line_1 || "Dirección principal";
                         const nombreCiudad = addr.city?.name || (typeof addr.city === 'string' ? addr.city : "");
 
@@ -489,28 +493,62 @@ export default function EditProfile({
                   </div>
                 )}
 
-                {/* ¿Acepta pago con tarjeta? */}
-                <div className="flex items-center justify-between py-2 border-t border-zinc-50 mt-2">
-                  <div>
-                    <p className="text-xs font-medium text-zinc-500">Aceptar pago con tarjeta</p>
-                    <p className="text-xs text-zinc-400">El comprador podrá pagar con tarjeta desde el link de Boxful</p>
+                {/* ✨ NUEVO: Selector de Paquetería (Couriers) */}
+                {boxfulCouriers && boxfulCouriers.length > 0 && (
+                  <div className="space-y-1 pt-2 animate-fade-in border-t border-zinc-50 mt-2">
+                    <label className="block text-xs font-semibold text-[#557051]">
+                      Selecciona la paquetería (Courier) *
+                    </label>
+                    <select
+                      name="boxful_courier_id"
+                      value={formData.boxful_courier_id}
+                      onChange={handleChange}
+                      className={inputClass}
+                      required
+                    >
+                      <option value="">Selecciona una paquetería...</option>
+                      {boxfulCouriers.map((courier) => (
+                        <option key={courier.id || courier.name} value={courier.id || courier.name}>
+                          {courier.name || courier.nombre || "Courier estándar"}
+                        </option>
+                      ))}
+                    </select>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((prev) => ({
-                        ...prev,
-                        boxful_allows_card_payment: !prev.boxful_allows_card_payment,
-                      }))
-                    }
-                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_card_payment ? "bg-[#557051]" : "bg-gray-300"
-                      }`}
-                  >
-                    <span
-                      className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_card_payment ? "translate-x-6" : "translate-x-1"
-                        }`}
-                    />
-                  </button>
+                )}
+
+                {/* Toggles de Métodos de Pago */}
+                <div className="space-y-3 py-3 border-t border-zinc-50 mt-2">
+                  <p className="text-xs font-semibold text-[#557051]">Métodos de pago en el envío</p>
+                  
+                  {/* Pago con Tarjeta */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-zinc-600">Aceptar pago con tarjeta</p>
+                      <p className="text-[10px] text-zinc-400">El comprador podrá pagar con tarjeta desde el link</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, boxful_allows_card_payment: !prev.boxful_allows_card_payment }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_card_payment ? "bg-[#557051]" : "bg-gray-300"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_card_payment ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
+
+                  {/* ✨ NUEVO: Pago Contra Entrega (COD) */}
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs font-medium text-zinc-600">Aceptar pago contra entrega (Efectivo)</p>
+                      <p className="text-[10px] text-zinc-400">El cliente pagará en efectivo al recibir el paquete</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, boxful_allows_cod_payment: !prev.boxful_allows_cod_payment }))}
+                      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_cod_payment ? "bg-[#557051]" : "bg-gray-300"}`}
+                    >
+                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_cod_payment ? "translate-x-6" : "translate-x-1"}`} />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Indicador de estado */}
