@@ -55,7 +55,7 @@ export const updateConfig = async (req, res) => {
 
     cache.set(clave, secure_url);
 
-    res.json({ message: "Configuración actualizada", url: secure_url });
+    res.json({ message: "Configuración actualizada", newUrl: secure_url });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Error interno del servidor" });

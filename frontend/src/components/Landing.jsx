@@ -76,7 +76,6 @@ export default function Landing({ currentUser }) {
 
         setActividadesParaCarrusel(formatted);
       } catch {
-        // Error cargando actividades
       } finally {
         setLoadingActividades(false);
       }
@@ -103,7 +102,7 @@ export default function Landing({ currentUser }) {
       formData.append("clave", "landing_banner");
 
       const token = localStorage.getItem("token");
-      const response = await fetch(`${API_BASE_URL}/config/update-config`, {
+      const response = await fetch(`${API_BASE_URL}/admin/update-config`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
         body: formData,
@@ -112,7 +111,6 @@ export default function Landing({ currentUser }) {
       const data = await response.json();
       if (response.ok) setBannerImg(data.newUrl);
     } catch {
-      // Error subiendo el banner
     } finally {
       setUploading(false);
     }
