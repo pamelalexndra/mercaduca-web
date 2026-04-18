@@ -44,7 +44,12 @@ export default function ProductCard({ p, activeCoupon, showPrice = true }) {
         </div>
 
         <div className="p-3 pt-4 font-montserrat flex flex-col gap-1.5">
-          <h3 className="font-semibold text-zinc-900 text-[13px] leading-tight line-clamp-2">
+          {/* Centrar el texto si showPrice es false en emprendimientos */}
+          <h3
+            className={`font-semibold text-zinc-900 text-[13px] leading-tight line-clamp-2 ${
+              !showPrice ? "text-center" : ""
+            }`}
+          >
             {p.nombre || "Nombre del producto"}
           </h3>
 
