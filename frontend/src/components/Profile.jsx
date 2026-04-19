@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import SuccessDialog from "./SuccessDialog";
-import ProductCard from "./Card";
+import ProductCard from "./ProductCard";
 import ProductForm from "./ProductForm";
 import EditProfile from "./EditProfile";
 import EntrepreneurshipForm from "./EntrepreneurshipForm";
@@ -120,6 +120,56 @@ const normalizeProducto = (producto) => ({
   categoria: producto?.categoria ?? producto?.Categoria,
 });
 
+// Función para enriquecer un producto con sus datos completos
+const enrichProduct = async (producto) => {
+  if (
+    producto.id_categoria !== undefined &&
+    producto.id_categoria !== null &&
+    producto.id_emprendimiento !== undefined &&
+    producto.id_emprendimiento !== null
+  ) {
+    return producto;
+  }
+
+  if (!producto.precio && producto.precio !== 0) {
+    return producto;
+  }
+
+  try {
+    const productId = producto.id || producto.id_producto;
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+
+    if (response.ok) {
+      const data = await response.json();
+      const detalle = data.producto || data;
+
+      return {
+        ...producto,
+        id_categoria: detalle.id_categoria ?? producto.id_categoria,
+        id_emprendimiento:
+          detalle.id_emprendimiento ?? producto.id_emprendimiento,
+        categoria: detalle.categoria ?? producto.categoria,
+      };
+    }
+  } catch (err) {
+    console.error(`Error enriching product ${producto.id}:`, err);
+  }
+
+  return producto;
+};
+
+const enrichProducts = async (productos) => {
+  const productosEnriquecidos = await Promise.all(
+    productos.map(async (item) => {
+      if (item.precio !== undefined || item.precio === 0) {
+        return await enrichProduct(item);
+      }
+      return item;
+    }),
+  );
+  return productosEnriquecidos;
+};
+
 const readCachedEmprendimientos = () => {
   try {
     const raw = localStorage.getItem(EMPRENDIMIENTO_CACHE_KEY);
@@ -173,7 +223,7 @@ const normalizeEmprendimiento = (data = {}) => ({
     data.idCategoria ||
     data.emprendimiento_id_categoria ||
     null,
-    
+
   boxful_email: data.boxful_email || "",
   boxful_address_id: data.boxful_address_id || null,
   boxful_allows_card_payment: data.boxful_allows_card_payment ?? true,
@@ -220,6 +270,11 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     return stored ? JSON.parse(stored) : null;
   });
 
+  const [cuponesProducto, setCuponesProducto] = useState([]);
+  const [cuponesCategoria, setCuponesCategoria] = useState([]);
+  const [cuponesEmp, setCuponesEmp] = useState([]);
+  const [cuponesLoaded, setCuponesLoaded] = useState(false);
+
   const getVendorIdFromUrl = useCallback(() => {
     const pathParts = location.pathname.split("/");
     const profileIndex = pathParts.indexOf("perfil");
@@ -253,6 +308,57 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   }, [isAdminMode]);
 
+  // FETCH CUPONES
+  useEffect(() => {
+    const fetchCupones = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/cupones?solo_disponibles=true`,
+        );
+        if (!res.ok) return;
+
+        const data = await res.json();
+        const cupones = data.cupones || [];
+
+        setCuponesProducto(cupones.filter((c) => c.id_producto));
+        setCuponesCategoria(
+          cupones.filter((c) => c.id_categoria && !c.id_producto),
+        );
+        setCuponesEmp(
+          cupones.filter(
+            (c) => c.id_emprendimiento && !c.id_producto && !c.id_categoria,
+          ),
+        );
+        setCuponesLoaded(true);
+      } catch (err) {
+        console.error("Error cargando cupones:", err);
+      }
+    };
+
+    fetchCupones();
+  }, []);
+
+  const getCouponForProduct = (producto) => {
+    if (!cuponesLoaded) return null;
+    if (producto.precio === undefined && producto.precio !== 0) return null;
+
+    const porProducto = cuponesProducto.find(
+      (c) =>
+        String(c.id_producto) === String(producto.id || producto.id_producto),
+    );
+    if (porProducto) return porProducto;
+
+    const porCategoria = cuponesCategoria.find(
+      (c) => String(c.id_categoria) === String(producto.id_categoria),
+    );
+    if (porCategoria) return porCategoria;
+
+    const porEmprendimiento = cuponesEmp.find(
+      (c) => String(c.id_emprendimiento) === String(producto.id_emprendimiento),
+    );
+    return porEmprendimiento || null;
+  };
+
   const fetchProductos = useCallback(
     async (emprendimientoId) => {
       if (!emprendimientoId) {
@@ -282,9 +388,13 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         }
 
         const data = await response.json();
-        const productosNormalizados = (data.productos || data.data || []).map(
+        let productosNormalizados = (data.productos || data.data || []).map(
           normalizeProducto,
         );
+
+        // Enriquecer productos para obtener id_categoria
+        productosNormalizados = await enrichProducts(productosNormalizados);
+
         setProductos(productosNormalizados);
         return productosNormalizados;
       } catch (fetchError) {
@@ -1055,10 +1165,11 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             <button
               onClick={handleAgregar}
               disabled={!canAddProducts}
-              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${canAddProducts
-                ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
-                : "bg-gray-300 cursor-not-allowed"
-                }`}
+              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${
+                canAddProducts
+                  ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
               aria-label="Agregar producto"
               title={
                 isAdminMode
@@ -1094,22 +1205,30 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                 <button
                   onClick={handleAgregar}
                   disabled={!hasEmprendimiento}
-                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento
-                    ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
-                    : "bg-gray-300 cursor-not-allowed shadow-none"
-                    }`}
+                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${
+                    hasEmprendimiento
+                      ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
+                      : "bg-gray-300 cursor-not-allowed shadow-none"
+                  }`}
                 >
                   Comparte tu primer producto
                 </button>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-3 gap-1 md:gap-7 mt-4">
-              {productos.map((p) => (
-                <div key={p.id} className="aspect-square">
-                  <ProductCard p={p} allowEdit={!isAdminMode} />
-                </div>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-4">
+              {productos.map((p) => {
+                const coupon = getCouponForProduct(p);
+                return (
+                  <ProductCard
+                    key={p.id || p.id_producto}
+                    p={p}
+                    activeCoupon={coupon}
+                    showPrice={true}
+                    allowEdit={!isAdminMode}
+                  />
+                );
+              })}
             </div>
           )}
         </div>

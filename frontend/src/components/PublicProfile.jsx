@@ -1,8 +1,81 @@
 import React, { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import ProductCard from "./Card";
+import ProductCard from "./ProductCard";
 import SuccessDialog from "./SuccessDialog";
 import { API_BASE_URL } from "../utils/api";
+
+const normalizeProducto = (producto) => ({
+  id: producto?.id ?? producto?.id_producto,
+  nombre: producto?.nombre ?? producto?.Nombre ?? "",
+  descripcion: producto?.descripcion ?? producto?.Descripcion ?? "",
+  precio:
+    producto?.precio ??
+    producto?.precio_dolares ??
+    producto?.Precio_dolares ??
+    0,
+  imagen:
+    producto?.imagen ??
+    producto?.imagen_url ??
+    producto?.Imagen_URL ??
+    producto?.Imagen_url ??
+    "",
+  id_categoria: producto?.id_categoria ?? null,
+  stock: producto?.stock ?? producto?.existencias ?? producto?.Existencias ?? 0,
+  disponible: producto?.disponible ?? producto?.Disponible ?? true,
+  id_emprendimiento:
+    producto?.emprendimiento_id ?? producto?.id_emprendimiento ?? null,
+  categoria: producto?.categoria ?? producto?.Categoria,
+});
+
+// Función para enriquecer un producto con sus datos completos
+const enrichProduct = async (producto) => {
+  if (
+    producto.id_categoria !== undefined &&
+    producto.id_categoria !== null &&
+    producto.id_emprendimiento !== undefined &&
+    producto.id_emprendimiento !== null
+  ) {
+    return producto;
+  }
+
+  if (!producto.precio && producto.precio !== 0) {
+    return producto;
+  }
+
+  try {
+    const productId = producto.id || producto.id_producto;
+    const response = await fetch(`${API_BASE_URL}/products/${productId}`);
+
+    if (response.ok) {
+      const data = await response.json();
+      const detalle = data.producto || data;
+
+      return {
+        ...producto,
+        id_categoria: detalle.id_categoria ?? producto.id_categoria,
+        id_emprendimiento:
+          detalle.id_emprendimiento ?? producto.id_emprendimiento,
+        categoria: detalle.categoria ?? producto.categoria,
+      };
+    }
+  } catch (err) {
+    console.error(`Error enriching product ${producto.id}:`, err);
+  }
+
+  return producto;
+};
+
+const enrichProducts = async (productos) => {
+  const productosEnriquecidos = await Promise.all(
+    productos.map(async (item) => {
+      if (item.precio !== undefined || item.precio === 0) {
+        return await enrichProduct(item);
+      }
+      return item;
+    }),
+  );
+  return productosEnriquecidos;
+};
 
 export default function PublicProfile() {
   const { id } = useParams();
@@ -18,19 +91,99 @@ export default function PublicProfile() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
 
+  // Estados de cupones
+  const [cuponesProducto, setCuponesProducto] = useState([]);
+  const [cuponesCategoria, setCuponesCategoria] = useState([]);
+  const [cuponesEmp, setCuponesEmp] = useState([]);
+  const [cuponesLoaded, setCuponesLoaded] = useState(false);
+
+  // Fetch cupones
   useEffect(() => {
-    setIsLoading(true);
+    const fetchCupones = async () => {
+      try {
+        const res = await fetch(
+          `${API_BASE_URL}/cupones?solo_disponibles=true`,
+        );
+        if (!res.ok) return;
 
-    fetch(`${API_BASE_URL}/entrepreneurship/${id}`)
-      .then((res) => res.json())
-      .then((data) => setEmprendimiento(data))
-      .catch((err) => console.error("Error cargando emprendimiento:", err))
-      .finally(() => setIsLoading(false));
+        const data = await res.json();
+        const cupones = data.cupones || [];
 
-    fetch(`${API_BASE_URL}/products?emprendimiento_id=${id}`)
-      .then((res) => res.json())
-      .then((data) => setProductos(data.productos))
-      .catch((err) => console.error("Error cargando productos:", err));
+        setCuponesProducto(cupones.filter((c) => c.id_producto));
+        setCuponesCategoria(
+          cupones.filter((c) => c.id_categoria && !c.id_producto),
+        );
+        setCuponesEmp(
+          cupones.filter(
+            (c) => c.id_emprendimiento && !c.id_producto && !c.id_categoria,
+          ),
+        );
+        setCuponesLoaded(true);
+      } catch (err) {
+        console.error("Error cargando cupones:", err);
+      }
+    };
+
+    fetchCupones();
+  }, []);
+
+  const getCouponForProduct = (producto) => {
+    if (!cuponesLoaded) return null;
+    // Verificar si el producto tiene precio (puede ser 0)
+    if (producto.precio === undefined && producto.precio !== 0) return null;
+
+    const porProducto = cuponesProducto.find(
+      (c) =>
+        String(c.id_producto) === String(producto.id || producto.id_producto),
+    );
+    if (porProducto) return porProducto;
+
+    const porCategoria = cuponesCategoria.find(
+      (c) => String(c.id_categoria) === String(producto.id_categoria),
+    );
+    if (porCategoria) return porCategoria;
+
+    const porEmprendimiento = cuponesEmp.find(
+      (c) => String(c.id_emprendimiento) === String(producto.id_emprendimiento),
+    );
+    return porEmprendimiento || null;
+  };
+
+  useEffect(() => {
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      try {
+        // Fetch emprendimiento y productos en paralelo
+        const [emprendimientoRes, productosRes] = await Promise.all([
+          fetch(`${API_BASE_URL}/entrepreneurship/${id}`),
+          fetch(`${API_BASE_URL}/products?emprendimiento_id=${id}`),
+        ]);
+
+        // Procesar emprendimiento
+        if (emprendimientoRes.ok) {
+          const emprendimientoData = await emprendimientoRes.json();
+          setEmprendimiento(emprendimientoData);
+        }
+
+        // Procesar productos y normalizarlos
+        if (productosRes.ok) {
+          const productosData = await productosRes.json();
+          const productosList = productosData.productos || [];
+          // Normalizar cada producto
+          let productosNormalizados = productosList.map(normalizeProducto);
+          // Enriquecer productos para obtener id_categoria
+          productosNormalizados = await enrichProducts(productosNormalizados);
+          setProductos(productosNormalizados);
+        }
+      } catch (err) {
+        console.error("Error cargando datos:", err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, [id]);
 
   const handleSuccessClose = () => {
@@ -163,7 +316,7 @@ export default function PublicProfile() {
               <a
                 href={`https://instagram.com/${emprendimiento.instagram.replace(
                   "@",
-                  ""
+                  "",
                 )}`}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -195,15 +348,18 @@ export default function PublicProfile() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-1 md:gap-7 mt-4">
-            {productos.map((p) => (
-              <div
-                key={p.id}
-                className="aspect-square cursor-pointer hover:opacity-90 transition-opacity"
-              >
-                <ProductCard p={p} />
-              </div>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5 mt-4">
+            {productos.map((p) => {
+              const coupon = getCouponForProduct(p);
+              return (
+                <ProductCard
+                  key={p.id}
+                  p={p}
+                  activeCoupon={coupon}
+                  showPrice={true}
+                />
+              );
+            })}
           </div>
         )}
       </div>
