@@ -1,7 +1,7 @@
 import pool from "../database/connection.js";
 import { sendProfileModificationEmail } from "./sendNotificationEmail.js";
 
-// Función para notificar modificación de perfil (llamada desde updateProfile)
+// Función para notificar modificación de perfil (llamada desde updateProfile o twoFactorService)
 export const notifyProfileModification = async (
   userId,
   nuevosDatos,
@@ -17,6 +17,7 @@ export const notifyProfileModification = async (
       `SELECT 
         u.id_usuario,
         u.usuario,
+        u.two_factor_enabled,
         e.nombres,
         e.apellidos,
         e.correo,
@@ -34,15 +35,27 @@ export const notifyProfileModification = async (
 
     const usuarioInfo = result.rows[0];
 
+    // Determinar el estado de 2FA (priorizar nuevosDatos si viene)
+    let twoFactorEnabled = usuarioInfo.two_factor_enabled;
+    let twoFactorChanged = cambios.twoFactor || false;
+
+    // Si nos pasaron un estado específico en nuevosDatos, usarlo
+    if (nuevosDatos.twoFactorStatus !== undefined) {
+      twoFactorEnabled = nuevosDatos.twoFactorStatus;
+      twoFactorChanged = true;
+    }
+
     // Combinar datos actuales con los nuevos (para mostrar cambios)
     const datosParaCorreo = {
       id_usuario: usuarioInfo.id_usuario,
-      nombres: usuarioInfo.nombres,
-      apellidos: usuarioInfo.apellidos,
-      correo: usuarioInfo.correo,
-      telefono: usuarioInfo.telefono,
-      usuario: usuarioInfo.usuario,
+      nombres: nuevosDatos.nombres || usuarioInfo.nombres,
+      apellidos: nuevosDatos.apellidos || usuarioInfo.apellidos,
+      correo: nuevosDatos.correo || usuarioInfo.correo,
+      telefono: nuevosDatos.telefono || usuarioInfo.telefono,
+      usuario: nuevosDatos.usuario || usuarioInfo.usuario,
       contraseña: nuevosDatos.contraseña || null,
+      twoFactorEnabled: twoFactorEnabled,
+      twoFactorChanged: twoFactorChanged,
     };
 
     // Enviar el correo

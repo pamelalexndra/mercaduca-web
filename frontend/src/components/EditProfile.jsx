@@ -33,7 +33,7 @@ export default function EditProfile({
   });
 
   const [boxfulAddresses, setBoxfulAddresses] = useState([]);
-  
+
   const [isValidatingBoxful, setIsValidatingBoxful] = useState(false);
   const [boxfulConnectionStatus, setBoxfulConnectionStatus] = useState("idle");
   const [boxfulCouriers, setBoxfulCouriers] = useState([]);
@@ -80,7 +80,8 @@ export default function EditProfile({
             boxful_courier_id: emprendimientoData?.boxful_courier_id || "",
             boxful_allows_card_payment:
               emprendimientoData?.boxful_allows_card_payment ?? true,
-            boxful_allows_cod_payment: emprendimientoData?.boxful_allows_cod_payment ?? false,  
+            boxful_allows_cod_payment:
+              emprendimientoData?.boxful_allows_cod_payment ?? false,
           });
         }
         initializedRef.current = true;
@@ -101,14 +102,17 @@ export default function EditProfile({
     setLocalError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/boxful/validate-credentials`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: formData.boxful_email,
-          password: formData.boxful_password,
-        }),
-      });
+      const response = await fetch(
+        `${API_BASE_URL}/boxful/validate-credentials`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            email: formData.boxful_email,
+            password: formData.boxful_password,
+          }),
+        },
+      );
 
       const data = await response.json();
 
@@ -119,7 +123,9 @@ export default function EditProfile({
         setBoxfulConnectionStatus("success");
 
         if (addresses.length === 0) {
-          setLocalError("Conexión exitosa, pero no tienes ninguna dirección registrada en Boxful. Ve a la web de Boxful, crea una dirección, y vuelve a intentarlo.");
+          setLocalError(
+            "Conexión exitosa, pero no tienes ninguna dirección registrada en Boxful. Ve a la web de Boxful, crea una dirección, y vuelve a intentarlo.",
+          );
         }
       } else {
         setBoxfulConnectionStatus("error");
@@ -156,13 +162,12 @@ export default function EditProfile({
 
     try {
       const response = await fetch(
-        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`
+        `${API_BASE_URL}/auth/check-username/${encodeURIComponent(username)}`,
       );
       const data = await response.json();
       setUsernameAvailable(data.available);
       return data.available;
     } catch (error) {
-      console.error("Error verificando usuario:", error);
       setUsernameAvailable(null);
       return null;
     }
@@ -230,14 +235,16 @@ export default function EditProfile({
 
       if (formData.password && passwordStrength.score < 3) {
         setLocalError(
-          "La contraseña es demasiado débil. Usa al menos 8 caracteres, mayúsculas, números y símbolos."
+          "La contraseña es demasiado débil. Usa al menos 8 caracteres, mayúsculas, números y símbolos.",
         );
         return;
       }
     }
 
     if (formData.boxful_email && !formData.boxful_address_id) {
-      setLocalError("Por favor valida tus credenciales y selecciona una dirección de Boxful.");
+      setLocalError(
+        "Por favor valida tus credenciales y selecciona una dirección de Boxful.",
+      );
       return;
     }
 
@@ -281,9 +288,6 @@ export default function EditProfile({
 
     delete dataToSend.password;
     delete dataToSend.confirmPassword;
-
-    console.log("Datos enviados:", formData);
-    console.log("DATASEND COMPLETO:", JSON.stringify(dataToSend));
 
     const success = await onSave?.(dataToSend);
     if (success) {
@@ -421,7 +425,8 @@ export default function EditProfile({
                     Conexión con Boxful (Envíos)
                   </p>
                   <p className="text-xs text-zinc-400 mt-0.5">
-                    Vincula tu cuenta de Boxful para que los pedidos se generen automáticamente desde tu perfil.
+                    Vincula tu cuenta de Boxful para que los pedidos se generen
+                    automáticamente desde tu perfil.
                   </p>
                 </div>
 
@@ -459,10 +464,12 @@ export default function EditProfile({
                 <button
                   type="button"
                   onClick={handleConnectBoxful}
-                  disabled={isValidatingBoxful} // <--- ¡Le quitamos la condición de los correos aquí!
+                  disabled={isValidatingBoxful}
                   className="w-full px-4 py-3 bg-zinc-800 text-white rounded-xl text-sm font-medium hover:bg-zinc-700 transition-colors disabled:opacity-50"
                 >
-                  {isValidatingBoxful ? "Validando..." : "Validar y obtener direcciones"}
+                  {isValidatingBoxful
+                    ? "Validando..."
+                    : "Validar y obtener direcciones"}
                 </button>
 
                 {/* Selector de direcciones de Boxful */}
@@ -480,12 +487,19 @@ export default function EditProfile({
                     >
                       <option value="">Selecciona una dirección...</option>
                       {boxfulAddresses.map((addr) => {
-                        const textoDireccion = addr.address || addr.addressLine1 || addr.address_line_1 || "Dirección principal";
-                        const nombreCiudad = addr.city?.name || (typeof addr.city === 'string' ? addr.city : "");
+                        const textoDireccion =
+                          addr.address ||
+                          addr.addressLine1 ||
+                          addr.address_line_1 ||
+                          "Dirección principal";
+                        const nombreCiudad =
+                          addr.city?.name ||
+                          (typeof addr.city === "string" ? addr.city : "");
 
                         return (
                           <option key={addr.id} value={addr.id}>
-                            {textoDireccion} {nombreCiudad ? `- ${nombreCiudad}` : ""}
+                            {textoDireccion}{" "}
+                            {nombreCiudad ? `- ${nombreCiudad}` : ""}
                           </option>
                         );
                       })}
@@ -508,7 +522,10 @@ export default function EditProfile({
                     >
                       <option value="">Selecciona una paquetería...</option>
                       {boxfulCouriers.map((courier) => (
-                        <option key={courier.id || courier.name} value={courier.id || courier.name}>
+                        <option
+                          key={courier.id || courier.name}
+                          value={courier.id || courier.name}
+                        >
                           {courier.name || courier.nombre || "Courier estándar"}
                         </option>
                       ))}
@@ -518,35 +535,61 @@ export default function EditProfile({
 
                 {/* Toggles de Métodos de Pago */}
                 <div className="space-y-3 py-3 border-t border-zinc-50 mt-2">
-                  <p className="text-xs font-semibold text-[#557051]">Métodos de pago en el envío</p>
-                  
+                  <p className="text-xs font-semibold text-[#557051]">
+                    Métodos de pago en el envío
+                  </p>
+
                   {/* Pago con Tarjeta */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-medium text-zinc-600">Aceptar pago con tarjeta</p>
-                      <p className="text-[10px] text-zinc-400">El comprador podrá pagar con tarjeta desde el link</p>
+                      <p className="text-xs font-medium text-zinc-600">
+                        Aceptar pago con tarjeta
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        El comprador podrá pagar con tarjeta desde el link
+                      </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setFormData((prev) => ({ ...prev, boxful_allows_card_payment: !prev.boxful_allows_card_payment }))}
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          boxful_allows_card_payment:
+                            !prev.boxful_allows_card_payment,
+                        }))
+                      }
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_card_payment ? "bg-[#557051]" : "bg-gray-300"}`}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_card_payment ? "translate-x-6" : "translate-x-1"}`} />
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_card_payment ? "translate-x-6" : "translate-x-1"}`}
+                      />
                     </button>
                   </div>
 
                   {/* ✨ NUEVO: Pago Contra Entrega (COD) */}
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-medium text-zinc-600">Aceptar pago contra entrega (Efectivo)</p>
-                      <p className="text-[10px] text-zinc-400">El cliente pagará en efectivo al recibir el paquete</p>
+                      <p className="text-xs font-medium text-zinc-600">
+                        Aceptar pago contra entrega (Efectivo)
+                      </p>
+                      <p className="text-[10px] text-zinc-400">
+                        El cliente pagará en efectivo al recibir el paquete
+                      </p>
                     </div>
                     <button
                       type="button"
-                      onClick={() => setFormData((prev) => ({ ...prev, boxful_allows_cod_payment: !prev.boxful_allows_cod_payment }))}
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          boxful_allows_cod_payment:
+                            !prev.boxful_allows_cod_payment,
+                        }))
+                      }
                       className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${formData.boxful_allows_cod_payment ? "bg-[#557051]" : "bg-gray-300"}`}
                     >
-                      <span className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_cod_payment ? "translate-x-6" : "translate-x-1"}`} />
+                      <span
+                        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${formData.boxful_allows_cod_payment ? "translate-x-6" : "translate-x-1"}`}
+                      />
                     </button>
                   </div>
                 </div>

@@ -8,7 +8,9 @@ import {
   generateRejectionEmailHTML,
   generateRejectionEmailText,
   generateModificationEmailHTML,
-  generateModificationEmailText
+  generateModificationEmailText,
+  generateLoginEmailHTML,
+  generateLoginEmailText,
 } from "./generateEmailContent.js";
 import { getAllAdminRecipients } from "./emailToAdmins.js";
 
@@ -131,6 +133,31 @@ export const sendProfileModificationEmail = async (
     };
   } catch (error) {
     console.error("Error enviando correo de modificación:", error);
+    return {
+      success: false,
+      error: error.message,
+    };
+  }
+};
+
+export const sendLoginNotificationEmail = async (correoDestino, loginData) => {
+  try {
+    const mailOptions = {
+      from: process.env.EMAIL_FROM,
+      to: correoDestino,
+      subject: `Nuevo inicio de sesion en tu cuenta de MercadUCA`,
+      html: generateLoginEmailHTML(loginData),
+      text: generateLoginEmailText(loginData),
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+
+    return {
+      success: true,
+      messageId: info.messageId,
+    };
+  } catch (error) {
+    console.error("Error enviando correo de notificacion de login:", error);
     return {
       success: false,
       error: error.message,

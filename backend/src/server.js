@@ -22,6 +22,7 @@ import adminRoutes from "./routes/adminRoutes.js";
 import configRoutes from "./routes/configRoutes.js";
 import boxfulRoutes from "./routes/boxfulRoutes.js";
 import cuponRoutes from "./routes/cuponRoutes.js";
+import twoFactorRaoutes from "./routes/twoFactorRoutes.js";
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -50,6 +51,7 @@ app.use("/api/admin", adminRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/boxful", boxfulRoutes);
 app.use("/api/cupones", cuponRoutes);
+app.use("/api/2fa", twoFactorRaoutes);
 
 // Manejo de errores
 app.use((err, req, res, next) => {

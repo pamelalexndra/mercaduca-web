@@ -52,6 +52,15 @@ const Login = ({ onLoginSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const [twoFactorRequired, setTwoFactorRequired] = useState(false);
+  const [twoFactorCode, setTwoFactorCode] = useState("");
+  const [pendingUserId, setPendingUserId] = useState(null);
+  const [showBackupOption, setShowBackupOption] = useState(false);
+  const [backupCode, setBackupCode] = useState("");
+  const [usingBackup, setUsingBackup] = useState(false);
+  const [rememberDevice, setRememberDevice] = useState(false);
+
   const navigate = useNavigate();
 
   const handleChange = (e) => {
@@ -62,10 +71,8 @@ const Login = ({ onLoginSuccess }) => {
   };
 
   const handleLoginSuccess = async (user, token) => {
-    // Identificar rol de usuario
     const userRole = user.role || user.Rol || user.rol;
 
-    // Guardar token y usuario
     localStorage.setItem("token", token);
     localStorage.setItem("user", JSON.stringify(user));
     localStorage.setItem("isAuthenticated", "true");
@@ -74,13 +81,11 @@ const Login = ({ onLoginSuccess }) => {
       onLoginSuccess(user);
     }
 
-    // Redirigir según el rol
     if (userRole === "Administrador" || userRole === "administrador") {
       navigate("/Admin/entrepreneurship-applications");
       return;
     }
 
-    // Para vendedores, continuar con la carga del perfil normal
     const initialUserId = getUserId(user);
     let enrichedUser = { ...user, id: initialUserId, token };
 
@@ -143,7 +148,6 @@ const Login = ({ onLoginSuccess }) => {
         saveCachedEmprendimiento(profileUserId, emprendimiento);
       }
 
-      // Actualizar usuario en localStorage
       localStorage.setItem("user", JSON.stringify(enrichedUser));
       if (onLoginSuccess) {
         onLoginSuccess(enrichedUser);
@@ -152,22 +156,24 @@ const Login = ({ onLoginSuccess }) => {
       console.error("Error al obtener el perfil del usuario:", profileError);
     }
 
-    // Redirigir a perfil para vendedores
     navigate("/perfil");
 
-    // Forzar recarga para actualizar TopBar inmediatamente
     setTimeout(() => {
       window.location.reload();
     }, 100);
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const handleBackupCodeSubmit = async () => {
+    if (!backupCode.trim()) {
+      setError("Ingresa un código de respaldo");
+      return;
+    }
+
     setLoading(true);
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/logIn`, {
+      const loginResponse = await fetch(`${API_BASE_URL}/auth/logIn`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -178,16 +184,83 @@ const Login = ({ onLoginSuccess }) => {
         }),
       });
 
+      const loginData = await loginResponse.json();
+
+      if (!loginResponse.ok) {
+        throw new Error(loginData.message || "Error en el login");
+      }
+
+      const token = loginData.token;
+
+      const backupResponse = await fetch(`${API_BASE_URL}/auth/2fa/backup`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          backupCode: backupCode.toUpperCase(),
+        }),
+      });
+
+      const backupData = await backupResponse.json();
+
+      if (!backupResponse.ok) {
+        throw new Error(backupData.message || "Código de respaldo inválido");
+      }
+
+      if (backupData.success) {
+        await handleLoginSuccess(loginData.user, token);
+      } else {
+        throw new Error("Código de respaldo inválido");
+      }
+    } catch (err) {
+      console.error("Error en backup code:", err);
+      setError(err.message || "Error al verificar código de respaldo");
+      setLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError("");
+
+    if (usingBackup) {
+      await handleBackupCodeSubmit();
+      return;
+    }
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/auth/logIn`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username: formData.username,
+          password: formData.password,
+          twoFactorCode: twoFactorRequired ? twoFactorCode : undefined,
+          rememberDevice: rememberDevice,
+        }),
+      });
+
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 403 && data.requiresTwoFactor) {
+          setTwoFactorRequired(true);
+          setPendingUserId(data.userId);
+          setLoading(false);
+          return;
+        }
         throw new Error(data.message || "Error en el login");
       }
 
       if (data.success) {
         const { user, token } = data;
-
         const userId = getUserId(user);
+
         if (!user || !userId) {
           throw new Error("El usuario no tiene ID en la respuesta");
         }
@@ -199,7 +272,6 @@ const Login = ({ onLoginSuccess }) => {
     } catch (error) {
       console.error("Error en login:", error);
       setError(error.message || "Error al iniciar sesión");
-    } finally {
       setLoading(false);
     }
   };
@@ -208,123 +280,240 @@ const Login = ({ onLoginSuccess }) => {
     navigate("/registrar");
   };
 
+  const handleBackToLogin = () => {
+    setTwoFactorRequired(false);
+    setTwoFactorCode("");
+    setShowBackupOption(false);
+    setBackupCode("");
+    setUsingBackup(false);
+    setError("");
+  };
+
   return (
     <section className="min-h-screen flex flex-col lg:flex-row bg-white overflow-hidden">
       <div className="flex flex-1 items-center justify-center px-8 py-10 lg:px-16 order-2 lg:order-1">
         <div className="w-full max-w-sm text-center -translate-y-6 lg:-translate-y-8 pt-10">
           <h2 className="text-2xl font-semibold mb-6 text-gray-800 font-loubag">
-            Iniciar sesión
+            {twoFactorRequired
+              ? "Verificación en dos pasos"
+              : usingBackup
+                ? "Código de respaldo"
+                : "Iniciar sesión"}
           </h2>
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="mb-4 text-left font-montserrat">
-              <label
-                htmlFor="usuario"
-                className="block text-sm font-semibold text-gray-700 mb-1"
-              >
-                Usuario
-              </label>
-              <input
-                type="text"
-                name="username"
-                value={formData.username}
-                onChange={handleChange}
-                required
-                placeholder="Ingrese su usuario"
-                className="w-full p-2 rounded-md border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#557051]"
-              />
-            </div>
-            <div className="mb-6 text-left font-montserrat">
-              <label
-                htmlFor="contrasena"
-                className="block text-sm font-semibold text-gray-700 mb-1"
-              >
-                Contraseña
-              </label>
-              <div className="relative">
-                <input
-                  type={showPassword ? "text" : "password"}
-                  name="password"
-                  value={formData.password}
-                  onChange={handleChange}
-                  required
-                  placeholder="Ingrese su contraseña"
-                  className="w-full p-2 rounded-md border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#557051] pr-10"
-                />
+            {!twoFactorRequired && !usingBackup ? (
+              <>
+                <div className="mb-4 text-left font-montserrat">
+                  <label
+                    htmlFor="usuario"
+                    className="block text-sm font-semibold text-gray-700 mb-1"
+                  >
+                    Usuario
+                  </label>
+                  <input
+                    type="text"
+                    name="username"
+                    value={formData.username}
+                    onChange={handleChange}
+                    required
+                    placeholder="Ingrese su usuario"
+                    className="w-full p-2 rounded-md border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#557051]"
+                  />
+                </div>
+                <div className="mb-4 text-left font-montserrat">
+                  <label
+                    htmlFor="contrasena"
+                    className="block text-sm font-semibold text-gray-700 mb-1"
+                  >
+                    Contraseña
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      name="password"
+                      value={formData.password}
+                      onChange={handleChange}
+                      required
+                      placeholder="Ingrese su contraseña"
+                      className="w-full p-2 rounded-md border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#557051] pr-10"
+                    />
+                    <button
+                      type="button"
+                      className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
+                      onClick={() => setShowPassword(!showPassword)}
+                      aria-label={
+                        showPassword
+                          ? "Ocultar contraseña"
+                          : "Mostrar contraseña"
+                      }
+                    >
+                      {showPassword ? (
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                          />
+                        </svg>
+                      ) : (
+                        <svg
+                          className="h-5 w-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                          />
+                        </svg>
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="mb-4 flex items-center justify-between">
+                  <label className="flex items-center cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={rememberDevice}
+                      onChange={(e) => setRememberDevice(e.target.checked)}
+                      className="w-4 h-4 text-[#557051] border-gray-300 rounded focus:ring-[#557051] cursor-pointer"
+                    />
+                    <span className="ml-2 text-sm text-gray-600">
+                      Recordar este dispositivo
+                    </span>
+                  </label>
+                </div>
+              </>
+            ) : twoFactorRequired && !usingBackup ? (
+              <>
+                <div className="mb-4 text-left font-montserrat">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Código de verificación
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ingresa el código de 6 dígitos"
+                    value={twoFactorCode}
+                    onChange={(e) =>
+                      setTwoFactorCode(
+                        e.target.value.replace(/\D/g, "").slice(0, 6),
+                      )
+                    }
+                    className="w-full p-2 rounded-md border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#557051] text-center text-2xl tracking-widest"
+                    maxLength="6"
+                    required
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Abre Google Authenticator o Authy y ingresa el código de 6
+                    dígitos
+                  </p>
+                </div>
+
                 <button
                   type="button"
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none"
-                  onClick={() => setShowPassword(!showPassword)}
-                  aria-label={
-                    showPassword ? "Ocultar contraseña" : "Mostrar contraseña"
-                  }
+                  onClick={() => {
+                    setUsingBackup(true);
+                    setShowBackupOption(false);
+                  }}
+                  className="text-sm text-blue-600 hover:underline mb-4 w-full text-center"
                 >
-                  {showPassword ? (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.878 9.878L6.59 6.59m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
-                      />
-                    </svg>
-                  ) : (
-                    <svg
-                      className="h-5 w-5"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-                      />
-                    </svg>
-                  )}
+                  Perdiste acceso a tu autenticador? Usar código de respaldo
                 </button>
-              </div>
-            </div>
+
+                <button
+                  type="button"
+                  onClick={handleBackToLogin}
+                  className="text-sm text-gray-500 hover:underline mb-4 w-full text-center"
+                >
+                  Volver al inicio de sesión
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="mb-4 text-left font-montserrat">
+                  <label className="block text-sm font-semibold text-gray-700 mb-1">
+                    Código de respaldo
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Ej: A3F8 K9D2 5E1C 7B4A"
+                    value={backupCode}
+                    onChange={(e) =>
+                      setBackupCode(e.target.value.toUpperCase())
+                    }
+                    className="w-full p-2 rounded-md border border-gray-300 bg-gray-100 focus:outline-none focus:ring-2 focus:ring-[#557051] text-center font-mono tracking-wider"
+                    required
+                    autoFocus
+                  />
+                  <p className="text-xs text-gray-500 mt-2">
+                    Ingresa uno de los códigos de respaldo que guardaste al
+                    activar 2FA
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setUsingBackup(false);
+                    setBackupCode("");
+                  }}
+                  className="text-sm text-blue-600 hover:underline mb-4 w-full text-center"
+                >
+                  Usar código de autenticador
+                </button>
+              </>
+            )}
 
             {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                 {error}
               </div>
             )}
 
             <button
               type="submit"
-              className="
-              w-full py-2 rounded-full bg-[#557051]/90 text-white 
-              font-semibold font-montserrat 
-              hover:bg-[#557051] transition"
+              className="w-full py-2 rounded-full bg-[#557051]/90 text-white font-semibold font-montserrat hover:bg-[#557051] transition disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading}
             >
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
+              {loading
+                ? "Verificando..."
+                : twoFactorRequired
+                  ? "Verificar código"
+                  : usingBackup
+                    ? "Verificar código de respaldo"
+                    : "Iniciar sesión"}
             </button>
           </form>
 
-          <p className="text-sm text-gray-700 mt-4 font-montserrat">
-            ¿Quieres vender?{" "}
-            <button
-              type="button"
-              className="text-[#2563EB] font-semibold hover:underline bg-transparent border-none cursor-pointer"
-              onClick={handleRegisterClick}
-            >
-              Regístrate
-            </button>
-          </p>
+          {!twoFactorRequired && !usingBackup && (
+            <p className="text-sm text-gray-700 mt-4 font-montserrat">
+              Quieres vender?{" "}
+              <button
+                type="button"
+                className="text-[#2563EB] font-semibold hover:underline bg-transparent border-none cursor-pointer"
+                onClick={handleRegisterClick}
+              >
+                Regístrate
+              </button>
+            </p>
+          )}
         </div>
       </div>
       <div

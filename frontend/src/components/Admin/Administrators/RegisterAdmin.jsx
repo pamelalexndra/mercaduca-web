@@ -86,6 +86,8 @@ const RegisterAdmin = ({
   onRegisterSuccess,
   switchToLogin,
   loading: externalLoading = false,
+  twoFactorEnabled = false,
+  twoFactorCode = "",
 }) => {
   const [formData, setFormData] = useState({
     username: "",
@@ -251,7 +253,6 @@ const RegisterAdmin = ({
 
       setUsernameAvailable(data.available);
     } catch (error) {
-      console.error("Error verificando username:", error);
       setUsernameAvailable(null);
     }
   };
@@ -272,6 +273,8 @@ const RegisterAdmin = ({
         apellidos: formData.apellidos,
         correo: formData.correo.toLowerCase(),
         telefono: formData.telefono,
+        twoFactorEnabled: twoFactorEnabled,
+        twoFactorCode: twoFactorCode,
       };
 
       if (formData.password.trim()) {
@@ -398,7 +401,11 @@ const RegisterAdmin = ({
 
   return (
     <div className="p-4 md:p-6">
-      <form onSubmit={handleSubmit} className="space-y-4 md:space-y-6">
+      <form
+        id="register-admin-form"
+        onSubmit={handleSubmit}
+        className="space-y-4 md:space-y-6"
+      >
         <PersonalInfoSection
           formData={formData}
           onChange={handleChange}
@@ -418,7 +425,7 @@ const RegisterAdmin = ({
           errors={errors}
         />
 
-        {/* Error general - se muestra aquí, entre el último campo y los botones */}
+        {/* Error general */}
         {errors.general && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
             {errors.general}
