@@ -1,1 +1,4 @@
-0 5 * * * root /backup.sh >> /var/log/backup.log 2>&1
+SHELL=/bin/bash
+PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+0 5 * * * /backup.sh >> /var/log/backup.log 2>&1

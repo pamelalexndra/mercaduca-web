@@ -77,18 +77,20 @@ services:
     command: sh -c "npm run dev -- --host 0.0.0.0 --force --clearScreen false"
 
   backup:
-      build: ./backups
-      container_name: mercaduca_backup
-      depends_on:
-        - database
-      volumes:
-        - backups_data:/backups
-      environment:
-        POSTGRES_HOST: database
-        POSTGRES_DB: ${DB_NAME}
-        POSTGRES_USER: ${DB_USER}
-        POSTGRES_PASSWORD: ${DB_PASSWORD}
-        TZ: America/El_Salvador
+    build: ./backups
+    container_name: mercaduca_backup
+    depends_on:
+      - database
+    volumes:
+      - backups_data:/backups
+    environment:
+      POSTGRES_HOST: database
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      TZ: America/El_Salvador
+    networks:
+      - mercaduca_network
 
 volumes:
   database_data:
