@@ -1,11 +1,11 @@
 import pool from "../../database/connection.js";
+import { uploadToCloudinary } from "../../utils/helpers/uploadToCloudinary.js";
 
 export const createProduct = async (req, res) => {
   try {
     const {
       nombre,
       descripcion,
-      imagen_url,
       precio_dolares,
       id_categoria,
       id_emprendimiento,
@@ -21,9 +21,18 @@ export const createProduct = async (req, res) => {
       });
     }
 
+    let imagen_url = null;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(req.file.buffer, "productos");
+      imagen_url = result.secure_url;
+    } else {
+      return res.status(400).json({ error: "La imagen es obligatoria" });
+    }
+
     const emprendimientoCheck = await pool.query(
       "SELECT id_emprendimiento FROM Emprendimiento WHERE id_emprendimiento = $1",
-      [parseInt(id_emprendimiento)]
+      [parseInt(id_emprendimiento)],
     );
 
     if (emprendimientoCheck.rows.length === 0) {
@@ -47,9 +56,9 @@ export const createProduct = async (req, res) => {
         parseInt(id_categoria),
         nombre.trim(),
         descripcion?.trim() || "",
-        imagen_url?.trim() || "",
+        imagen_url,
         parseFloat(precio_dolares),
-      ]
+      ],
     );
 
     res.status(201).json({

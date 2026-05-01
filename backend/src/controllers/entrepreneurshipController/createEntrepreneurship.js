@@ -1,17 +1,12 @@
 import pool from "../../database/connection.js";
+import { uploadToCloudinary } from "../../utils/helpers/uploadToCloudinary.js";
 
 export const createEntrepreneurship = async (req, res) => {
   const client = await pool.connect();
 
   try {
-    const {
-      nombre,
-      descripcion,
-      imagen_url,
-      instagram,
-      id_categoria,
-      id_usuario,
-    } = req.body;
+    const { nombre, descripcion, instagram, id_categoria, id_usuario } =
+      req.body;
 
     await client.query("BEGIN");
 
@@ -25,9 +20,22 @@ export const createEntrepreneurship = async (req, res) => {
       return res.status(400).json({ error: "El ID de usuario es requerido" });
     }
 
+    let imagen_url = null;
+
+    if (req.file) {
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        "emprendimientos",
+      );
+      imagen_url = result.secure_url;
+    } else {
+      await client.query("ROLLBACK");
+      return res.status(400).json({ error: "La imagen es obligatoria" });
+    }
+
     const emprendedorCheck = await client.query(
       "SELECT id_emprendedor FROM Usuarios WHERE id_usuario = $1",
-      [parseInt(id_usuario)]
+      [parseInt(id_usuario)],
     );
 
     const emprendedorData = emprendedorCheck.rows[0];
@@ -57,17 +65,17 @@ export const createEntrepreneurship = async (req, res) => {
         id_categoria ? parseInt(id_categoria) : null,
         nombre.trim(),
         descripcion?.trim() || "",
-        imagen_url?.trim() || "",
+        imagen_url,
         instagram?.trim() || "",
         true,
-      ]
+      ],
     );
 
     const emprendimientoCreado = nuevoEmprendimiento.rows[0];
 
     await client.query(
       "UPDATE Emprendedor SET id_emprendimiento = $1 WHERE id_emprendedor = $2",
-      [emprendimientoCreado.id_emprendimiento, idEmprendedor]
+      [emprendimientoCreado.id_emprendimiento, idEmprendedor],
     );
 
     await client.query("COMMIT");

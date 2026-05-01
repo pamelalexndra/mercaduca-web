@@ -1,6 +1,7 @@
 import pool from "../../database/connection.js";
 import { validarAlcance } from "../../utils/helpers/validarAlcance.js";
 import { uploadToCloudinary } from "../../utils/helpers/uploadToCloudinary.js";
+import { deleteImageByUrl } from "../../utils/helpers/deleteFromCloudinary.js";
 
 export const updateCupons = async (req, res) => {
   try {
@@ -24,9 +25,9 @@ export const updateCupons = async (req, res) => {
       descuento,
       disponible,
       fecha_limite,
+      imagen_url,
     } = req.body;
 
-    // Determinar qué valores usar (los nuevos o los existentes)
     const nuevo_id_emprendimiento =
       id_emprendimiento !== undefined
         ? id_emprendimiento
@@ -36,7 +37,6 @@ export const updateCupons = async (req, res) => {
     const nuevo_id_producto =
       id_producto !== undefined ? id_producto : current.id_producto;
 
-    // Validar alcance (solo una opción debe estar presente)
     const alcanceError = validarAlcance(
       nuevo_id_emprendimiento,
       nuevo_id_categoria,
@@ -44,16 +44,22 @@ export const updateCupons = async (req, res) => {
     );
     if (alcanceError) return res.status(400).json({ message: alcanceError });
 
-    // Procesar imagen si se subió un archivo nuevo
-    let imagen_url = current.imagen_url;
+    let imagen_final_url = current.imagen_url;
+
     if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer);
-      imagen_url = result.secure_url;
-    } else if (req.body.imagen_url !== undefined) {
-      imagen_url = req.body.imagen_url;
+      if (current.imagen_url) {
+        try {
+          await deleteImageByUrl(current.imagen_url);
+        } catch (error) {
+          // No fallamos la actualización si no se pudo eliminar la imagen anterior
+        }
+      }
+      const result = await uploadToCloudinary(req.file.buffer, "cupones");
+      imagen_final_url = result.secure_url;
+    } else if (imagen_url !== undefined) {
+      imagen_final_url = imagen_url;
     }
 
-    // Normalizar según el alcance seleccionado
     let final_id_emprendimiento = nuevo_id_emprendimiento;
     let final_id_categoria = nuevo_id_categoria;
     let final_id_producto = nuevo_id_producto;
@@ -88,7 +94,7 @@ export const updateCupons = async (req, res) => {
         final_id_producto,
         nombre || null,
         descripcion || null,
-        imagen_url,
+        imagen_final_url,
         descuento !== undefined ? descuento : null,
         disponible !== undefined ? disponible : null,
         fecha_limite || null,

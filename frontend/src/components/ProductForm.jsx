@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { X, Trash2 } from "lucide-react";
+import { X, Trash2, Upload, Loader2 } from "lucide-react";
 import ConfirmationDialog from "./ConfirmationDialog";
 import SuccessDialog from "./SuccessDialog";
 import useCategories from "../hooks/useCategories";
@@ -12,13 +12,18 @@ export default function ProductForm({
   onDelete,
   errorMessage,
   categories: propCategories,
+  isAdminMode = false,
+  emprendimientoId,
+  authToken,
 }) {
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [imagenUrl, setImagenUrl] = useState("");
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [precioDolares, setPrecioDolares] = useState("");
   const [idCategoria, setIdCategoria] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const modalRef = useRef();
   const [showConfirm, setShowConfirm] = useState(false);
@@ -34,17 +39,40 @@ export default function ProductForm({
   const inputClass =
     "w-full bg-gray-50 text-gray-900 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all placeholder:text-gray-400";
 
+  // Resetear estados cuando se cierra el modal
+  useEffect(() => {
+    if (!visible) {
+      setShowConfirm(false);
+      setShowSuccess(false);
+      setSuccessMessage("");
+      setError("");
+      setIsLoading(false);
+    }
+  }, [visible]);
+
+  // Resetear success cuando se abre el modal
+  useEffect(() => {
+    if (visible) {
+      setShowSuccess(false);
+      setSuccessMessage("");
+    }
+  }, [visible]);
+
   useEffect(() => {
     if (producto) {
       setNombre(producto.nombre || "");
       setDescripcion(producto.descripcion || producto.Descripcion || "");
-      setImagenUrl(
-        producto.imagen || producto.imagen_url || producto.Imagen_URL || "",
-      );
+      if (producto.imagen || producto.imagen_url || producto.Imagen_URL) {
+        setImagePreview(
+          producto.imagen || producto.imagen_url || producto.Imagen_URL,
+        );
+      }
       const normalizedPrecio =
         producto.precio || producto.precio_dolares || producto.Precio_dolares;
       setPrecioDolares(
-        normalizedPrecio !== undefined && normalizedPrecio !== null
+        normalizedPrecio !== undefined &&
+          normalizedPrecio !== null &&
+          normalizedPrecio !== 0
           ? normalizedPrecio.toString()
           : "",
       );
@@ -52,7 +80,8 @@ export default function ProductForm({
     } else {
       setNombre("");
       setDescripcion("");
-      setImagenUrl("");
+      setSelectedImage(null);
+      setImagePreview(null);
       setPrecioDolares("");
       setIdCategoria("");
     }
@@ -63,7 +92,8 @@ export default function ProductForm({
     if (visible && !producto) {
       setNombre("");
       setDescripcion("");
-      setImagenUrl("");
+      setSelectedImage(null);
+      setImagePreview(null);
       setPrecioDolares("");
       setIdCategoria("");
       setError("");
@@ -75,6 +105,31 @@ export default function ProductForm({
       setError(errorMessage);
     }
   }, [errorMessage]);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Por favor, selecciona un archivo de imagen válido");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("La imagen no puede superar los 10MB");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    setSelectedImage(file);
+    setError("");
+  };
+
+  const handleClearImage = () => {
+    setImagePreview(null);
+    setSelectedImage(null);
+  };
 
   const validateForm = () => {
     if (!nombre.trim()) {
@@ -98,6 +153,11 @@ export default function ProductForm({
       return false;
     }
 
+    if (!producto && !selectedImage) {
+      setError("La imagen es obligatoria");
+      return false;
+    }
+
     setError("");
     return true;
   };
@@ -109,25 +169,57 @@ export default function ProductForm({
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      const success = await onSubmit({
-        nombre,
-        descripcion,
-        imagen_url: imagenUrl,
-        precio_dolares: precioDolares,
-        id_categoria: idCategoria,
+      const token = authToken || localStorage.getItem("token");
+      const isEditing = !!producto?.id;
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("nombre", nombre.trim());
+      formDataToSend.append("descripcion", descripcion.trim() || "");
+      formDataToSend.append("precio_dolares", precioDolares.toString());
+      formDataToSend.append("id_categoria", idCategoria);
+
+      if (!isEditing && emprendimientoId) {
+        formDataToSend.append("id_emprendimiento", emprendimientoId);
+      }
+
+      if (selectedImage) {
+        formDataToSend.append("imagen", selectedImage);
+      }
+
+      const endpoint = isEditing
+        ? `${import.meta.env.VITE_API_URL}/products/${producto.id}`
+        : `${import.meta.env.VITE_API_URL}/products`;
+
+      const response = await fetch(endpoint, {
+        method: isEditing ? "PUT" : "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: formDataToSend,
       });
 
-      if (success) {
-        setSuccessMessage(
-          producto
-            ? "Producto actualizado correctamente"
-            : "Producto creado correctamente",
-        );
-        setShowSuccess(true);
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || "No se pudo guardar el producto");
+      }
+
+      setSuccessMessage(
+        isEditing
+          ? "Producto actualizado correctamente"
+          : "Producto creado correctamente",
+      );
+      setShowSuccess(true);
+
+      if (onSubmit) {
+        await onSubmit(result, isEditing);
       }
     } catch (err) {
+      console.error("Error en handleSubmit:", err);
       setError(err.message || "Error al procesar la solicitud");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -138,7 +230,7 @@ export default function ProductForm({
   const handleConfirmDelete = async () => {
     setShowConfirm(false);
     if (onDelete) {
-      const success = await onDelete(producto);
+      const success = await onDelete(producto, authToken);
       if (success) {
         setSuccessMessage("Producto eliminado correctamente");
         setShowSuccess(true);
@@ -158,6 +250,7 @@ export default function ProductForm({
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
+    setSuccessMessage("");
     onClose();
   };
 
@@ -169,16 +262,18 @@ export default function ProductForm({
   };
 
   const isFormValid = () => {
-    return (
-      nombre.trim() &&
-      precioDolares.trim() &&
-      !isNaN(parseFloat(precioDolares)) &&
-      parseFloat(precioDolares) > 0 &&
-      idCategoria
-    );
+    if (!nombre.trim()) return false;
+    if (!precioDolares.trim()) return false;
+    const precioNum = parseFloat(precioDolares);
+    if (isNaN(precioNum) || precioNum <= 0) return false;
+    if (!idCategoria) return false;
+    if (!producto && !selectedImage) return false;
+    return true;
   };
 
   if (!visible) return null;
+
+  const isLoadingState = isLoading;
 
   return (
     <>
@@ -262,43 +357,64 @@ export default function ProductForm({
 
             <div className="space-y-1">
               <label className="block text-sm font-semibold text-zinc-700 mb-2">
-                Imagen URL
+                Imagen del producto *
               </label>
-              <input
-                type="text"
-                value={imagenUrl}
-                onChange={(e) => setImagenUrl(e.target.value)}
-                placeholder="https://..."
-                className={inputClass}
-              />
-
-              <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                <svg
-                  className="w-4 h-4 text-gray-400 flex-shrink-0"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              {!imagePreview ? (
+                <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#557051] transition-colors">
+                  <input
+                    type="file"
+                    id="product-image-upload"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
                   />
-                </svg>
-                <span>
-                  Para generar el enlace de tu imagen se recomienda iniciar sesion en{" "}
-                  <a
-                    href="https://imgbb.com"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-[#557051] hover:text-[#3a4d36] underline font-medium transition-colors"
+                  <label
+                    htmlFor="product-image-upload"
+                    className="cursor-pointer flex flex-col items-center gap-2"
                   >
-                    imgbb.com
-                  </a>{" "}
-                  para continuar con el proceso de creación o modificación.
-                </span>
-              </p>
+                    <Upload className="w-12 h-12 text-gray-400" />
+                    <span className="text-gray-600">
+                      Haz clic para seleccionar una imagen
+                    </span>
+                    <span className="text-gray-400 text-sm">
+                      Formatos permitidos: JPG, PNG, GIF, WebP (Máx. 10MB)
+                    </span>
+                  </label>
+                </div>
+              ) : (
+                <div className="border border-gray-200 rounded-xl p-4">
+                  <div className="relative">
+                    <img
+                      src={imagePreview}
+                      alt="Vista previa"
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleClearImage}
+                      className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                    >
+                      <X size={16} />
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      document.getElementById("product-image-upload")?.click()
+                    }
+                    className="mt-3 w-full px-4 py-2 border border-[#557051] text-[#557051] rounded-lg hover:bg-[#557051] hover:text-white transition"
+                  >
+                    Cambiar imagen
+                  </button>
+                  <input
+                    type="file"
+                    id="product-image-upload"
+                    accept="image/*"
+                    onChange={handleFileSelect}
+                    className="hidden"
+                  />
+                </div>
+              )}
             </div>
 
             <div className="space-y-1">
@@ -321,9 +437,8 @@ export default function ProductForm({
               </div>
             </div>
 
-            {/* Error message moved here - between last field and buttons */}
             {(error || errorMessage) && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
+              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
                 {error || errorMessage}
               </div>
             )}
@@ -331,16 +446,26 @@ export default function ProductForm({
             <div className={`space-y-3 ${producto ? "pt-2" : ""}`}>
               <button
                 type="submit"
-                disabled={!isFormValid()}
-                className="w-full bg-gradient-to-r from-[#557051] to-[#6B8E5E] text-white rounded-xl py-3.5 text-sm font-semibold hover:from-[#496345] hover:to-[#5A7750] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+                disabled={!isFormValid() || isLoadingState}
+                className="w-full bg-gradient-to-r from-[#557051] to-[#6B8E5E] text-white rounded-xl py-3.5 text-sm font-semibold hover:from-[#496345] hover:to-[#5A7750] transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none flex items-center justify-center gap-2"
               >
-                {producto ? "Guardar cambios" : "Publicar Producto"}
+                {isLoadingState ? (
+                  <>
+                    <Loader2 className="animate-spin h-4 w-4" />
+                    {producto ? "Actualizando..." : "Publicando..."}
+                  </>
+                ) : producto ? (
+                  "Guardar cambios"
+                ) : (
+                  "Publicar Producto"
+                )}
               </button>
 
               {producto && onDelete && (
                 <button
                   type="button"
                   onClick={handleDeleteClick}
+                  disabled={isLoadingState}
                   className="w-full bg-gradient-to-r from-red-500 to-red-600 text-white rounded-xl py-3.5 text-sm font-semibold hover:from-red-600 hover:to-red-700 transition-all shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center gap-2"
                 >
                   <Trash2 size={16} />

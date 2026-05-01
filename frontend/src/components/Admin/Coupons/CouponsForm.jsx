@@ -1,5 +1,5 @@
 import React, { useState, useEffect, forwardRef } from "react";
-import { X } from "lucide-react";
+import { X, Upload, Loader2 } from "lucide-react";
 import { API_BASE_URL } from "../../../utils/api.js";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -57,10 +57,13 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
   const [categorias, setCategorias] = useState([]);
   const [productos, setProductos] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
   const [submitError, setSubmitError] = useState("");
   const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
 
   // Calcular fechas mínimas y máximas
   const hoy = new Date();
@@ -84,32 +87,13 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     const month = date.getMonth();
     const day = date.getDate();
 
-    // No permitir fechas anteriores a mañana
-    if (date <= hoy) {
-      return false;
-    }
+    if (date <= hoy) return false;
+    if (date < manana || date > unAñoDespues) return false;
+    if (!añosPermitidos.includes(year)) return false;
 
-    // Verificar que la fecha esté dentro del rango permitido (mañana hasta un año)
-    if (date < manana || date > unAñoDespues) {
-      return false;
-    }
-
-    // Verificar que el año sea válido
-    if (!añosPermitidos.includes(year)) {
-      return false;
-    }
-
-    // Para el año actual, validar mes y día
     if (year === añoActual) {
-      // Si el mes es menor al mes actual, deshabilitar
-      if (month < hoy.getMonth()) {
-        return false;
-      }
-
-      // Si es el mismo mes, verificar que el día sea mayor a hoy
-      if (month === hoy.getMonth() && day <= hoy.getDate()) {
-        return false;
-      }
+      if (month < hoy.getMonth()) return false;
+      if (month === hoy.getMonth() && day <= hoy.getDate()) return false;
     }
 
     return true;
@@ -191,8 +175,55 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
         id_categoria: cupon.id_categoria ? String(cupon.id_categoria) : "",
         id_producto: cupon.id_producto ? String(cupon.id_producto) : "",
       });
+
+      if (cupon.imagen_url) {
+        setImagePreview(cupon.imagen_url);
+      }
     }
   }, [cupon]);
+
+  // Manejar selección de archivo (sin subir a Cloudinary todavía)
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setErrors({
+        ...errors,
+        imagen_url: "Por favor, selecciona un archivo de imagen válido",
+      });
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setErrors({
+        ...errors,
+        imagen_url: "La imagen no puede superar los 10MB",
+      });
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    setSelectedImage(file);
+    setErrors({ ...errors, imagen_url: null });
+
+    // Limpiar la URL anterior si existe (por si se está editando)
+    setForm({
+      ...form,
+      imagen_url: "",
+    });
+  };
+
+  const handleClearImage = () => {
+    setImagePreview(null);
+    setSelectedImage(null);
+    setForm({
+      ...form,
+      imagen_url: "",
+    });
+    setErrors({ ...errors, imagen_url: null });
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -310,8 +341,11 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
 
     if (!form.descripcion?.trim())
       newErrors.descripcion = "La descripción es obligatoria";
-    if (!form.imagen_url?.trim())
-      newErrors.imagen_url = "La URL de la imagen es obligatoria";
+
+    // Validar que haya una imagen (nueva o existente)
+    if (!selectedImage && !form.imagen_url) {
+      newErrors.imagen_url = "La imagen es obligatoria";
+    }
 
     if (!form.fecha_limite) {
       newErrors.fecha_limite = "La fecha límite es obligatoria";
@@ -319,17 +353,14 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
       const fechaLimite = new Date(form.fecha_limite);
       fechaLimite.setHours(0, 0, 0, 0);
 
-      // Validar que no sea hoy
       if (fechaLimite.getTime() === hoy.getTime()) {
         newErrors.fecha_limite = "La fecha límite no puede ser hoy";
       }
 
-      // Validar que no sea en el pasado
       if (fechaLimite < hoy) {
         newErrors.fecha_limite = "La fecha límite no puede ser en el pasado";
       }
 
-      // Validar que sea al menos mañana
       if (fechaLimite <= hoy) {
         newErrors.fecha_limite = "La fecha límite debe ser a partir de mañana";
       }
@@ -344,7 +375,6 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
           "La fecha debe ser del año actual o próximo año";
       }
 
-      // Validar que el mes no sea anterior al mes actual
       if (
         añoFechaLimite === añoActual &&
         fechaLimite.getMonth() < hoy.getMonth()
@@ -382,20 +412,18 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
       return false;
 
     if (!form.descripcion?.trim()) return false;
-    if (!form.imagen_url?.trim()) return false;
+    if (!selectedImage && !form.imagen_url) return false;
     if (!form.fecha_limite) return false;
 
     const fechaLimite = new Date(form.fecha_limite);
     fechaLimite.setHours(0, 0, 0, 0);
 
-    // Validar que no sea hoy y sea a partir de mañana
     if (fechaLimite <= hoy) return false;
     if (fechaLimite > unAñoDespues) return false;
 
     const añoFechaLimite = fechaLimite.getFullYear();
     if (!añosPermitidos.includes(añoFechaLimite)) return false;
 
-    // Validar que el mes no sea anterior al mes actual
     if (
       añoFechaLimite === añoActual &&
       fechaLimite.getMonth() < hoy.getMonth()
@@ -427,23 +455,35 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
 
     try {
       const token = localStorage.getItem("token");
-
       const fechaFormateada = form.fecha_limite
         ? form.fecha_limite.toISOString().split("T")[0]
         : null;
 
-      const cuponData = {
-        nombre: form.nombre,
-        descuento: parseFloat(form.descuento),
-        descripcion: form.descripcion,
-        imagen_url: form.imagen_url,
-        fecha_limite: fechaFormateada,
-        id_emprendimiento: form.id_emprendimiento
-          ? parseInt(form.id_emprendimiento)
-          : null,
-        id_categoria: form.id_categoria ? parseInt(form.id_categoria) : null,
-        id_producto: form.id_producto ? parseInt(form.id_producto) : null,
-      };
+      // Crear FormData para enviar al backend
+      const formData = new FormData();
+
+      formData.append("nombre", form.nombre);
+      formData.append("descuento", parseFloat(form.descuento));
+      formData.append("descripcion", form.descripcion);
+      formData.append("fecha_limite", fechaFormateada);
+
+      if (form.id_emprendimiento) {
+        formData.append("id_emprendimiento", parseInt(form.id_emprendimiento));
+      }
+      if (form.id_categoria) {
+        formData.append("id_categoria", parseInt(form.id_categoria));
+      }
+      if (form.id_producto) {
+        formData.append("id_producto", parseInt(form.id_producto));
+      }
+
+      // Si hay una imagen seleccionada, enviarla al backend
+      if (selectedImage) {
+        formData.append("imagen", selectedImage);
+      } else if (form.imagen_url) {
+        // Si es edición y no se cambió la imagen, enviar la URL existente
+        formData.append("imagen_url", form.imagen_url);
+      }
 
       const url = cupon
         ? `${API_BASE_URL}/cupones/${cupon.id_cupon}`
@@ -452,10 +492,10 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
       const response = await fetch(url, {
         method: cupon ? "PUT" : "POST",
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          // No pongas Content-Type, el navegador lo pondrá automáticamente con el boundary correcto
         },
-        body: JSON.stringify(cuponData),
+        body: formData,
       });
 
       const data = await response.json();
@@ -475,15 +515,6 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
     } finally {
       setLoading(false);
     }
-  };
-
-  // Formatear fecha para mostrar
-  const formatDateForDisplay = (date) => {
-    if (!date) return "";
-    const day = date.getDate().toString().padStart(2, "0");
-    const month = (date.getMonth() + 1).toString().padStart(2, "0");
-    const year = date.getFullYear();
-    return `${day}-${month}-${year}`;
   };
 
   return (
@@ -567,50 +598,73 @@ export default function CouponForm({ cupon, onClose, onSuccess }) {
             )}
           </div>
 
+          {/* Sección de carga de imagen */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              URL de la imagen *
+              Imagen del cupón *
             </label>
-            <input
-              type="url"
-              name="imagen_url"
-              value={form.imagen_url}
-              onChange={handleChange}
-              onBlur={handleBlur}
-              className={`w-full border ${errors.imagen_url && touched.imagen_url ? "border-red-500" : "border-gray-200"} rounded-xl px-4 py-2 focus:outline-none focus:ring-2 focus:ring-[#557051]`}
-              placeholder="https://ejemplo.com/imagen.jpg"
-            />
-            {errors.imagen_url && touched.imagen_url && (
+
+            {!imagePreview ? (
+              <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#557051] transition-colors">
+                <input
+                  type="file"
+                  id="image-upload"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                  disabled={uploadingImage}
+                />
+                <label
+                  htmlFor="image-upload"
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  <Upload className="w-12 h-12 text-gray-400" />
+                  <span className="text-gray-600">
+                    Haz clic para seleccionar una imagen
+                  </span>
+                  <span className="text-gray-400 text-sm">
+                    Formatos permitidos: JPG, PNG, GIF, WebP (Máx. 10MB)
+                  </span>
+                </label>
+              </div>
+            ) : (
+              <div className="border border-gray-200 rounded-xl p-4">
+                <div className="relative">
+                  <img
+                    src={imagePreview}
+                    alt="Vista previa"
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleClearImage}
+                    className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+                <button
+                  type="button"
+                  onClick={() =>
+                    document.getElementById("image-upload")?.click()
+                  }
+                  className="mt-3 w-full px-4 py-2 border border-[#557051] text-[#557051] rounded-lg hover:bg-[#557051] hover:text-white transition"
+                >
+                  Cambiar imagen
+                </button>
+                <input
+                  type="file"
+                  id="image-upload"
+                  accept="image/*"
+                  onChange={handleFileSelect}
+                  className="hidden"
+                />
+              </div>
+            )}
+
+            {errors.imagen_url && (
               <p className="text-red-500 text-xs mt-1">{errors.imagen_url}</p>
             )}
-            <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-              <svg
-                className="w-4 h-4 text-gray-400 flex-shrink-0"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span>
-                Para generar el enlace de tu imagen se recomienda iniciar sesion
-                en{" "}
-                <a
-                  href="https://imgbb.com"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-[#557051] hover:text-[#3a4d36] underline font-medium transition-colors"
-                >
-                  imgbb.com
-                </a>{" "}
-                para continuar con el proceso de creación o modificación.
-              </span>
-            </p>
           </div>
 
           <div>

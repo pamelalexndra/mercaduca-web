@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from "react";
+import { Upload, X, Loader2 } from "lucide-react";
 import useCategories from "../hooks/useCategories";
 import { useEmprendimiento } from "../hooks/useEmprendimiento";
 import ConfirmationDialog from "./ConfirmationDialog";
 import { API_BASE_URL } from "../utils/api";
+import {
+  createEntrepreneurshipService,
+  updateEntrepreneurshipService,
+} from "../services/entrepreneurship.service";
 
 export default function EntrepreneurshipForm({
   visible,
@@ -13,17 +18,21 @@ export default function EntrepreneurshipForm({
   errorMessage = "",
   onDeleteSuccess,
   isAdminMode = false,
+  userId: propUserId,
+  authToken,
 }) {
   const [formData, setFormData] = useState({
     nombre: "",
     descripcion: "",
-    imagen_url: "",
     instagram: "",
     id_categoria: "",
   });
 
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [error, setError] = useState("");
   const [showConfirm, setShowConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const { categories } = useCategories();
   const { removeEntrepreneurship, loadingDelete, errorDelete } =
@@ -34,13 +43,15 @@ export default function EntrepreneurshipForm({
       setFormData({
         nombre: initialData.nombre || "",
         descripcion: initialData.descripcion || "",
-        imagen_url: initialData.imagen_url || initialData.Imagen_URL || "",
         instagram: initialData.instagram || initialData.Instagram || "",
         id_categoria:
           initialData.id_categoria ||
           initialData.emprendimiento_id_categoria ||
           "",
       });
+      if (initialData.imagen_url || initialData.Imagen_URL) {
+        setImagePreview(initialData.imagen_url || initialData.Imagen_URL);
+      }
     }
     setError("");
   }, [initialData]);
@@ -49,8 +60,12 @@ export default function EntrepreneurshipForm({
     if (!visible) {
       setShowConfirm(false);
       setError("");
+      setSelectedImage(null);
+      if (!initialData?.imagen_url && !initialData?.Imagen_URL) {
+        setImagePreview(null);
+      }
     }
-  }, [visible]);
+  }, [visible, initialData]);
 
   useEffect(() => {
     if (errorMessage) {
@@ -63,6 +78,31 @@ export default function EntrepreneurshipForm({
       setError(errorDelete);
     }
   }, [errorDelete]);
+
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Por favor, selecciona un archivo de imagen válido");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("La imagen no puede superar los 10MB");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    setSelectedImage(file);
+    setError("");
+  };
+
+  const handleClearImage = () => {
+    setImagePreview(null);
+    setSelectedImage(null);
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -83,8 +123,27 @@ export default function EntrepreneurshipForm({
       return false;
     }
 
+    if (
+      !selectedImage &&
+      !imagePreview &&
+      !initialData?.imagen_url &&
+      !initialData?.Imagen_URL
+    ) {
+      setError("La imagen es obligatoria");
+      return false;
+    }
+
     setError("");
     return true;
+  };
+
+  const getUserId = () => {
+    if (propUserId) return propUserId;
+    const storedUserId = localStorage.getItem("userId");
+    if (storedUserId) return storedUserId;
+    if (initialData?.id_usuario) return initialData.id_usuario;
+    if (initialData?.userId) return initialData.userId;
+    return null;
   };
 
   const handleSubmit = async (e) => {
@@ -94,13 +153,27 @@ export default function EntrepreneurshipForm({
       return;
     }
 
+    setIsLoading(true);
+
     try {
-      const success = await onSubmit?.(formData);
+      // Crear un objeto con los datos del formulario incluyendo la imagen
+      const submissionData = {
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        instagram: formData.instagram,
+        id_categoria: formData.id_categoria,
+        imagen: selectedImage, // Incluir la imagen si existe
+      };
+
+      // Llamar al onSubmit con los datos y el authToken
+      const success = await onSubmit?.(submissionData, authToken);
       if (success) {
         onClose?.();
       }
     } catch (err) {
       setError(err.message || "Error al procesar la solicitud");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -113,21 +186,19 @@ export default function EntrepreneurshipForm({
 
     const idToDelete =
       initialData.id_emprendimiento || initialData.Id_Emprendimiento;
-
     if (!idToDelete) return;
 
-    const token = localStorage.getItem(
-      isAdminMode ? "adminOriginalToken" : "token",
-    );
+    // Usar el token que viene por prop
+    const token =
+      authToken ||
+      localStorage.getItem(isAdminMode ? "adminOriginalToken" : "token");
 
     try {
       const response = await fetch(
         `${API_BASE_URL}/entrepreneurship/${idToDelete}`,
         {
           method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: { Authorization: `Bearer ${token}` },
         },
       );
 
@@ -136,10 +207,12 @@ export default function EntrepreneurshipForm({
         throw new Error(error.error || "Error al eliminar el emprendimiento");
       }
 
+      // Limpiar caché SOLO si no estamos en modo admin
       const EMPRENDIMIENTO_CACHE_KEY = "emprendimientoCache";
-      const userId = localStorage.getItem("userId") || initialData.id_usuario;
+      const userId =
+        propUserId || localStorage.getItem("userId") || initialData.id_usuario;
 
-      if (userId) {
+      if (userId && !isAdminMode) {
         try {
           const cache = JSON.parse(
             localStorage.getItem(EMPRENDIMIENTO_CACHE_KEY) || "{}",
@@ -181,6 +254,7 @@ export default function EntrepreneurshipForm({
   const isEditing = !!(
     initialData?.id_emprendimiento || initialData?.Id_Emprendimiento
   );
+  const isLoadingState = loading || isLoading;
 
   return (
     <>
@@ -205,12 +279,6 @@ export default function EntrepreneurshipForm({
               Completa la información de tu emprendimiento para comenzar a
               compartir tus productos.
             </p>
-
-            {error && (
-              <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md mb-4">
-                {error}
-              </div>
-            )}
 
             <form onSubmit={handleSubmit} className="space-y-5">
               <div className="space-y-1">
@@ -267,43 +335,64 @@ export default function EntrepreneurshipForm({
 
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-gray-800">
-                  Imagen de perfil (URL)
+                  Imagen de perfil *
                 </label>
-                <input
-                  type="url"
-                  name="imagen_url"
-                  value={formData.imagen_url}
-                  onChange={handleChange}
-                  className={inputClass}
-                  placeholder="https://..."
-                />
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                  <svg
-                    className="w-4 h-4 text-gray-400 flex-shrink-0"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                {!imagePreview ? (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#557051] transition-colors">
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
                     />
-                  </svg>
-                  <span>
-                    Para generar el enlace de tu imagen se recomienda iniciar sesion en{" "}
-                    <a
-                      href="https://imgbb.com"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-[#557051] hover:text-[#3a4d36] underline font-medium transition-colors"
+                    <label
+                      htmlFor="image-upload"
+                      className="cursor-pointer flex flex-col items-center gap-2"
                     >
-                      imgbb.com
-                    </a>{" "}
-                    para continuar con el proceso de creación o modificación.
-                  </span>
-                </p>
+                      <Upload className="w-12 h-12 text-gray-400" />
+                      <span className="text-gray-600">
+                        Haz clic para seleccionar una imagen
+                      </span>
+                      <span className="text-gray-400 text-sm">
+                        Formatos permitidos: JPG, PNG, GIF, WebP (Máx. 10MB)
+                      </span>
+                    </label>
+                  </div>
+                ) : (
+                  <div className="border border-gray-200 rounded-xl p-4">
+                    <div className="relative">
+                      <img
+                        src={imagePreview}
+                        alt="Vista previa"
+                        className="w-full h-48 object-cover rounded-lg"
+                      />
+                      <button
+                        type="button"
+                        onClick={handleClearImage}
+                        className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
+                      >
+                        <X size={16} />
+                      </button>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        document.getElementById("image-upload")?.click()
+                      }
+                      className="mt-3 w-full px-4 py-2 border border-[#557051] text-[#557051] rounded-lg hover:bg-[#557051] hover:text-white transition"
+                    >
+                      Cambiar imagen
+                    </button>
+                    <input
+                      type="file"
+                      id="image-upload"
+                      accept="image/*"
+                      onChange={handleFileSelect}
+                      className="hidden"
+                    />
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -320,12 +409,18 @@ export default function EntrepreneurshipForm({
                 />
               </div>
 
+              {error && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
+                  {error}
+                </div>
+              )}
+
               <div className="flex justify-end gap-3 pt-2">
                 {isEditing && (
                   <button
                     type="button"
                     onClick={handleDeleteClick}
-                    disabled={loading || loadingDelete}
+                    disabled={isLoadingState || loadingDelete}
                     className="flex-1 px-4 py-3 rounded-xl border border-red-200 bg-red-50 text-red-600 hover:bg-red-100 text-sm font-medium transition disabled:opacity-50"
                   >
                     {loadingDelete
@@ -333,13 +428,19 @@ export default function EntrepreneurshipForm({
                       : "Eliminar emprendimiento"}
                   </button>
                 )}
-
                 <button
                   type="submit"
-                  disabled={loading || loadingDelete || !isFormValid()}
-                  className="flex-1 px-4 py-3 rounded-xl bg-[#557051] text-white hover:bg-[#445a3f] text-sm font-medium transition disabled:opacity-60 disabled:cursor-not-allowed"
+                  disabled={isLoadingState || loadingDelete || !isFormValid()}
+                  className="flex-1 px-4 py-3 rounded-xl bg-[#557051] text-white hover:bg-[#445a3f] text-sm font-medium transition disabled:opacity-60 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
-                  {loading ? "Guardando..." : "Guardar cambios"}
+                  {isLoadingState ? (
+                    <>
+                      <Loader2 className="animate-spin h-4 w-4" />
+                      Guardando...
+                    </>
+                  ) : (
+                    "Guardar cambios"
+                  )}
                 </button>
               </div>
             </form>

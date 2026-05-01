@@ -1,4 +1,3 @@
-// src/components/EditProfile.jsx
 import React, { useState, useEffect, useRef } from "react";
 import { X } from "lucide-react";
 import { useProfile } from "../hooks/useProfile";
@@ -16,6 +15,8 @@ export default function EditProfile({
   loading = false,
   onDeleteSuccess,
   onSuccess,
+  isAdminMode = false,
+  authToken,
 }) {
   const [formData, setFormData] = useState({
     nombres: "",
@@ -30,10 +31,10 @@ export default function EditProfile({
     boxful_address_id: "",
     boxful_allows_card_payment: true,
     boxful_allows_cod_payment: false,
+    boxful_courier_id: "",
   });
 
   const [boxfulAddresses, setBoxfulAddresses] = useState([]);
-
   const [isValidatingBoxful, setIsValidatingBoxful] = useState(false);
   const [boxfulConnectionStatus, setBoxfulConnectionStatus] = useState("idle");
   const [boxfulCouriers, setBoxfulCouriers] = useState([]);
@@ -51,7 +52,6 @@ export default function EditProfile({
   const inputClass =
     "w-full bg-gray-50 text-zinc-800 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#557051] focus:bg-white border border-gray-200 transition-all";
 
-  // Inicializar form cuando abre
   useEffect(() => {
     if (visible) {
       if (!initializedRef.current) {
@@ -141,11 +141,9 @@ export default function EditProfile({
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-
     if (name === "password" || name === "confirmPassword") {
       setLocalError("");
     }
-
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -218,7 +216,9 @@ export default function EditProfile({
       setLocalError("No se pudo identificar el usuario.");
       return;
     }
-    const success = await removeProfile(userId);
+    // Usar el token que viene por prop (authToken) que es el del admin en modo admin
+    const token = authToken || localStorage.getItem("token");
+    const success = await removeProfile(userId, token);
     if (success) onDeleteSuccess?.();
   };
 
@@ -232,7 +232,6 @@ export default function EditProfile({
         setLocalError("Las contraseñas no coinciden.");
         return;
       }
-
       if (formData.password && passwordStrength.score < 3) {
         setLocalError(
           "La contraseña es demasiado débil. Usa al menos 8 caracteres, mayúsculas, números y símbolos.",
@@ -249,7 +248,6 @@ export default function EditProfile({
     }
 
     const available = await handleUsernameCheck(formData.username);
-
     if (available === false) {
       setLocalError("El nombre de usuario no está disponible.");
       return;
@@ -265,7 +263,6 @@ export default function EditProfile({
         setLocalError("El nombre de usuario no está disponible.");
         return;
       }
-
       if (usernameAvailable === null) {
         await handleUsernameCheck(formData.username);
         if (usernameAvailable === false) {
@@ -281,15 +278,11 @@ export default function EditProfile({
       ...formData,
       ...(formData.password ? { nuevaContraseña: formData.password } : {}),
     };
-
-    if (!dataToSend.boxful_password) {
-      delete dataToSend.boxful_password;
-    }
-
     delete dataToSend.password;
     delete dataToSend.confirmPassword;
 
-    const success = await onSave?.(dataToSend);
+    // Pasar explícitamente el authToken (token del admin en modo admin)
+    const success = await onSave?.(dataToSend, authToken);
     if (success) {
       onSuccess?.("Perfil actualizado correctamente");
     }
@@ -343,7 +336,6 @@ export default function EditProfile({
               )}
 
             <form onSubmit={handleSubmit} className="space-y-4">
-              {/* Nombres */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Nombres *
@@ -358,7 +350,6 @@ export default function EditProfile({
                 />
               </div>
 
-              {/* Apellidos */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Apellidos *
@@ -373,7 +364,6 @@ export default function EditProfile({
                 />
               </div>
 
-              {/* Correo */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Correo electrónico *
@@ -388,7 +378,6 @@ export default function EditProfile({
                 />
               </div>
 
-              {/* Teléfono */}
               <div className="space-y-1">
                 <label className="block text-sm font-semibold text-zinc-700 mb-2">
                   Teléfono
@@ -418,7 +407,6 @@ export default function EditProfile({
                 errors={credentialsErrors}
               />
 
-              {/* ── Sección de envíos (Boxful) ── */}
               <div className="border-t border-zinc-100 pt-5 space-y-4">
                 <div>
                   <p className="text-sm font-semibold text-zinc-700">
@@ -430,7 +418,6 @@ export default function EditProfile({
                   </p>
                 </div>
 
-                {/* Credenciales de Boxful */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-zinc-500">
@@ -445,7 +432,6 @@ export default function EditProfile({
                       className={inputClass}
                     />
                   </div>
-
                   <div className="space-y-1">
                     <label className="block text-xs font-medium text-zinc-500">
                       Contraseña de Boxful
@@ -472,7 +458,6 @@ export default function EditProfile({
                     : "Validar y obtener direcciones"}
                 </button>
 
-                {/* Selector de direcciones de Boxful */}
                 {boxfulAddresses && boxfulAddresses.length > 0 && (
                   <div className="space-y-1 pt-2 animate-fade-in">
                     <label className="block text-xs font-semibold text-[#557051]">
@@ -495,7 +480,6 @@ export default function EditProfile({
                         const nombreCiudad =
                           addr.city?.name ||
                           (typeof addr.city === "string" ? addr.city : "");
-
                         return (
                           <option key={addr.id} value={addr.id}>
                             {textoDireccion}{" "}
@@ -507,7 +491,6 @@ export default function EditProfile({
                   </div>
                 )}
 
-                {/* ✨ NUEVO: Selector de Paquetería (Couriers) */}
                 {boxfulCouriers && boxfulCouriers.length > 0 && (
                   <div className="space-y-1 pt-2 animate-fade-in border-t border-zinc-50 mt-2">
                     <label className="block text-xs font-semibold text-[#557051]">
@@ -533,13 +516,11 @@ export default function EditProfile({
                   </div>
                 )}
 
-                {/* Toggles de Métodos de Pago */}
                 <div className="space-y-3 py-3 border-t border-zinc-50 mt-2">
                   <p className="text-xs font-semibold text-[#557051]">
                     Métodos de pago en el envío
                   </p>
 
-                  {/* Pago con Tarjeta */}
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-medium text-zinc-600">
@@ -566,7 +547,6 @@ export default function EditProfile({
                     </button>
                   </div>
 
-                  {/* ✨ NUEVO: Pago Contra Entrega (COD) */}
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs font-medium text-zinc-600">
@@ -594,7 +574,6 @@ export default function EditProfile({
                   </div>
                 </div>
 
-                {/* Indicador de estado */}
                 {formData.boxful_address_id ? (
                   <p className="text-xs text-[#557051] flex items-center gap-1">
                     <span>✓</span> Dirección de recolección vinculada
@@ -607,7 +586,6 @@ export default function EditProfile({
                 )}
               </div>
 
-              {/* Botones */}
               <div className="flex gap-3 pt-2">
                 <button
                   type="button"
@@ -617,7 +595,6 @@ export default function EditProfile({
                 >
                   {loadingDelete ? "Eliminando..." : "Eliminar perfil"}
                 </button>
-
                 <button
                   type="submit"
                   disabled={loading || loadingDelete}

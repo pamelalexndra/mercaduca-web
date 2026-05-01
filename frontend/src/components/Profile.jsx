@@ -120,7 +120,6 @@ const normalizeProducto = (producto) => ({
   categoria: producto?.categoria ?? producto?.Categoria,
 });
 
-// Función para enriquecer un producto con sus datos completos
 const enrichProduct = async (producto) => {
   if (
     producto.id_categoria !== undefined &&
@@ -223,7 +222,6 @@ const normalizeEmprendimiento = (data = {}) => ({
     data.idCategoria ||
     data.emprendimiento_id_categoria ||
     null,
-
   boxful_email: data.boxful_email || "",
   boxful_address_id: data.boxful_address_id || null,
   boxful_allows_card_payment: data.boxful_allows_card_payment ?? true,
@@ -263,6 +261,9 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
   const [emprendimiento, setEmprendimiento] = useState({});
   const [productos, setProductos] = useState([]);
+
+  // Estado para los datos del perfil del usuario que se está viendo (vendedor o el propio usuario)
+  const [viewingProfileData, setViewingProfileData] = useState(null);
 
   const [currentUser, setCurrentUser] = useState(() => {
     if (user) return user;
@@ -308,7 +309,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   }, [isAdminMode]);
 
-  // FETCH CUPONES
   useEffect(() => {
     const fetchCupones = async () => {
       try {
@@ -316,10 +316,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           `${API_BASE_URL}/cupones?solo_disponibles=true`,
         );
         if (!res.ok) return;
-
         const data = await res.json();
         const cupones = data.cupones || [];
-
         setCuponesProducto(cupones.filter((c) => c.id_producto));
         setCuponesCategoria(
           cupones.filter((c) => c.id_categoria && !c.id_producto),
@@ -334,7 +332,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         console.error("Error cargando cupones:", err);
       }
     };
-
     fetchCupones();
   }, []);
 
@@ -368,14 +365,14 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
       try {
         const headers = isAdminMode
-          ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          ? {
+              Authorization: `Bearer ${localStorage.getItem("adminOriginalToken") || localStorage.getItem("token")}`,
+            }
           : getAuthHeaders(currentUserRef.current);
 
         const response = await fetch(
           `${API_BASE_URL}/products?emprendimiento_id=${emprendimientoId}`,
-          {
-            headers: headers,
-          },
+          { headers },
         );
 
         if (response.status === 404 || response.status === 204) {
@@ -391,10 +388,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         let productosNormalizados = (data.productos || data.data || []).map(
           normalizeProducto,
         );
-
-        // Enriquecer productos para obtener id_categoria
         productosNormalizados = await enrichProducts(productosNormalizados);
-
         setProductos(productosNormalizados);
         return productosNormalizados;
       } catch (fetchError) {
@@ -414,14 +408,14 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
       try {
         const headers = isAdminMode
-          ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          ? {
+              Authorization: `Bearer ${localStorage.getItem("adminOriginalToken") || localStorage.getItem("token")}`,
+            }
           : getAuthHeaders(currentUserRef.current);
 
         const response = await fetch(
           `${API_BASE_URL}/entrepreneurship/${emprendimientoId}`,
-          {
-            headers: headers,
-          },
+          { headers },
         );
 
         if (!response.ok) {
@@ -452,18 +446,33 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     setLoading(true);
 
     try {
-      const headers = isAdminMode
-        ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
-        : getAuthHeaders(currentUserRef.current);
+      let authToken;
+      if (isAdminMode) {
+        authToken =
+          localStorage.getItem("adminOriginalToken") ||
+          localStorage.getItem("token");
+      } else {
+        authToken = getStoredToken(currentUserRef.current);
+      }
+
+      const headers = authToken ? { Authorization: `Bearer ${authToken}` } : {};
 
       const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
-        headers: headers,
+        headers,
       });
-
       if (!response.ok) throw new Error("No se pudo actualizar los datos");
 
       const payload = await response.json();
       const profileData = payload.profile || payload;
+
+      // Guardar los datos del perfil del usuario que estamos viendo
+      setViewingProfileData({
+        nombres: profileData.nombres || "",
+        apellidos: profileData.apellidos || "",
+        correo: profileData.correo || "",
+        telefono: profileData.telefono || "",
+        username: profileData.username || "",
+      });
 
       let emprendimientoId = null;
 
@@ -488,6 +497,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         await fetchProductos(emprendimientoId);
       }
 
+      // Solo actualizar localStorage si NO estamos en modo admin
       if (!isAdminMode) {
         const updatedUser = {
           ...currentUserRef.current,
@@ -511,7 +521,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const resetEntrepreneurshipData = useCallback(() => {
     setEmprendimiento({});
     setProductos([]);
-
     const userId = targetUserId;
     if (userId) {
       const cache = readCachedEmprendimientos();
@@ -530,7 +539,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       try {
         const storedUser =
           user || JSON.parse(localStorage.getItem("user") || "null");
-
         const userId = targetUserId;
 
         if (!userId) {
@@ -540,11 +548,13 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         }
 
         const headers = isAdminMode
-          ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+          ? {
+              Authorization: `Bearer ${localStorage.getItem("adminOriginalToken") || localStorage.getItem("token")}`,
+            }
           : getAuthHeaders(storedUser);
 
         const response = await fetch(`${API_BASE_URL}/user/profile/${userId}`, {
-          headers: headers,
+          headers,
         });
 
         if (!response.ok) {
@@ -559,13 +569,21 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         const payload = await response.json();
         const profileData = payload.profile || payload;
 
+        // Guardar los datos del perfil
+        setViewingProfileData({
+          nombres: profileData.nombres || "",
+          apellidos: profileData.apellidos || "",
+          correo: profileData.correo || "",
+          telefono: profileData.telefono || "",
+          username: profileData.username || "",
+        });
+
         if (profileData?.emprendimiento) {
           const normalized = normalizeEmprendimiento(
             profileData.emprendimiento,
           );
           setEmprendimiento(normalized);
           saveCachedEmprendimiento(userId, normalized);
-
           if (normalized.id_emprendimiento) {
             await fetchProductos(normalized.id_emprendimiento);
           }
@@ -647,7 +665,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const handleSuccessClose = () => {
     setShowSuccessDialog(false);
     setSuccessMessage("");
-
     if (successMessage.includes("Perfil eliminado")) {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
@@ -656,8 +673,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   };
 
-  const handleSubmit = async (data) => {
-    if (!emprendimiento?.id_emprendimiento) {
+  const handleSubmit = async (result, isEditing) => {
+    if (!emprendimiento?.id_emprendimiento && !isEditing) {
       setError("Debes tener un emprendimiento para publicar productos.");
       return false;
     }
@@ -667,57 +684,24 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       return false;
     }
 
-    const payload = {
-      nombre: data.nombre?.trim(),
-      descripcion: data.descripcion?.trim() || "",
-      imagen_url: data.imagen_url?.trim() || productoEdit?.imagen || "",
-      precio_dolares: parseFloat(data.precio_dolares),
-      existencias: parseInt(data.existencias ?? "0", 10),
-      id_categoria: productoEdit?.id_categoria || emprendimiento?.id_categoria,
-      id_emprendimiento: emprendimiento.id_emprendimiento,
-    };
-
     try {
       setError("");
-
-      const endpoint = productoEdit?.id
-        ? `${API_BASE_URL}/products/${productoEdit.id}`
-        : `${API_BASE_URL}/products`;
-
-      const response = await fetch(endpoint, {
-        method: productoEdit?.id ? "PUT" : "POST",
-        headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(currentUser),
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "No se pudo guardar el producto");
-      }
-
       const savedProduct = normalizeProducto(
         result.producto || result.product || result,
       );
-
       setProductos((prev) => {
-        if (productoEdit?.id) {
-          return prev.map((p) => (p.id === productoEdit.id ? savedProduct : p));
+        if (isEditing) {
+          return prev.map((p) => (p.id === savedProduct.id ? savedProduct : p));
         }
         return [...prev, savedProduct];
       });
-
       setSuccessMessage(
-        productoEdit
+        isEditing
           ? "Producto actualizado correctamente"
           : "Producto creado correctamente",
       );
       setShowSuccessDialog(true);
       closeProductForm();
-
       await refreshData();
       return true;
     } catch (err) {
@@ -727,9 +711,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   };
 
-  const handleEliminarProducto = async (producto) => {
+  const handleEliminarProducto = async (producto, adminToken) => {
     if (!producto?.id) return false;
-
     if (isAdminMode) {
       setError("Los administradores no pueden eliminar productos.");
       return false;
@@ -737,22 +720,19 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
 
     try {
       setError("");
+      const token = adminToken || getAuthToken();
       const response = await fetch(`${API_BASE_URL}/products/${producto.id}`, {
         method: "DELETE",
-        headers: { ...getAuthHeaders(currentUser) },
+        headers: { Authorization: `Bearer ${token}` },
       });
-
       const result = await response.json();
-
       if (!response.ok) {
         throw new Error(result.error || "No se pudo eliminar el producto");
       }
-
       setProductos((prev) => prev.filter((p) => p.id !== producto.id));
       setSuccessMessage(`Producto eliminado correctamente`);
       setShowSuccessDialog(true);
       closeProductForm();
-
       await refreshData();
       return true;
     } catch (err) {
@@ -762,40 +742,44 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   };
 
-  const handleSaveEntrepreneurship = async (data) => {
-    if (!data?.nombre?.trim() || !data?.id_categoria) {
-      setError(
-        !data?.nombre?.trim()
-          ? "El nombre del emprendimiento es obligatorio."
-          : "Selecciona una categoría para tu emprendimiento.",
-      );
-      return false;
-    }
-
-    const userId = targetUserId;
-
+  const handleSaveEntrepreneurship = async (data, adminToken) => {
     try {
       setSavingEntrepreneurship(true);
       setError("");
+
+      const token = adminToken || getAuthToken();
 
       const endpoint = emprendimiento?.id_emprendimiento
         ? `${API_BASE_URL}/entrepreneurship/${emprendimiento.id_emprendimiento}`
         : `${API_BASE_URL}/entrepreneurship`;
 
+      const isEditing = !!emprendimiento?.id_emprendimiento;
+
+      const formDataToSend = new FormData();
+      formDataToSend.append("nombre", data.nombre?.trim() || "");
+      formDataToSend.append("descripcion", data.descripcion?.trim() || "");
+      formDataToSend.append("instagram", data.instagram?.trim() || "");
+      formDataToSend.append("id_categoria", Number(data.id_categoria));
+
+      if (!isEditing) {
+        const userId = targetUserId;
+        if (!userId) {
+          setError("No se encontró el ID de usuario");
+          return false;
+        }
+        formDataToSend.append("id_usuario", userId);
+      }
+
+      if (data.imagen) {
+        formDataToSend.append("imagen", data.imagen);
+      }
+
       const response = await fetch(endpoint, {
-        method: emprendimiento?.id_emprendimiento ? "PUT" : "POST",
+        method: isEditing ? "PUT" : "POST",
         headers: {
-          "Content-Type": "application/json",
-          ...getAuthHeaders(currentUser),
+          Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          nombre: data.nombre?.trim(),
-          descripcion: data.descripcion?.trim() || "",
-          imagen_url: data.imagen_url?.trim() || "",
-          instagram: data.instagram?.trim() || "",
-          id_categoria: Number(data.id_categoria),
-          id_usuario: emprendimiento?.id_emprendimiento ? undefined : userId,
-        }),
+        body: formDataToSend,
       });
 
       const result = await response.json();
@@ -809,9 +793,9 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       );
 
       setEmprendimiento(normalized);
-      saveCachedEmprendimiento(userId, normalized);
+      saveCachedEmprendimiento(targetUserId, normalized);
       setSuccessMessage(
-        emprendimiento?.id_emprendimiento
+        isEditing
           ? "Emprendimiento actualizado correctamente"
           : "Emprendimiento creado correctamente",
       );
@@ -829,7 +813,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     }
   };
 
-  const handleSaveProfile = async (datos) => {
+  const handleSaveProfile = async (datos, token) => {
     const userId = targetUserId;
     if (!userId) {
       setError("No se encontró el usuario para actualizar el perfil.");
@@ -839,7 +823,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     try {
       if (
         datos.nuevaContraseña &&
-        datos.nuevaContraseña !== datos.confirmarContraseña
+        datos.nuevaContraseña !== datos.confirmPassword
       ) {
         setError("Las contraseñas no coinciden.");
         return false;
@@ -848,13 +832,15 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       setSavingProfile(true);
       setError("");
 
+      const authToken = isAdminMode ? token : token || getAuthToken();
+
       const responseUser = await fetch(
         `${API_BASE_URL}/user/profile/${userId}`,
         {
           method: "PUT",
           headers: {
             "Content-Type": "application/json",
-            ...getAuthHeaders(currentUser),
+            Authorization: `Bearer ${authToken}`,
           },
           body: JSON.stringify({
             nombres: datos.nombres?.trim(),
@@ -863,6 +849,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             telefono: datos.telefono?.trim(),
             username:
               datos.username?.trim() ||
+              viewingProfileData?.username ||
               currentUser?.username ||
               currentUser?.profile?.username,
             nuevaContraseña: datos.nuevaContraseña?.trim() || undefined,
@@ -871,7 +858,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
       );
 
       const resultUser = await responseUser.json();
-
       if (!responseUser.ok) {
         throw new Error(
           resultUser.error || "No se pudo actualizar el perfil personal",
@@ -895,12 +881,11 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
               method: "PATCH",
               headers: {
                 "Content-Type": "application/json",
-                ...getAuthHeaders(currentUser),
+                Authorization: `Bearer ${authToken}`,
               },
               body: JSON.stringify(boxfulPayload),
             },
           );
-
           if (!responseEmp.ok) {
             const errorEmp = await responseEmp.json();
             console.error("Error guardando datos de envío:", errorEmp);
@@ -910,10 +895,26 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         }
       }
 
-      setSuccessMessage("Perfil actualizado correctamente");
+      // Actualizar los datos del perfil en el estado
+      setViewingProfileData((prev) => ({
+        ...prev,
+        nombres: datos.nombres?.trim() || prev?.nombres || "",
+        apellidos: datos.apellidos?.trim() || prev?.apellidos || "",
+        correo: datos.correo?.trim() || prev?.correo || "",
+        telefono: datos.telefono?.trim() || prev?.telefono || "",
+        username: datos.username?.trim() || prev?.username || "",
+      }));
+
+      if (!isAdminMode) {
+        setSuccessMessage("Perfil actualizado correctamente");
+      } else {
+        setSuccessMessage(
+          `Perfil de ${datos.username || "vendedor"} actualizado correctamente`,
+        );
+      }
+
       setShowSuccessDialog(true);
       setShowEditProfileModal(false);
-
       await refreshData();
       return true;
     } catch (profileError) {
@@ -957,7 +958,20 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   };
 
   const handleEntrepreneurshipDeleteSuccess = () => {
+    setEmprendimiento({});
+    setProductos([]);
     resetEntrepreneurshipData();
+
+    const updatedUser = {
+      ...currentUser,
+      profile: {
+        ...currentUser?.profile,
+        emprendimiento: null,
+      },
+    };
+    localStorage.setItem("user", JSON.stringify(updatedUser));
+    window.dispatchEvent(new Event("userUpdated"));
+    window.dispatchEvent(new Event("storage"));
     setSuccessMessage("Emprendimiento eliminado correctamente");
     setShowSuccessDialog(true);
     refreshData();
@@ -969,6 +983,17 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
     );
     setShowSuccessDialog(true);
   };
+
+  const getAuthToken = useCallback(() => {
+    if (isAdminMode) {
+      const adminToken = localStorage.getItem("adminOriginalToken");
+      if (adminToken && adminToken !== "undefined" && adminToken !== "null") {
+        return adminToken;
+      }
+    }
+    const token = localStorage.getItem("token");
+    return token && token !== "undefined" && token !== "null" ? token : null;
+  }, [isAdminMode]);
 
   if (loading && !initializedRef.current) {
     return (
@@ -986,6 +1011,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
   const profileImage = emprendimiento?.imagen_url || PROFILE_PLACEHOLDER;
   const emprendimientoNombre =
     emprendimiento?.nombre ||
+    viewingProfileData?.username ||
     currentUser?.profile?.username ||
     "Tu emprendimiento";
   const emprendimientoDescripcion = emprendimiento?.descripcion || "";
@@ -1045,7 +1071,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                 className="w-40 h-40 rounded-full object-cover border"
               />
             </div>
-
             <div className="flex-1">
               <div className="flex items-center gap-5 mb-5">
                 <h1 className="text-xl font-normal text-gray-900">
@@ -1064,7 +1089,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                   {emprendimientoActionLabel}
                 </button>
               </div>
-
               <div className="flex gap-10 mb-5">
                 <div className="flex gap-1">
                   <span className="font-semibold text-gray-900">
@@ -1073,7 +1097,6 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                   <span className="text-gray-900">productos</span>
                 </div>
               </div>
-
               <div className="text-sm space-y-2">
                 {emprendimientoDescripcion && (
                   <p className="text-gray-900 whitespace-pre-wrap">
@@ -1165,11 +1188,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
             <button
               onClick={handleAgregar}
               disabled={!canAddProducts}
-              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${
-                canAddProducts
-                  ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer"
-                  : "bg-gray-300 cursor-not-allowed"
-              }`}
+              className={`absolute right-0 -top-3 h-10 w-10 rounded-full text-white text-2xl font-semibold shadow-md transition-transform ${canAddProducts ? "bg-[#557051] hover:bg-[#445a3f] hover:-translate-y-0.5 cursor-pointer" : "bg-gray-300 cursor-not-allowed"}`}
               aria-label="Agregar producto"
               title={
                 isAdminMode
@@ -1205,11 +1224,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
                 <button
                   onClick={handleAgregar}
                   disabled={!hasEmprendimiento}
-                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${
-                    hasEmprendimiento
-                      ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl"
-                      : "bg-gray-300 cursor-not-allowed shadow-none"
-                  }`}
+                  className={`px-8 py-3 text-white rounded-xl font-semibold text-sm shadow-lg transition-all duration-200 active:scale-95 ${hasEmprendimiento ? "bg-[#557051] hover:bg-[#445a3f] hover:shadow-xl" : "bg-gray-300 cursor-not-allowed shadow-none"}`}
                 >
                   Comparte tu primer producto
                 </button>
@@ -1242,6 +1257,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         onDelete={handleEliminarProducto}
         errorMessage={error}
         isAdminMode={isAdminMode}
+        emprendimientoId={emprendimiento?.id_emprendimiento}
+        authToken={getAuthToken()}
       />
 
       <EditProfile
@@ -1250,7 +1267,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           setShowEditProfileModal(false);
           setError("");
         }}
-        profileData={currentUser?.profile}
+        profileData={viewingProfileData}
         emprendimientoData={emprendimiento}
         onSave={handleSaveProfile}
         errorMessage={error}
@@ -1262,6 +1279,7 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
           setShowEditProfileModal(false);
         }}
         isAdminMode={isAdminMode}
+        authToken={getAuthToken()}
       />
 
       <EntrepreneurshipForm
@@ -1276,6 +1294,8 @@ export default function Profile({ user, onProfileLoaded, disableActions }) {
         errorMessage={error}
         onDeleteSuccess={handleEntrepreneurshipDeleteSuccess}
         isAdminMode={isAdminMode}
+        userId={targetUserId}
+        authToken={getAuthToken()}
       />
 
       <SuccessDialog

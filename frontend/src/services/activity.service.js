@@ -1,32 +1,71 @@
 import { API_BASE_URL } from "../utils/api.js";
 
-const getHeaders = () => ({
-  "Content-Type": "application/json",
-  Authorization: `Bearer ${localStorage.getItem("token")}`,
-});
+const getToken = () => localStorage.getItem("token");
 
 export const activityService = {
   getAll: async () => {
-    const res = await fetch(`${API_BASE_URL}/activities`);
-    if (!res.ok) throw new Error("Error al obtener actividades");
-    return res.json();
+    const response = await fetch(`${API_BASE_URL}/activities`);
+    if (!response.ok) {
+      throw new Error("Error al obtener actividades");
+    }
+    return response.json();
   },
 
-  create: async (data) => {
-    const res = await fetch(`${API_BASE_URL}/activities`, {
+  getById: async (id) => {
+    const response = await fetch(`${API_BASE_URL}/activities/${id}`);
+    if (!response.ok) {
+      throw new Error("Error al obtener actividad");
+    }
+    return response.json();
+  },
+
+  create: async (formData) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/activities`, {
       method: "POST",
-      headers: getHeaders(),
-      body: JSON.stringify(data),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
     });
-    return res.json();
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Error al crear actividad");
+    }
+    return data;
+  },
+
+  update: async (id, formData) => {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Error al actualizar actividad");
+    }
+    return data;
   },
 
   delete: async (id) => {
-    const res = await fetch(`${API_BASE_URL}/activities/${id}`, {
+    const token = getToken();
+    const response = await fetch(`${API_BASE_URL}/activities/${id}`, {
       method: "DELETE",
-      headers: getHeaders(),
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
-    if (!res.ok) throw new Error("Error al eliminar la actividad");
-    return res.json();
+
+    const data = await response.json();
+    if (!response.ok) {
+      throw new Error(data.error || "Error al eliminar actividad");
+    }
+    return data;
   },
 };

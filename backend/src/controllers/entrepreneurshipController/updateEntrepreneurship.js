@@ -1,4 +1,6 @@
 import pool from "../../database/connection.js";
+import { uploadToCloudinary } from "../../utils/helpers/uploadToCloudinary.js";
+import { deleteImageByUrl } from "../../utils/helpers/deleteFromCloudinary.js";
 
 export const updateEntrepreneurship = async (req, res) => {
   try {
@@ -6,7 +8,6 @@ export const updateEntrepreneurship = async (req, res) => {
     const {
       nombre,
       descripcion,
-      imagen_url,
       instagram,
       disponible,
       id_categoria,
@@ -23,12 +24,29 @@ export const updateEntrepreneurship = async (req, res) => {
     }
 
     const emprendimientoCheck = await pool.query(
-      "SELECT id_emprendimiento FROM Emprendimiento WHERE id_emprendimiento = $1",
-      [parseInt(id)]
+      "SELECT id_emprendimiento, Imagen_URL FROM Emprendimiento WHERE id_emprendimiento = $1",
+      [parseInt(id)],
     );
 
     if (emprendimientoCheck.rows.length === 0) {
       return res.status(404).json({ error: "Emprendimiento no encontrado" });
+    }
+
+    let imagen_url = emprendimientoCheck.rows[0].imagen_url;
+
+    if (req.file) {
+      if (imagen_url) {
+        try {
+          await deleteImageByUrl(imagen_url);
+        } catch (error) {
+          // No fallamos la actualización
+        }
+      }
+      const result = await uploadToCloudinary(
+        req.file.buffer,
+        "emprendimientos",
+      );
+      imagen_url = result.secure_url;
     }
 
     const result = await pool.query(
@@ -51,7 +69,7 @@ export const updateEntrepreneurship = async (req, res) => {
       [
         nombre?.trim(),
         descripcion?.trim() || "",
-        imagen_url?.trim() || "",
+        imagen_url,
         instagram?.trim() || "",
         disponible !== undefined ? disponible : true,
         id_categoria ? parseInt(id_categoria) : null,
@@ -62,7 +80,7 @@ export const updateEntrepreneurship = async (req, res) => {
         boxful_allows_card_payment ?? true,
         boxful_courier_id?.trim() || null,
         parseInt(id),
-      ]
+      ],
     );
 
     res.json({
@@ -71,9 +89,12 @@ export const updateEntrepreneurship = async (req, res) => {
     });
   } catch (error) {
     console.error("Error actualizando emprendimiento:", error);
-    if (error.code === "23503") return res.status(400).json({ error: "Categoría no válida" });
-    if (error.code === "23505") return res.status(400).json({ error: "Ya existe un emprendimiento con ese nombre" });
-    console.error("ERROR: ", error);
+    if (error.code === "23503")
+      return res.status(400).json({ error: "Categoría no válida" });
+    if (error.code === "23505")
+      return res
+        .status(400)
+        .json({ error: "Ya existe un emprendimiento con ese nombre" });
     res.status(500).json({ error: "Error interno del servidor" });
   }
 };

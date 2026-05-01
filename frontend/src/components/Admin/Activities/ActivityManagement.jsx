@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Trash2, PlusCircle } from "lucide-react";
+import { Trash2, PlusCircle, Upload, X, Loader2 } from "lucide-react";
 import SuccessDialog from "../../SuccessDialog";
 import ConfirmationDialog from "../../ConfirmationDialog";
 import { activityService } from "../../../services/activity.service";
@@ -8,20 +8,22 @@ export default function ActivityManagement() {
   const [actividades, setActividades] = useState([]);
   const [nombre, setNombre] = useState("");
   const [descripcion, setDescripcion] = useState("");
-  const [imagenUrl, setImagenUrl] = useState("");
-
+  const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
+  const [editingId, setEditingId] = useState(null);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [actividadAEliminar, setActividadAEliminar] = useState(null);
   const [successMessage, setSuccessMessage] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   useEffect(() => {
     const load = async () => {
       try {
         const data = await activityService.getAll();
-        setActividades(data);
+        setActividades(Array.isArray(data) ? data : []);
       } catch (err) {
         setError("Error al cargar las actividades");
       }
@@ -29,39 +31,95 @@ export default function ActivityManagement() {
     load();
   }, []);
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setError("Por favor, selecciona un archivo de imagen válido");
+      return;
+    }
+
+    if (file.size > 10 * 1024 * 1024) {
+      setError("La imagen no puede superar los 10MB");
+      return;
+    }
+
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+    setSelectedImage(file);
+    setError("");
+  };
+
+  const handleClearImage = () => {
+    setImagePreview(null);
+    setSelectedImage(null);
+  };
+
+  const resetForm = () => {
+    setNombre("");
+    setDescripcion("");
+    setImagePreview(null);
+    setSelectedImage(null);
+    setEditingId(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setLoading(true);
 
     try {
-      const datosParaEnviar = {
-        nombre: nombre,
-        descripcion: descripcion,
-        imagen_url: imagenUrl,
-      };
+      const formData = new FormData();
+      formData.append("nombre", nombre);
+      formData.append("descripcion", descripcion);
 
-      const res = await activityService.create(datosParaEnviar);
+      if (selectedImage) {
+        formData.append("imagen", selectedImage);
+      } else if (!imagePreview && !editingId) {
+        setError("La imagen es obligatoria");
+        setLoading(false);
+        return;
+      }
+
+      let res;
+      if (editingId) {
+        res = await activityService.update(editingId, formData);
+      } else {
+        res = await activityService.create(formData);
+      }
 
       if (res && res.data) {
-        setActividades((prev) => [res.data, ...prev]);
-        setSuccessMessage("Actividad publicada con éxito.");
+        const updatedActivities = await activityService.getAll();
+        setActividades(
+          Array.isArray(updatedActivities) ? updatedActivities : [],
+        );
+        setSuccessMessage(
+          editingId
+            ? "Actividad actualizada con éxito."
+            : "Actividad publicada con éxito.",
+        );
         setShowSuccess(true);
         resetForm();
       } else {
-        setError(res?.message || "Error al crear la actividad");
+        setError(res?.error || "Error al guardar la actividad");
       }
     } catch (err) {
-      setError(err.message || "Error al publicar la actividad");
+      setError(err.message || "Error al guardar la actividad");
     } finally {
       setLoading(false);
     }
   };
 
-  const resetForm = () => {
-    setNombre("");
-    setDescripcion("");
-    setImagenUrl("");
+  const handleEdit = (actividad) => {
+    setEditingId(actividad.id_actividad);
+    setNombre(actividad.nombre);
+    setDescripcion(actividad.descripcion || "");
+    if (actividad.imagen_url) {
+      setImagePreview(actividad.imagen_url);
+    }
+    setSelectedImage(null);
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   const confirmarEliminacion = (actividad) => {
@@ -75,11 +133,8 @@ export default function ActivityManagement() {
     try {
       await activityService.delete(actividadAEliminar.id_actividad);
 
-      setActividades((prevActividades) =>
-        prevActividades.filter(
-          (a) => a.id_actividad !== actividadAEliminar.id_actividad,
-        ),
-      );
+      const updatedActivities = await activityService.getAll();
+      setActividades(Array.isArray(updatedActivities) ? updatedActivities : []);
 
       setSuccessMessage("Actividad eliminada con éxito.");
       setShowSuccess(true);
@@ -101,6 +156,10 @@ export default function ActivityManagement() {
   const handleCancelDelete = () => {
     setShowConfirm(false);
     setActividadAEliminar(null);
+  };
+
+  const handleCancelEdit = () => {
+    resetForm();
   };
 
   return (
@@ -154,7 +213,7 @@ export default function ActivityManagement() {
                         key={act.id_actividad}
                         className="bg-white rounded-3xl shadow-md p-6 border border-gray-100 flex justify-between items-center"
                       >
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-4 flex-1">
                           {act.imagen_url && (
                             <img
                               src={act.imagen_url}
@@ -162,7 +221,7 @@ export default function ActivityManagement() {
                               className="w-16 h-16 rounded-2xl object-cover border border-gray-100"
                             />
                           )}
-                          <div>
+                          <div className="flex-1">
                             <h3 className="font-poppins text-lg font-bold text-gray-800">
                               {act.nombre}
                             </h3>
@@ -171,12 +230,32 @@ export default function ActivityManagement() {
                             </p>
                           </div>
                         </div>
-                        <button
-                          onClick={() => confirmarEliminacion(act)}
-                          className="p-2 rounded-full hover:bg-gray-100 transition-colors"
-                        >
-                          <Trash2 size={20} className="text-red-500" />
-                        </button>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleEdit(act)}
+                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                          >
+                            <svg
+                              className="w-5 h-5 text-[#557051]"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"
+                              />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => confirmarEliminacion(act)}
+                            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+                          >
+                            <Trash2 size={20} className="text-red-500" />
+                          </button>
+                        </div>
                       </div>
                     ),
                 )
@@ -191,8 +270,20 @@ export default function ActivityManagement() {
               className="bg-white rounded-3xl shadow-xl p-8 sticky top-10 border border-gray-50"
             >
               <h2 className="font-loubag text-xl text-[#557051] mb-6 flex items-center gap-2">
-                <PlusCircle size={20} /> Nueva actividad
+                <PlusCircle size={20} />
+                {editingId ? "Editar actividad" : "Nueva actividad"}
               </h2>
+
+              {editingId && (
+                <button
+                  type="button"
+                  onClick={handleCancelEdit}
+                  className="mb-4 text-sm text-gray-500 hover:text-gray-700 flex items-center gap-1"
+                >
+                  <X size={14} /> Cancelar edición
+                </button>
+              )}
+
               <div className="space-y-5">
                 <input
                   type="text"
@@ -202,6 +293,7 @@ export default function ActivityManagement() {
                   placeholder="Nombre del evento"
                   required
                 />
+
                 <textarea
                   value={descripcion}
                   onChange={(e) => setDescripcion(e.target.value)}
@@ -210,45 +302,65 @@ export default function ActivityManagement() {
                   required
                 />
 
+                {/* Sección de carga de imagen */}
                 <div className="space-y-2">
-                  <input
-                    type="text"
-                    value={imagenUrl}
-                    onChange={(e) => setImagenUrl(e.target.value)}
-                    className="w-full bg-[#f4f4f2] rounded-2xl px-4 py-3 text-sm focus:ring-2 focus:ring-[#557051] focus:outline-none"
-                    placeholder="Agregar enlace de imagen"
-                    required
-                  />
-
-                  <div className="bg-[#f4f4f2] border border-blue-100 rounded-xl p-3">
-                    <p className="text-xs text-gray-600 flex items-start gap-2">
-                      <svg
-                        className="w-4 h-4 text-gray-400 flex-shrink-0"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
+                  {!imagePreview ? (
+                    <div className="border-2 border-dashed border-gray-300 rounded-xl p-6 text-center hover:border-[#557051] transition-colors">
+                      <input
+                        type="file"
+                        id="image-upload"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                        disabled={uploadingImage}
+                      />
+                      <label
+                        htmlFor="image-upload"
+                        className="cursor-pointer flex flex-col items-center gap-2"
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                        <Upload className="w-12 h-12 text-gray-400" />
+                        <span className="text-gray-600">
+                          Haz clic para seleccionar una imagen
+                        </span>
+                        <span className="text-gray-400 text-sm">
+                          Formatos permitidos: JPG, PNG, GIF, WebP (Máx. 10MB)
+                        </span>
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="border border-gray-200 rounded-xl p-4">
+                      <div className="relative">
+                        <img
+                          src={imagePreview}
+                          alt="Vista previa"
+                          className="w-full h-48 object-cover rounded-lg"
                         />
-                      </svg>
-                      <span>
-                        Para generar el enlace de tu imagen se recomienda iniciar sesion en{" "}
-                        <a
-                          href="https://imgbb.com"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#557051] hover:text-[#3a4d36] underline font-medium transition-colors"
+                        <button
+                          type="button"
+                          onClick={handleClearImage}
+                          className="absolute top-2 right-2 bg-red-500 text-white p-1 rounded-full hover:bg-red-600 transition"
                         >
-                          imgbb.com
-                        </a>{" "}
-                        para continuar con el proceso de creación.
-                      </span>
-                    </p>
-                  </div>
+                          <X size={16} />
+                        </button>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          document.getElementById("image-upload")?.click()
+                        }
+                        className="mt-3 w-full px-4 py-2 border border-[#557051] text-[#557051] rounded-lg hover:bg-[#557051] hover:text-white transition"
+                      >
+                        Cambiar imagen
+                      </button>
+                      <input
+                        type="file"
+                        id="image-upload"
+                        accept="image/*"
+                        onChange={handleFileSelect}
+                        className="hidden"
+                      />
+                    </div>
+                  )}
                 </div>
 
                 <button
@@ -258,28 +370,11 @@ export default function ActivityManagement() {
                 >
                   {loading ? (
                     <>
-                      <svg
-                        className="animate-spin h-5 w-5 mr-2 text-white"
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                      >
-                        <circle
-                          className="opacity-25"
-                          cx="12"
-                          cy="12"
-                          r="10"
-                          stroke="currentColor"
-                          strokeWidth="4"
-                        ></circle>
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                        />
-                      </svg>
-                      Publicando...
+                      <Loader2 className="animate-spin h-5 w-5 mr-2 text-white" />
+                      {editingId ? "Actualizando..." : "Publicando..."}
                     </>
+                  ) : editingId ? (
+                    "Actualizar actividad"
                   ) : (
                     "Publicar actividad"
                   )}

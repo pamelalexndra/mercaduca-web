@@ -150,46 +150,23 @@ export default function ProductDetailPage() {
 
   const canEdit = esDueno || isAdmin;
 
-  const handleUpdateProduct = async (formData) => {
-    setUpdateError("");
+  // Nueva función handleUpdateProduct que recibe result e isEditing de ProductForm
+  const handleUpdateProduct = async (result, isEditing) => {
+    // result es la respuesta del backend { producto: {...}, message: "..." }
+    // isEditing es un boolean
+
     try {
-      const payload = {
-        ...formData,
-        id_categoria: formData.id_categoria || product.id_categoria,
-        disponible: true,
-      };
+      setUpdateError("");
 
-      const authToken = isAdmin
-        ? token
-        : localStorage.getItem("adminOriginalToken") || token;
-
-      const response = await fetch(`${API_BASE_URL}/products/${product.id}`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${authToken}`,
-        },
-        body: JSON.stringify(payload),
-      });
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || "Error al actualizar el producto");
-      }
-
-      const raw = result.producto;
+      const raw = result.producto || result;
 
       let categoriaNombre = product.categoria || "Sin categoría";
-      const categoriaId = parseInt(
-        formData.id_categoria || product.id_categoria,
-      );
+      const categoriaId = parseInt(raw.id_categoria || product.id_categoria);
 
-      if (Array.isArray(categories)) {
+      if (Array.isArray(categories) && categories.length > 0) {
         const categoriaActualizada = categories.find(
           (cat) => cat.id_categoria === categoriaId,
         );
-
         if (categoriaActualizada) {
           categoriaNombre =
             categoriaActualizada.categoria ||
@@ -204,8 +181,7 @@ export default function ProductDetailPage() {
         descripcion: raw.descripcion || raw.Descripcion,
         imagen: raw.imagen || raw.imagen_url || raw.Imagen_URL,
         precio: raw.precio || raw.precio_dolares || raw.Precio_dolares,
-        id_categoria:
-          raw.id_categoria || formData.id_categoria || product.id_categoria,
+        id_categoria: raw.id_categoria || product.id_categoria,
         categoria: categoriaNombre,
       };
 
@@ -518,6 +494,7 @@ export default function ProductDetailPage() {
         errorMessage={updateError}
         categories={categories}
         isAdminMode={isAdmin}
+        emprendimientoId={product?.id_emprendimiento}
       />
 
       <SuccessDialog

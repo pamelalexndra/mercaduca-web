@@ -5,13 +5,14 @@ import { createActivity } from "../controllers/activitiesController/createActivi
 import { updateActivity } from "../controllers/activitiesController/updateActivity.js";
 import { deleteActivity } from "../controllers/activitiesController/deleteActivity.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
+import upload from "../middlewares/upload.js";
 
 const router = express.Router();
 
 router.get("/", getActivity);
 router.get("/:id", getActivityById);
-router.post("/", verifyToken, createActivity);
-router.put("/:id", verifyToken, updateActivity);
+router.post("/", verifyToken, upload.single("imagen"), createActivity);
+router.put("/:id", verifyToken, upload.single("imagen"), updateActivity);
 router.delete("/:id", verifyToken, deleteActivity);
 
 export default router;

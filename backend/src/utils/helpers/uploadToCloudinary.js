@@ -7,10 +7,10 @@ cloudinary.config({
   api_secret: process.env.CLOUDINARY_SECRET,
 });
 
-export const uploadToCloudinary = (buffer) =>
+export const uploadToCloudinary = (buffer, tipo = "general") =>
   new Promise((resolve, reject) => {
     const stream = cloudinary.uploader.upload_stream(
-      { folder: "mercaduca_cupones" },
+      { folder: `mercaduca_${tipo}` },
       (error, result) => (error ? reject(error) : resolve(result)),
     );
     streamifier.createReadStream(buffer).pipe(stream);

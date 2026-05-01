@@ -13,9 +13,9 @@ export const createCupons = async (req, res) => {
       descuento,
       disponible,
       fecha_limite,
+      imagen_url,
     } = req.body;
 
-    // Validar campos obligatorios
     if (!id_emprendimiento && !id_categoria && !id_producto) {
       return res.status(400).json({
         message:
@@ -38,7 +38,6 @@ export const createCupons = async (req, res) => {
         .json({ message: "La fecha límite es obligatoria." });
     }
 
-    // Validar alcance (solo una opción debe estar presente)
     const alcanceError = validarAlcance(
       id_emprendimiento,
       id_categoria,
@@ -46,29 +45,24 @@ export const createCupons = async (req, res) => {
     );
     if (alcanceError) return res.status(400).json({ message: alcanceError });
 
-    // Procesar imagen si se subió un archivo
-    let imagen_url = null;
+    let imagen_final_url = null;
+
     if (req.file) {
-      const result = await uploadToCloudinary(req.file.buffer);
-      imagen_url = result.secure_url;
-    } else if (req.body.imagen_url) {
-      imagen_url = req.body.imagen_url;
+      const result = await uploadToCloudinary(req.file.buffer, "cupones");
+      imagen_final_url = result.secure_url;
+    } else if (imagen_url) {
+      imagen_final_url = imagen_url;
     } else {
       return res.status(400).json({ message: "La imagen es obligatoria." });
     }
 
-    // Si se seleccionó emprendimiento -> categoría y producto a null
     if (id_emprendimiento) {
       id_categoria = null;
       id_producto = null;
-    }
-    // Si se seleccionó categoría -> emprendimiento y producto a null
-    else if (id_categoria) {
+    } else if (id_categoria) {
       id_emprendimiento = null;
       id_producto = null;
-    }
-    // Si se seleccionó producto -> emprendimiento y categoría a null
-    else if (id_producto) {
+    } else if (id_producto) {
       id_emprendimiento = null;
       id_categoria = null;
     }
@@ -85,7 +79,7 @@ export const createCupons = async (req, res) => {
         id_producto || null,
         nombre,
         descripcion,
-        imagen_url,
+        imagen_final_url,
         descuento,
         disponible !== undefined ? disponible : true,
         fecha_limite,

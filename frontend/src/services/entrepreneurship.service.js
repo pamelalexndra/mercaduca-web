@@ -1,11 +1,54 @@
 const BASE_URL = import.meta.env.VITE_API_URL;
 
+export const createEntrepreneurshipService = async (formData, token) => {
+  try {
+    const response = await fetch(`${BASE_URL}/entrepreneurship`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Error al crear el emprendimiento");
+    }
+
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
+export const updateEntrepreneurshipService = async (id, formData, token) => {
+  try {
+    const response = await fetch(`${BASE_URL}/entrepreneurship/${id}`, {
+      method: "PUT",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Error al actualizar el emprendimiento");
+    }
+
+    return data;
+  } catch (error) {
+    throw error;
+  }
+};
+
 export const deleteEntrepreneurshipService = async (id, token) => {
   try {
     const response = await fetch(`${BASE_URL}/entrepreneurship/${id}`, {
       method: "DELETE",
       headers: {
-        "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
     });
@@ -32,14 +75,14 @@ export const getEntrepreneurshipApplications = async (token) => {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-      }
+      },
     );
 
     const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
-        data.error || "Error al obtener solicitudes de emprendimiento"
+        data.error || "Error al obtener solicitudes de emprendimiento",
       );
     }
 
@@ -52,7 +95,7 @@ export const getEntrepreneurshipApplications = async (token) => {
 export const approveEntrepreneurshipApplication = async (
   id,
   comentario,
-  token
+  token,
 ) => {
   try {
     const response = await fetch(
@@ -64,14 +107,14 @@ export const approveEntrepreneurshipApplication = async (
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ comentario }),
-      }
+      },
     );
 
     const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
-        data.error || "Error al aprobar la solicitud de emprendimiento"
+        data.error || "Error al aprobar la solicitud de emprendimiento",
       );
     }
 
@@ -84,7 +127,7 @@ export const approveEntrepreneurshipApplication = async (
 export const rejectEntrepreneurshipApplication = async (
   id,
   comentario,
-  token
+  token,
 ) => {
   try {
     const response = await fetch(
@@ -96,14 +139,14 @@ export const rejectEntrepreneurshipApplication = async (
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({ comentario }),
-      }
+      },
     );
 
     const data = await response.json();
 
     if (!response.ok) {
       throw new Error(
-        data.error || "Error al rechazar la solicitud de emprendimiento"
+        data.error || "Error al rechazar la solicitud de emprendimiento",
       );
     }
 

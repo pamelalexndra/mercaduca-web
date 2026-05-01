@@ -6,14 +6,15 @@ import { updateEntrepreneurship } from "../controllers/entrepreneurshipControlle
 import { updateEntrepreneurshipPartial } from "../controllers/entrepreneurshipController/updateEntrepreneurshipPartial.js";
 import { deleteEntrepreneurship } from "../controllers/entrepreneurshipController/deleteEntrepreneurship.js";
 import { verifyToken } from "../middlewares/verifyToken.js";
+import upload from "../middlewares/upload.js";
 
 const router = express.Router();
 
-router.get("/", getEntrepreneurship); // GET /api/emprendimientos
-router.get("/:id", getEntrepreneurshipById); // GET /api/emprendimientos/:id
-router.post("/",  verifyToken, createEntrepreneurship); // POST /api/emprendimientos
-router.put("/:id", verifyToken, updateEntrepreneurship); // PUT /api/emprendimientos/:id
-router.patch("/:id", verifyToken, updateEntrepreneurshipPartial); // PATCH /api/emprendimientos/:id
-router.delete("/:id", verifyToken, deleteEntrepreneurship); // DELETE /api/emprendimientos/:id
+router.get("/", getEntrepreneurship);
+router.get("/:id", getEntrepreneurshipById);
+router.post("/", verifyToken, upload.single("imagen"), createEntrepreneurship);
+router.put("/:id", verifyToken, upload.single("imagen"), updateEntrepreneurship);
+router.patch("/:id", verifyToken, upload.single("imagen"), updateEntrepreneurshipPartial);
+router.delete("/:id", verifyToken, deleteEntrepreneurship);
 
 export default router;
